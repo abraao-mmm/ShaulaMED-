@@ -7,7 +7,7 @@ from transcritor import ouvir_e_transcrever
 
 # IMPORTANTE: Quando você hospedar a API, este endereço deverá ser alterado
 # para a URL pública que o serviço (ex: Render) lhe der.
-API_URL = "http://127.0.0.1:8000"
+API_URL = "https://shaulamed-api.onrender.com"
 
 # --- Configuração da Página e Estilo ---
 st.set_page_config(
