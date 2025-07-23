@@ -75,8 +75,15 @@ def desenhar_indicador_confianca(nivel: float):
 
 # --- Funções de Página ---
 def pagina_inicial():
-    frase_escolhida = random.choice(FRASES_BOAS_VINDAS)
-    st.info(f"**Shaula:** \"_{frase_escolhida}_\"")
+    # Lógica da Reflexão: exibe a reflexão da última consulta se ela existir
+    if 'ultima_reflexao' in st.session_state and st.session_state.ultima_reflexao:
+        st.success(f"**Reflexão da Shaula:** \"_{st.session_state.ultima_reflexao}_\"")
+        del st.session_state.ultima_reflexao # Limpa para não mostrar novamente
+    else:
+        # Se não houver reflexão, mostra uma frase de boas-vindas aleatória
+        frase_escolhida = random.choice(FRASES_BOAS_VINDAS)
+        st.info(f"**Shaula:** \"_{frase_escolhida}_\"")
+
     desenhar_jornada(1)
     if st.button("▶️ Iniciar Nova Consulta", type="primary"):
         with st.spinner("A conectar com o servidor da API... Isto pode demorar até 30 segundos na primeira vez."):
@@ -131,14 +138,14 @@ def pagina_finalizacao():
         submitted = st.form_submit_button("Salvar e Concluir Sessão")
         if submitted:
             if decisao_final:
-                with st.spinner("A finalizar e a gerar insight..."):
+                with st.spinner("A finalizar e a gerar reflexão..."):
                     dados = {"decisao": decisao_final, "resumo": "..."}
                     response = requests.post(f"{API_URL}/consulta/finalizar", json=dados)
                     if response.status_code == 200:
-                        insight = response.json().get("insight")
-                        st.session_state.ultimo_insight = insight
-                        st.session_state.pagina = "Despedida"
-                        st.rerun()
+                        reflexao = response.json().get("reflexao")
+                        st.session_state.ultima_reflexao = reflexao
+                    st.session_state.etapa = 1
+                    st.rerun()
             else:
                 st.warning("Por favor, insira a decisão final antes de salvar.")
 
@@ -153,22 +160,14 @@ def pagina_relatorio():
 
 # --- Lógica de Navegação Principal ---
 with st.sidebar:
-    st.title("🩺 ShaulaMed"); st.caption(f"v1.0 - Online")
+    st.title("🩺 ShaulaMed"); st.caption(f"v1.1 - Online")
     if st.button("Consulta ao Vivo", use_container_width=True, type="primary" if st.session_state.pagina == "Consulta" else "secondary"):
         st.session_state.pagina = "Consulta"; st.rerun()
     if st.button("Painel Reflexivo", use_container_width=True, type="primary" if st.session_state.pagina == "Relatorio" else "secondary"):
-        st.session_state.pagina = "Relatorio"
-        if 'relatorio_gerado' in st.session_state: del st.session_state['relatorio_gerado']
-        st.rerun()
+        st.session_state.pagina = "Relatorio"; st.rerun()
     st.markdown("---")
     if st.button("Encerrar Expediente", use_container_width=True):
-        response = requests.get(f"{API_URL}/sessao/despedida")
-        if response.status_code == 200:
-            despedida = response.json().get("mensagem")
-            st.session_state.pagina = "Despedida"
-            st.session_state.mensagem_final = despedida
-            st.rerun()
-        else: st.error("Não foi possível gerar a despedida.")
+        st.session_state.pagina = "Despedida"; st.rerun()
 
 st.title("ShaulaMed Copilot")
 
@@ -183,15 +182,12 @@ if st.session_state.pagina == "Consulta":
 elif st.session_state.pagina == "Relatorio":
     pagina_relatorio()
 elif st.session_state.pagina == "Despedida":
-    if 'ultimo_insight' in st.session_state:
-        st.success(f"**Insight da Consulta:** \"_{st.session_state.get('ultimo_insight', 'Consulta finalizada com sucesso.')}_\"")
-        del st.session_state['ultimo_insight']
-    elif 'mensagem_final' in st.session_state:
-        st.success(f"**Shaula:** \"_{st.session_state.get('mensagem_final', 'Bom descanso.')}_\"")
-        del st.session_state['mensagem_final']
-    
-    st.info("Sessão encerrada.")
-    if st.button("Voltar ao Início"):
-        st.session_state.pagina = "Consulta"
-        st.session_state.etapa = 1
-        st.rerun()
+    st.info("Clique abaixo para gerar uma mensagem de encerramento baseada nas consultas do dia.")
+    if st.button("Gerar Mensagem de Despedida da Shaula", type="primary"):
+        with st.spinner("A Shaula está a refletir sobre o seu dia..."):
+            response = requests.get(f"{API_URL}/sessao/despedida")
+            if response.status_code == 200:
+                despedida = response.json().get("mensagem")
+                st.success(f"**Shaula:** \"_{despedida}_\"")
+            else:
+                st.error("Não foi possível gerar a despedida.")
