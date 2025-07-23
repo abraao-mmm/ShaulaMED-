@@ -1,4 +1,4 @@
-# app.py
+# app.py (Versão 1.1 - Lançamento)
 
 import streamlit as st
 import requests
@@ -10,29 +10,59 @@ from transcritor import transcrever_audio_bytes
 # IMPORTANTE: Esta URL deve ser o endereço público do seu back-end no Render
 API_URL = "https://shaulamed-api.onrender.com" # Exemplo, use a sua URL real
 
-# --- Configuração da Página e Estilo ---
+# --- Configuração da Página ---
 st.set_page_config(
     page_title="ShaulaMed Copilot",
     layout="centered",
     initial_sidebar_state="expanded"
 )
 
-# Injetamos CSS para o tema "Pleiades" e outros detalhes visuais
+# --- ESTILO CSS COMPLETO E DEFINITIVO ---
 st.markdown("""
 <style>
-    .stJson {
-        border: 1px solid #8A2BE2 !important; /* Borda Lilás */
-        box-shadow: 0 0 15px rgba(138, 43, 226, 0.5) !important; /* Efeito de aura/brilho */
-        border-radius: 10px !important; /* Bordas arredondadas */
+    /* Tema Escuro "Pleiades" */
+    [data-testid="stAppViewContainer"] {
+        background-color: #0A0A2A;
     }
+    [data-testid="stSidebar"] {
+        background-color: #1E1E3F;
+    }
+
+    /* Estilo para Botões */
+    .stButton > button {
+        border-radius: 8px;
+        border: 1px solid #8A2BE2;
+        background-color: transparent;
+        color: #E0E0E0;
+        transition: all 0.2s ease-in-out;
+    }
+    .stButton > button:hover {
+        border-color: #E0E0E0;
+        background-color: #8A2BE2;
+        color: white;
+    }
+    /* Botão Primário (o que está ativo na sidebar) */
+    .stButton > button[kind="primary"] {
+        background-color: #8A2BE2;
+        color: white;
+    }
+    
+    /* Aura Lilás para Sugestão da IA */
+    .stJson {
+        border: 1px solid #8A2BE2 !important;
+        box-shadow: 0 0 15px rgba(138, 43, 226, 0.5) !important;
+        border-radius: 10px !important;
+    }
+    
+    /* Estilo para a Jornada da Consulta */
     .step-active {
         font-weight: bold;
-        color: #E0E0E0; /* Branco Suave */
-        border-bottom: 2px solid #8A2BE2; /* Lilás */
+        color: #E0E0E0;
+        border-bottom: 2px solid #8A2BE2;
         padding-bottom: 5px;
     }
     .step-inactive {
-        color: #555; /* Cinza escuro para etapas inativas */
+        color: #555;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -145,7 +175,7 @@ def pagina_finalizacao():
                         reflexao = response.json().get("reflexao")
                         st.session_state.ultima_reflexao = reflexao
                     st.session_state.etapa = 1
-                    st.rerun()
+                    st.rerun() # <<< A CORREÇÃO ESTÁ AQUI
             else:
                 st.warning("Por favor, insira a decisão final antes de salvar.")
 
