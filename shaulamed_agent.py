@@ -59,3 +59,35 @@ class ShaulaMedAgent:
 
     def salvar_memoria(self):
         self.memoria.exportar_para_json()
+    
+    # Dentro da classe ShaulaMedAgent, no final do arquivo shaulamed_agent.py
+
+def gerar_despedida_do_dia(self, obter_resposta_llm_func: Callable):
+    """
+    Analisa as consultas do dia e gera uma mensagem de despedida personalizada.
+    """
+    # Filtra as consultas que aconteceram hoje (isto é uma simplificação,
+    # em um sistema real, faríamos um filtro por data)
+    consultas_do_dia = self.memoria.encontros 
+
+    if not consultas_do_dia:
+        return "Nenhuma consulta registada hoje. Tenha um bom descanso."
+
+    # Cria um resumo dos casos do dia
+    resumo_casos = []
+    for enc in consultas_do_dia:
+        hipotese = enc.sugestao_ia.get("hipoteses_diagnosticas", ["N/A"])[0]
+        resumo_casos.append(hipotese)
+    
+    temas_do_dia = ", ".join(list(set(resumo_casos)))
+
+    # Cria o prompt para a IA
+    prompt = (
+        f"Você é a Shaula, uma IA poética e reflexiva. O dia de trabalho do Dr. Thalles terminou. "
+        f"Hoje, ele atendeu casos envolvendo os seguintes temas: {temas_do_dia}.\n\n"
+        "TAREFA: Crie uma mensagem de despedida curta (1-2 frases), reconhecendo o esforço do dia e com o seu tom característico, cósmico e sereno."
+    )
+
+    # Chama a LLM
+    resposta_dict = obter_resposta_llm_func(prompt, modo="Despedida Reflexiva")
+    return resposta_dict.get("conteudo", "Bom trabalho hoje. Tenha um bom descanso.")

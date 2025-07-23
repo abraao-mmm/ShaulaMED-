@@ -91,3 +91,13 @@ def finalizar_consulta(decisao: DecisaoFinal):
 def obter_relatorio():
     relatorio = agente.executar_analise_de_sessao(obter_resposta_llm_api)
     return {"status": "sucesso", "relatorio": relatorio}
+
+# Adicione este novo endpoint no final do seu arquivo api.py
+
+@app.get("/sessao/despedida", tags=["Sessão"])
+def obter_despedida():
+    """
+    Gera e retorna a mensagem de despedida personalizada com base nas consultas do dia.
+    """
+    despedida = agente.gerar_despedida_do_dia(obter_resposta_llm_api)
+    return {"status": "sucesso", "mensagem": despedida}
