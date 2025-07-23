@@ -1,0 +1,15 @@
+{
+    "12345AM_otorrinolaringologia": {
+        "id": "12345AM_otorrinolaringologia",
+        "nome": "Thalles Rodrigues",
+        "crm": "12345-AM",
+        "especialidade": "Otorrinolaringologia",
+        "nivel_confianca_ia": 1,
+        "estilo_clinico_observado": {
+            "padrao_prescritivo": {},
+            "exames_mais_solicitados": [],
+            "linguagem_resumo": "SOAP"
+        },
+        "consultas_realizadas_count": 0
+    }
+}

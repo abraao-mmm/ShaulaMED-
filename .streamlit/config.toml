@@ -1,0 +1,17 @@
+# .streamlit/config.toml
+
+[theme]
+# Cor de fundo principal (Azul Profundo)
+backgroundColor = "#0A0A2A"
+
+# Cor do fundo secundário (para painéis e barras laterais)
+secondaryBackgroundColor = "#1E1E3F"
+
+# Cor do texto principal (Branco Suave)
+textColor = "#E0E0E0"
+
+# Cor da fonte principal (Prata/Branco para botões e elementos primários)
+primaryColor = "#E0E0E0"
+
+[server]
+headless = true

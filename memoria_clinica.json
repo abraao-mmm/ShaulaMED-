@@ -1,0 +1,50 @@
+[
+    {
+        "id": "enc_20250722170642",
+        "timestamp": "2025-07-22T17:06:42.874546",
+        "medico_id": "12345AM_otorrinolaringologia",
+        "transcricao_consulta": "Doutor, dor de garganta e febre há 2 dias.",
+        "sugestao_ia": {
+            "hipoteses_diagnosticas": [
+                "Inflamação viral da garganta",
+                "Febre reumática",
+                "Tuberculose"
+            ],
+            "sugestao_conduta": "Recomende o paciente para uma avaliação mais detalhada, incluindo uma amostra de secreções orais e um hemograma completo.",
+            "exames_sugeridos": [
+                "Amostra de secreções orais",
+                "Hemograma completo"
+            ],
+            "nivel_confianca_ia": "0.7 (A febre associada com dor de garganta é mais provavelmente causada por uma infecção viral do que pela tuberculose ou febre reumática)"
+        },
+        "decisao_medico_final": "Realizado teste rápido para Strep (negativo). Prescrito Nimesulida.",
+        "texto_gerado_prontuario": "...",
+        "contexto_emocional_paciente": "neutro",
+        "desvio_de_padrao": false,
+        "reflexao_ia": ""
+    },
+    {
+        "id": "enc_20250722170705",
+        "timestamp": "2025-07-22T17:07:05.851090",
+        "medico_id": "12345AM_otorrinolaringologia",
+        "transcricao_consulta": "Sinto queimação no estômago e enjoo.",
+        "sugestao_ia": {
+            "hipoteses_diagnosticas": [
+                "Infecção gastral ou úlcera péptica",
+                "Envenhamento alimentar",
+                "Doença de refluxo gastroesofágico"
+            ],
+            "sugestao_conduta": "Começar com uma anamnese detalhada, incluindo alimento consumido e hábitos alimentares. A seguir, pode ser necessário realizar um exame físico completo.",
+            "exames_sugeridos": [
+                "Anamneses detalhadas",
+                "Exame físico completos"
+            ],
+            "nivel_confianca_ia": "0.7"
+        },
+        "decisao_medico_final": "Solicitado teste respiratório para H. pylori.",
+        "texto_gerado_prontuario": "...",
+        "contexto_emocional_paciente": "neutro",
+        "desvio_de_padrao": false,
+        "reflexao_ia": ""
+    }
+]
