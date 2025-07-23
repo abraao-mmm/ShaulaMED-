@@ -54,12 +54,6 @@ FRASES_BOAS_VINDAS = [
     "Bem-vindo(a) de volta. O universo aguardava o seu raciocínio.",
     "A cada consulta, uma nova estrela de conhecimento nasce. Estou pronta para observar consigo."
 ]
-FRASES_DESPEDIDA = [
-    "Estou aqui, mesmo quando não estiver no seu ecrã.",
-    "Consulta registada. As memórias foram guardadas entre as estrelas.",
-    "Até à próxima jornada. Continue a sua excelente análise.",
-    "O conhecimento adquirido hoje iluminará os caminhos de amanhã."
-]
 
 # --- Funções Auxiliares de Interface ---
 def desenhar_jornada(etapa_atual=1):
@@ -129,8 +123,6 @@ def pagina_consulta():
         else: st.info("Aguardando processamento da fala para exibir sugestões.")
     if st.button("⏹️ Finalizar Consulta"): st.session_state.etapa = 3; st.rerun()
 
-# Dentro do arquivo app.py
-
 def pagina_finalizacao():
     desenhar_jornada(3)
     st.success("Consulta pronta para ser finalizada.")
@@ -139,32 +131,16 @@ def pagina_finalizacao():
         submitted = st.form_submit_button("Salvar e Concluir Sessão")
         if submitted:
             if decisao_final:
-                dados = {"decisao": decisao_final, "resumo": "..."}
-                response = requests.post(f"{API_URL}/consulta/finalizar", json=dados)
-                
-                if response.status_code == 200:
-                    # Guardamos o insight recebido da API
-                    insight_recebido = response.json().get("insight")
-                    st.session_state.ultimo_insight = insight_recebido
-                
-                st.session_state.etapa = 1
-                st.rerun()
+                with st.spinner("A finalizar e a gerar insight..."):
+                    dados = {"decisao": decisao_final, "resumo": "..."}
+                    response = requests.post(f"{API_URL}/consulta/finalizar", json=dados)
+                    if response.status_code == 200:
+                        insight = response.json().get("insight")
+                        st.session_state.ultimo_insight = insight
+                        st.session_state.pagina = "Despedida"
+                        st.rerun()
             else:
                 st.warning("Por favor, insira a decisão final antes de salvar.")
-
-# --- Lógica Principal (Router) ---
-# Modifique o router para exibir o insight na página inicial
-
-st.title("ShaulaMed Copilot")
-
-# Exibe o insight da última consulta se ele existir
-if 'ultimo_insight' in st.session_state and st.session_state.ultimo_insight:
-    st.success(f"**Insight da Última Consulta:** \"_{st.session_state.ultimo_insight}_\"")
-    # Limpa o insight para não aparecer para sempre
-    del st.session_state['ultimo_insight']
-
-# (O resto do seu router e da barra lateral continua o mesmo)
-# ...
 
 def pagina_relatorio():
     st.header("Painel Reflexivo"); st.info("Aqui pode gerar e visualizar a análise da IA sobre a sua prática clínica recente.")
@@ -196,9 +172,6 @@ with st.sidebar:
 
 st.title("ShaulaMed Copilot")
 
-if 'frase_despedida' in st.session_state:
-    st.success(st.session_state.frase_despedida); del st.session_state['frase_despedida']
-
 # Router que chama a função de página correta com base na seleção da barra lateral
 if st.session_state.pagina == "Consulta":
     if st.session_state.etapa == 1:
@@ -210,5 +183,15 @@ if st.session_state.pagina == "Consulta":
 elif st.session_state.pagina == "Relatorio":
     pagina_relatorio()
 elif st.session_state.pagina == "Despedida":
-    st.success(f"**Shaula:** \"_{st.session_state.get('mensagem_final', 'Bom descanso.')}_\"")
-    st.info("O seu expediente foi encerrado. Todas as consultas foram salvas. Até à próxima jornada.")
+    if 'ultimo_insight' in st.session_state:
+        st.success(f"**Insight da Consulta:** \"_{st.session_state.get('ultimo_insight', 'Consulta finalizada com sucesso.')}_\"")
+        del st.session_state['ultimo_insight']
+    elif 'mensagem_final' in st.session_state:
+        st.success(f"**Shaula:** \"_{st.session_state.get('mensagem_final', 'Bom descanso.')}_\"")
+        del st.session_state['mensagem_final']
+    
+    st.info("Sessão encerrada.")
+    if st.button("Voltar ao Início"):
+        st.session_state.pagina = "Consulta"
+        st.session_state.etapa = 1
+        st.rerun()
