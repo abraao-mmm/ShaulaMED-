@@ -129,6 +129,8 @@ def pagina_consulta():
         else: st.info("Aguardando processamento da fala para exibir sugestões.")
     if st.button("⏹️ Finalizar Consulta"): st.session_state.etapa = 3; st.rerun()
 
+# Dentro do arquivo app.py
+
 def pagina_finalizacao():
     desenhar_jornada(3)
     st.success("Consulta pronta para ser finalizada.")
@@ -138,12 +140,31 @@ def pagina_finalizacao():
         if submitted:
             if decisao_final:
                 dados = {"decisao": decisao_final, "resumo": "..."}
-                requests.post(f"{API_URL}/consulta/finalizar", json=dados)
+                response = requests.post(f"{API_URL}/consulta/finalizar", json=dados)
+                
+                if response.status_code == 200:
+                    # Guardamos o insight recebido da API
+                    insight_recebido = response.json().get("insight")
+                    st.session_state.ultimo_insight = insight_recebido
+                
                 st.session_state.etapa = 1
-                frase_despedida_escolhida = random.choice(FRASES_DESPEDIDA)
-                st.session_state.frase_despedida = f"**Shaula:** \"_{frase_despedida_escolhida}_\""
                 st.rerun()
-            else: st.warning("Por favor, insira a decisão final antes de salvar.")
+            else:
+                st.warning("Por favor, insira a decisão final antes de salvar.")
+
+# --- Lógica Principal (Router) ---
+# Modifique o router para exibir o insight na página inicial
+
+st.title("ShaulaMed Copilot")
+
+# Exibe o insight da última consulta se ele existir
+if 'ultimo_insight' in st.session_state and st.session_state.ultimo_insight:
+    st.success(f"**Insight da Última Consulta:** \"_{st.session_state.ultimo_insight}_\"")
+    # Limpa o insight para não aparecer para sempre
+    del st.session_state['ultimo_insight']
+
+# (O resto do seu router e da barra lateral continua o mesmo)
+# ...
 
 def pagina_relatorio():
     st.header("Painel Reflexivo"); st.info("Aqui pode gerar e visualizar a análise da IA sobre a sua prática clínica recente.")

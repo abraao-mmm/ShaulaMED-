@@ -99,3 +99,29 @@ class ShaulaMedAgent:
 
     def salvar_memoria(self):
         self.memoria.exportar_para_json()
+    
+    # Dentro da classe ShaulaMedAgent, no arquivo shaulamed_agent.py
+
+    def gerar_insight_pos_consulta(self, encontro: EncontroClinico, obter_resposta_llm_func: Callable) -> str:
+        """
+        Analisa um único encontro clínico recém-finalizado e gera um insight rápido.
+        """
+        if not encontro:
+            return None
+
+        transcricao = encontro.transcricao_consulta
+        sugestao_ia = encontro.sugestao_ia
+        decisao_medico = encontro.decisao_medico_final
+
+        prompt = (
+            "Você é a Shaula, uma IA observadora e perspicaz. Uma consulta acabou de terminar. Analise os dados abaixo e gere um insight clínico ou comportamental curto (uma frase) que seja interessante e útil para o médico.\n\n"
+            f"**Transcrição do Paciente:** \"{transcricao}\"\n"
+            f"**Sugestão da IA:** {sugestao_ia}\n"
+            f"**Decisão Final do Médico:** \"{decisao_medico}\"\n\n"
+            "**Seu Insight Rápido (seja conciso e direto):**"
+        )
+
+        resposta_dict = obter_resposta_llm_func(prompt, modo="Insight Pós-Consulta")
+        insight = resposta_dict.get("conteudo")
+
+        return insight if insight else "Nenhum insight particular para esta consulta."
