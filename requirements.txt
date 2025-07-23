@@ -1,7 +1,14 @@
+# requirements.txt
+fastapi
+uvicorn
+pydantic
+openai
+rich
 streamlit
 requests
-streamlit-mic-recorder
 openai-whisper
 soundfile
 numpy
+streamlit-mic-recorder
 ffmpeg-python
+groq
