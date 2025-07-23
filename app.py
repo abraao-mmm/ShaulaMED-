@@ -158,6 +158,8 @@ def pagina_relatorio():
     if 'relatorio_gerado' in st.session_state:
         st.markdown("---")
         st.markdown(st.session_state.relatorio_gerado)
+    
+
 
 # --- Lógica de Navegação Principal ---
 if 'pagina' not in st.session_state:
