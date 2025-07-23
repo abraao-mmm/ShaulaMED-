@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI
 from pydantic import BaseModel
-import openai
+import os
 import json
 
 # Importamos toda a nossa lógica do ShaulaMed
@@ -19,8 +19,6 @@ app = FastAPI(
 )
 
 # --- Objetos Globais ---
-# Estes objetos são criados uma vez, quando o servidor liga,
-# e permanecem na memória para atender a todas as requisições.
 console = Console()
 gerenciador = GerenciadorDeMedicos()
 medico_logado = gerenciador.definir_medico_atual(
@@ -30,30 +28,26 @@ medico_logado = gerenciador.definir_medico_atual(
 )
 
 def obter_resposta_llm_api(prompt: str, modo: str = "API", schema: dict = None) -> dict:
-    """Função real de conexão com a LLM para ser usada pela API."""
-    console.print(f"\n[dim][API -> IA: Núcleo de '{modo}' ativado...][/dim]")
-    MODELO_USADO = "lmstudio-community/Phi-3-mini-4k-instruct-gguf" # Verifique o nome do seu modelo
+    """
+    Função SIMULADA de conexão com a LLM.
+    Ela retorna respostas prontas para testarmos a hospedagem sem precisar de uma chave de API real.
+    """
+    console.print(f"\n[dim][API -> IA (SIMULADA): Núcleo de '{modo}' ativado...][/dim]")
     
-    mensagens = [{"role": "user", "content": prompt}]
+    if modo == "Relatório Clínico":
+        resposta_simulada = "[RELATÓRIO SIMULADO]: Análise da sessão gerada pela API online."
+        return {"tipo": "texto", "conteudo": resposta_simulada}
     
-    if schema:
-        system_prompt = f"Responda em formato JSON seguindo este schema: {json.dumps(schema)}"
-        mensagens.insert(0, {"role": "system", "content": system_prompt})
+    # Para o modo de Diagnóstico, retornamos uma string JSON, como a IA real faria.
+    resposta_simulada_dict = {
+        "hipoteses_diagnosticas": ["Hipótese (Gerada pela API Online)"],
+        "sugestao_conduta": "Conduta (Gerada pela API Online).",
+        "exames_sugeridos": ["Exame A (online)", "Exame B (online)"],
+        "nivel_confianca_ia": "0.8"
+    }
+    return {"tipo": "texto", "conteudo": json.dumps(resposta_simulada_dict)}
 
-    try:
-        client = openai.OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")
-        response = client.chat.completions.create(
-            model=MODELO_USADO,
-            messages=mensagens,
-            temperature=0.7,
-        )
-        conteudo = response.choices[0].message.content.strip()
-        return {"tipo": "texto", "conteudo": conteudo}
-    except Exception as e:
-        console.print(f"❌ [bold red]API: Erro na chamada da IA: {e}[/bold red]")
-        return {"tipo": "erro", "conteudo": "{}"}
-
-# Criamos a instância principal do nosso agente, passando a função real da LLM
+# Criamos a instância principal do nosso agente, passando a função SIMULADA
 agente = ShaulaMedAgent(
     medico=medico_logado, 
     console_log=console, 
@@ -61,7 +55,6 @@ agente = ShaulaMedAgent(
 )
 
 # --- Modelos de Dados Pydantic ---
-# Definem a estrutura dos dados que a API espera receber
 class FalaPaciente(BaseModel):
     texto: str
 
@@ -73,13 +66,11 @@ class DecisaoFinal(BaseModel):
 
 @app.post("/consulta/iniciar", tags=["Consulta"])
 def iniciar_consulta():
-    """Inicia uma nova sessão de consulta no agente."""
     agente.iniciar_nova_consulta()
     return {"status": "sucesso", "mensagem": "Nova consulta iniciada."}
 
 @app.post("/consulta/processar", tags=["Consulta"])
 def processar_fala(fala: FalaPaciente):
-    """Recebe a fala do paciente, processa e retorna a sugestão da IA."""
     if not agente.consulta_atual:
         return {"status": "erro", "mensagem": "Nenhuma consulta iniciada."}
     
@@ -89,7 +80,6 @@ def processar_fala(fala: FalaPaciente):
 
 @app.post("/consulta/finalizar", tags=["Consulta"])
 def finalizar_consulta(decisao: DecisaoFinal):
-    """Finaliza a consulta, registrando a decisão do médico."""
     if not agente.consulta_atual:
         return {"status": "erro", "mensagem": "Nenhuma consulta para finalizar."}
         
@@ -99,6 +89,5 @@ def finalizar_consulta(decisao: DecisaoFinal):
 
 @app.get("/relatorio", tags=["Análise"])
 def obter_relatorio():
-    """Gera e retorna o relatório reflexivo com base na memória."""
     relatorio = agente.executar_analise_de_sessao(obter_resposta_llm_api)
     return {"status": "sucesso", "relatorio": relatorio}
