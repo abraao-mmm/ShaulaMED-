@@ -78,24 +78,23 @@ def processar_fala(fala: FalaPaciente):
     sugestao = agente.consulta_atual.sugestao_ia
     return {"status": "sucesso", "sugestao": sugestao}
 
-# Dentro do arquivo api.py, modifique o endpoint finalizar_consulta
+
+# api.py (modifique o endpoint finalizar_consulta)
 
 @app.post("/consulta/finalizar", tags=["Consulta"])
 def finalizar_consulta(decisao: DecisaoFinal):
     if not agente.consulta_atual:
         return {"status": "erro", "mensagem": "Nenhuma consulta para finalizar."}
     
-    # Guardamos o encontro clínico antes que ele seja finalizado
     encontro_finalizado = agente.consulta_atual
-        
     agente.finalizar_consulta(decisao.decisao, decisao.resumo)
     gerenciador.salvar_medicos()
 
-    # --- NOVO PASSO: GERAR O INSIGHT ---
-    insight = agente.gerar_insight_pos_consulta(encontro_finalizado, obter_resposta_llm_api)
+    # --- MUDANÇA AQUI ---
+    # Agora chamamos a nova função e usamos a chave "reflexao"
+    reflexao = agente.gerar_reflexao_pos_consulta(encontro_finalizado, obter_resposta_llm_api)
     
-    # Agora a resposta da API inclui o insight
-    return {"status": "sucesso", "mensagem": "Consulta finalizada.", "insight": insight}
+    return {"status": "sucesso", "mensagem": "Consulta finalizada.", "reflexao": reflexao}
         
 
 @app.get("/relatorio", tags=["Análise"])

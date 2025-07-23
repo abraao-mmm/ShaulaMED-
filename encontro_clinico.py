@@ -32,3 +32,24 @@ class EncontroClinico:
             "desvio_de_padrao": self.desvio_de_padrao,
             "reflexao_ia": self.reflexao_ia
         }
+    
+    # Dentro da classe EncontroClinico, no ficheiro encontro_clinico.py
+
+    @staticmethod
+    def de_dict(data: dict):
+        """Cria um objeto EncontroClinico a partir de um dicionário."""
+        # Criamos um objeto vazio, pois a transcrição é necessária no construtor
+        encontro = EncontroClinico(
+            medico_id=data.get('medico_id'),
+            transcricao_consulta=data.get('transcricao_consulta')
+        )
+        # Preenchemos os restantes campos a partir dos dados
+        encontro.id = data.get('id')
+        encontro.timestamp = datetime.fromisoformat(data.get('timestamp'))
+        encontro.sugestao_ia = data.get('sugestao_ia', {})
+        encontro.decisao_medico_final = data.get('decisao_medico_final', "")
+        encontro.texto_gerado_prontuario = data.get('texto_gerado_prontuario', "")
+        encontro.contexto_emocional_paciente = data.get('contexto_emocional_paciente', "neutro")
+        encontro.desvio_de_padrao = data.get('desvio_de_padrao', False)
+        encontro.reflexao_ia = data.get('reflexao_ia', "")
+        return encontro
