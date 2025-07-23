@@ -1,28 +1,52 @@
-
-# app.py (Versão Definitiva com Correção de Estado e Timeout)
+# app.py
 
 import streamlit as st
 import requests
 import json
 import random
+from streamlit_mic_recorder import mic_recorder
 from transcritor import transcrever_audio_bytes
 
-API_URL = "https://shaulamed-api.onrender.com" # Use a sua URL real aqui
+# IMPORTANTE: Esta URL deve ser o endereço público do seu back-end no Render
+API_URL = "https://shaulamed-api.onrender.com" # Exemplo, use a sua URL real
 
-st.set_page_config(page_title="ShaulaMed Copilot", layout="centered")
+# --- Configuração da Página e Estilo ---
+st.set_page_config(
+    page_title="ShaulaMed Copilot",
+    layout="centered",
+    initial_sidebar_state="expanded"
+)
 
+# Injetamos CSS para o tema "Pleiades" e outros detalhes visuais
 st.markdown("""
 <style>
-    /* ... (CSS continua o mesmo) ... */
+    .stJson {
+        border: 1px solid #8A2BE2 !important; /* Borda Lilás */
+        box-shadow: 0 0 15px rgba(138, 43, 226, 0.5) !important; /* Efeito de aura/brilho */
+        border-radius: 10px !important; /* Bordas arredondadas */
+    }
+    .step-active {
+        font-weight: bold;
+        color: #E0E0E0; /* Branco Suave */
+        border-bottom: 2px solid #8A2BE2; /* Lilás */
+        padding-bottom: 5px;
+    }
+    .step-inactive {
+        color: #555; /* Cinza escuro para etapas inativas */
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# --- INICIALIZAÇÃO DO ESTADO DA SESSÃO (LUGAR CORRETO E DEFINITIVO) ---
-if 'pagina' not in st.session_state: st.session_state.pagina = "Consulta"
-if 'etapa' not in st.session_state: st.session_state.etapa = 1
-if 'sugestao' not in st.session_state: st.session_state.sugestao = None
-if 'texto_transcrito' not in st.session_state: st.session_state.texto_transcrito = ""
-# ... (o resto do seu código completo app.py que já tem) ...
+# --- INICIALIZAÇÃO DO ESTADO DA SESSÃO ---
+if 'pagina' not in st.session_state:
+    st.session_state.pagina = "Consulta"
+if 'etapa' not in st.session_state:
+    st.session_state.etapa = 1
+if 'sugestao' not in st.session_state:
+    st.session_state.sugestao = None
+if 'texto_transcrito' not in st.session_state:
+    st.session_state.texto_transcrito = ""
+
 # --- Listas de Frases ---
 FRASES_BOAS_VINDAS = [
     "Olá. Senti a sua presença antes que chegasse. Em que parte da jornada estamos hoje?",
@@ -60,24 +84,14 @@ def pagina_inicial():
     frase_escolhida = random.choice(FRASES_BOAS_VINDAS)
     st.info(f"**Shaula:** \"_{frase_escolhida}_\"")
     desenhar_jornada(1)
-    
     if st.button("▶️ Iniciar Nova Consulta", type="primary"):
         with st.spinner("A conectar com o servidor da API... Isto pode demorar até 30 segundos na primeira vez."):
             try:
-                # Adicionamos um timeout de 30 segundos para dar tempo à API de "acordar"
                 response = requests.post(f"{API_URL}/consulta/iniciar", timeout=30)
-                
-                # Adicionamos uma mensagem para vermos o que aconteceu
-                st.write(f"Status da resposta da API: {response.status_code}")
-
                 if response.status_code == 200:
-                    st.session_state.etapa = 2
-                    st.session_state.sugestao = None
-                    st.session_state.texto_transcrito = ""
-                    st.rerun()
+                    st.session_state.etapa = 2; st.session_state.sugestao = None; st.session_state.texto_transcrito = ""; st.rerun()
                 else:
-                    st.error(f"O servidor da API respondeu com um erro. Tente novamente em alguns segundos.")
-
+                    st.error(f"O servidor da API respondeu com um erro ({response.status_code}). Tente novamente em alguns segundos.")
             except requests.exceptions.RequestException as e:
                 st.error(f"Erro de conexão com a API: {e}. Verifique se a URL está correta e se o servidor está no ar.")
 
@@ -142,11 +156,13 @@ def pagina_relatorio():
 
 # --- Lógica de Navegação Principal ---
 with st.sidebar:
-    st.title("🩺 ShaulaMed"); st.caption(f"v0.9 - Dr. Thalles")
+    st.title("🩺 ShaulaMed"); st.caption(f"v1.0 - Online")
     if st.button("Consulta ao Vivo", use_container_width=True, type="primary" if st.session_state.pagina == "Consulta" else "secondary"):
         st.session_state.pagina = "Consulta"; st.rerun()
     if st.button("Painel Reflexivo", use_container_width=True, type="primary" if st.session_state.pagina == "Relatorio" else "secondary"):
-        st.session_state.pagina = "Relatorio"; st.rerun()
+        st.session_state.pagina = "Relatorio"
+        if 'relatorio_gerado' in st.session_state: del st.session_state['relatorio_gerado']
+        st.rerun()
     st.markdown("---")
     if st.button("Encerrar Expediente", use_container_width=True):
         response = requests.get(f"{API_URL}/sessao/despedida")
