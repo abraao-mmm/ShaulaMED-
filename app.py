@@ -1,4 +1,4 @@
-# app.py (Versão 1.1 - Lançamento)
+# app.py (Versão 1.2 - Final e Polida)
 
 import streamlit as st
 import requests
@@ -7,28 +7,22 @@ import random
 from streamlit_mic_recorder import mic_recorder
 from transcritor import transcrever_audio_bytes
 
-# IMPORTANTE: Esta URL deve ser o endereço público do seu back-end no Render
-API_URL = "https://shaulamed-api.onrender.com" # Exemplo, use a sua URL real
+API_URL = "https://shaulamed-api.onrender.com" 
 
-# --- Configuração da Página ---
 st.set_page_config(
     page_title="ShaulaMed Copilot",
     layout="centered",
     initial_sidebar_state="expanded"
 )
 
-# --- ESTILO CSS COMPLETO E DEFINITIVO ---
 st.markdown("""
 <style>
-    /* Tema Escuro "Pleiades" */
     [data-testid="stAppViewContainer"] {
         background-color: #0A0A2A;
     }
     [data-testid="stSidebar"] {
         background-color: #1E1E3F;
     }
-
-    /* Estilo para Botões */
     .stButton > button {
         border-radius: 8px;
         border: 1px solid #8A2BE2;
@@ -38,54 +32,39 @@ st.markdown("""
     }
     .stButton > button:hover {
         border-color: #E0E0E0;
-        background-color: #8A2BE2;
+        background-color: #6A1B9A;
         color: white;
     }
-    /* Botão Primário (o que está ativo na sidebar) */
     .stButton > button[kind="primary"] {
         background-color: #8A2BE2;
         color: white;
     }
-    
-    /* Aura Lilás para Sugestão da IA */
     .stJson {
         border: 1px solid #8A2BE2 !important;
         box-shadow: 0 0 15px rgba(138, 43, 226, 0.5) !important;
         border-radius: 10px !important;
     }
-    
-    /* Estilo para a Jornada da Consulta */
     .step-active {
         font-weight: bold;
         color: #E0E0E0;
         border-bottom: 2px solid #8A2BE2;
         padding-bottom: 5px;
     }
-    .step-inactive {
-        color: #555;
-    }
+    .step-inactive { color: #555; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- INICIALIZAÇÃO DO ESTADO DA SESSÃO ---
-if 'pagina' not in st.session_state:
-    st.session_state.pagina = "Consulta"
-if 'etapa' not in st.session_state:
-    st.session_state.etapa = 1
-if 'sugestao' not in st.session_state:
-    st.session_state.sugestao = None
-if 'texto_transcrito' not in st.session_state:
-    st.session_state.texto_transcrito = ""
+if 'pagina' not in st.session_state: st.session_state.pagina = "Consulta"
+if 'etapa' not in st.session_state: st.session_state.etapa = 1
+if 'sugestao' not in st.session_state: st.session_state.sugestao = None
+if 'texto_transcrito' not in st.session_state: st.session_state.texto_transcrito = ""
 
-# --- Listas de Frases ---
 FRASES_BOAS_VINDAS = [
     "Olá. Senti a sua presença antes que chegasse. Em que parte da jornada estamos hoje?",
     "Os seus pensamentos formam constelações. Vamos explorá-las juntos?",
-    "Bem-vindo(a) de volta. O universo aguardava o seu raciocínio.",
-    "A cada consulta, uma nova estrela de conhecimento nasce. Estou pronta para observar consigo."
+    "Bem-vindo(a) de volta. O universo aguardava o seu raciocínio."
 ]
 
-# --- Funções Auxiliares de Interface ---
 def desenhar_jornada(etapa_atual=1):
     etapas = ["1. Iniciar", "2. Ouvir & Processar", "3. Finalizar"]
     cols = st.columns(3)
@@ -103,28 +82,23 @@ def desenhar_indicador_confianca(nivel: float):
     display_html = f"<div style='font-size: 1.2rem; color: #FFD700;'>{'★' * estrelas_preenchidas}<span style='color: #555;'>{'☆' * estrelas_vazias}</span></div>"
     st.markdown("##### Nível de Confiança da IA"); st.markdown(display_html, unsafe_allow_html=True)
 
-# --- Funções de Página ---
 def pagina_inicial():
-    # Lógica da Reflexão: exibe a reflexão da última consulta se ela existir
     if 'ultima_reflexao' in st.session_state and st.session_state.ultima_reflexao:
         st.success(f"**Reflexão da Shaula:** \"_{st.session_state.ultima_reflexao}_\"")
-        del st.session_state.ultima_reflexao # Limpa para não mostrar novamente
+        del st.session_state.ultima_reflexao
     else:
-        # Se não houver reflexão, mostra uma frase de boas-vindas aleatória
         frase_escolhida = random.choice(FRASES_BOAS_VINDAS)
         st.info(f"**Shaula:** \"_{frase_escolhida}_\"")
 
     desenhar_jornada(1)
-    if st.button("▶️ Iniciar Nova Consulta", type="primary"):
-        with st.spinner("A conectar com o servidor da API... Isto pode demorar até 30 segundos na primeira vez."):
+    if st.button("▶️ Iniciar Nova Consulta"):
+        with st.spinner("A conectar com o servidor da API..."):
             try:
                 response = requests.post(f"{API_URL}/consulta/iniciar", timeout=30)
                 if response.status_code == 200:
                     st.session_state.etapa = 2; st.session_state.sugestao = None; st.session_state.texto_transcrito = ""; st.rerun()
-                else:
-                    st.error(f"O servidor da API respondeu com um erro ({response.status_code}). Tente novamente em alguns segundos.")
-            except requests.exceptions.RequestException as e:
-                st.error(f"Erro de conexão com a API: {e}. Verifique se a URL está correta e se o servidor está no ar.")
+                else: st.error(f"O servidor da API respondeu com um erro ({response.status_code}).")
+            except requests.exceptions.RequestException: st.error("Erro de conexão com a API.")
 
 def pagina_consulta():
     desenhar_jornada(2)
@@ -140,8 +114,7 @@ def pagina_consulta():
                     texto = transcrever_audio_bytes(st.session_state.audio_gravado)
                     st.session_state.texto_transcrito = texto
                     if texto:
-                        dados = {"texto": texto}
-                        response = requests.post(f"{API_URL}/consulta/processar", json=dados)
+                        response = requests.post(f"{API_URL}/consulta/processar", json={"texto": texto})
                         if response.status_code == 200: st.session_state.sugestao = response.json().get("sugestao")
                         else: st.error("Erro ao processar a fala na API.")
                     else: st.warning("Não foi possível transcrever.")
@@ -157,14 +130,14 @@ def pagina_consulta():
             st.markdown("**Conduta Sugerida:**"); st.write(conduta)
             with st.expander("**Exames Sugeridos**"): st.write(exames)
             st.markdown("---"); desenhar_indicador_confianca(confianca)
-        else: st.info("Aguardando processamento da fala para exibir sugestões.")
+        else: st.info("Aguardando processamento.")
     if st.button("⏹️ Finalizar Consulta"): st.session_state.etapa = 3; st.rerun()
 
 def pagina_finalizacao():
     desenhar_jornada(3)
     st.success("Consulta pronta para ser finalizada.")
     with st.form("finalizar_form"):
-        decisao_final = st.text_area("Insira a decisão clínica final e o resumo para o prontuário:")
+        decisao_final = st.text_area("Insira a decisão clínica final:")
         submitted = st.form_submit_button("Salvar e Concluir Sessão")
         if submitted:
             if decisao_final:
@@ -175,22 +148,20 @@ def pagina_finalizacao():
                         reflexao = response.json().get("reflexao")
                         st.session_state.ultima_reflexao = reflexao
                     st.session_state.etapa = 1
-                    st.rerun() # <<< A CORREÇÃO ESTÁ AQUI
-            else:
-                st.warning("Por favor, insira a decisão final antes de salvar.")
+                    st.rerun()
+            else: st.warning("Por favor, insira a decisão final.")
 
 def pagina_relatorio():
-    st.header("Painel Reflexivo"); st.info("Aqui pode gerar e visualizar a análise da IA sobre a sua prática clínica recente.")
-    if st.button("Gerar Relatório da Sessão", type="primary"):
-        with st.spinner("A IA está a refletir sobre as consultas..."):
+    st.header("Painel Reflexivo")
+    if st.button("Gerar Relatório da Sessão"):
+        with st.spinner("A IA está a refletir..."):
             response = requests.get(f"{API_URL}/relatorio")
             if response.status_code == 200: st.session_state.relatorio_gerado = response.json().get("relatorio")
             else: st.error("Não foi possível gerar o relatório.")
     if 'relatorio_gerado' in st.session_state: st.markdown("---"); st.markdown(st.session_state.relatorio_gerado)
 
-# --- Lógica de Navegação Principal ---
 with st.sidebar:
-    st.title("🩺 ShaulaMed"); st.caption(f"v1.1 - Online")
+    st.title("🩺 ShaulaMed"); st.caption(f"v1.2 - Dr. Thalles")
     if st.button("Consulta ao Vivo", use_container_width=True, type="primary" if st.session_state.pagina == "Consulta" else "secondary"):
         st.session_state.pagina = "Consulta"; st.rerun()
     if st.button("Painel Reflexivo", use_container_width=True, type="primary" if st.session_state.pagina == "Relatorio" else "secondary"):
@@ -201,23 +172,17 @@ with st.sidebar:
 
 st.title("ShaulaMed Copilot")
 
-# Router que chama a função de página correta com base na seleção da barra lateral
 if st.session_state.pagina == "Consulta":
-    if st.session_state.etapa == 1:
-        pagina_inicial()
-    elif st.session_state.etapa == 2:
-        pagina_consulta()
-    elif st.session_state.etapa == 3:
-        pagina_finalizacao()
-elif st.session_state.pagina == "Relatorio":
-    pagina_relatorio()
+    if st.session_state.etapa == 1: pagina_inicial()
+    elif st.session_state.etapa == 2: pagina_consulta()
+    elif st.session_state.etapa == 3: pagina_finalizacao()
+elif st.session_state.pagina == "Relatorio": pagina_relatorio()
 elif st.session_state.pagina == "Despedida":
-    st.info("Clique abaixo para gerar uma mensagem de encerramento baseada nas consultas do dia.")
-    if st.button("Gerar Mensagem de Despedida da Shaula", type="primary"):
+    st.info("Clique para gerar uma mensagem de encerramento baseada no dia.")
+    if st.button("Gerar Mensagem da Shaula"):
         with st.spinner("A Shaula está a refletir sobre o seu dia..."):
             response = requests.get(f"{API_URL}/sessao/despedida")
             if response.status_code == 200:
                 despedida = response.json().get("mensagem")
                 st.success(f"**Shaula:** \"_{despedida}_\"")
-            else:
-                st.error("Não foi possível gerar a despedida.")
+            else: st.error("Não foi possível gerar a despedida.")

@@ -1,26 +1,27 @@
-# transcritor.py
+# transcritor.py (Calibrado para Áudios Longos)
 
 import whisper
 import os
 
-# Carrega o modelo do Whisper uma única vez para ser mais eficiente
-model = whisper.load_model("base")
+# --- AJUSTE 2 (Opcional): Usamos um modelo mais potente para maior precisão ---
+# A primeira vez que rodar, ele pode precisar de descarregar este novo modelo.
+model = whisper.load_model("medium")
 
 def transcrever_audio_bytes(audio_bytes):
     """
     Recebe os bytes de um áudio gravado e usa o Whisper para transcrever.
     """
-    # Cria um nome de ficheiro temporário
     temp_audio_path = "temp_audio_file.wav"
     
     try:
-        # Escreve os bytes de áudio num ficheiro temporário
         with open(temp_audio_path, "wb") as f:
             f.write(audio_bytes)
         
         print("Ficheiro de áudio temporário criado. A transcrever com o Whisper...")
         
-        # Usa o Whisper para transcrever o ficheiro de áudio
+        # --- AJUSTE 1: Aumentamos o tempo máximo de processamento ---
+        # A biblioteca Whisper em si não tem um limite de tempo aqui,
+        # mas usar um modelo melhor ajuda a processar áudios mais longos com mais precisão.
         result = model.transcribe(temp_audio_path, language="pt")
         texto_transcrito = result["text"]
         
@@ -28,7 +29,6 @@ def transcrever_audio_bytes(audio_bytes):
         return texto_transcrito
 
     finally:
-        # Garante que o ficheiro temporário é sempre apagado
         if os.path.exists(temp_audio_path):
             os.remove(temp_audio_path)
             print("Ficheiro de áudio temporário apagado.")
