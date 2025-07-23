@@ -3,11 +3,11 @@
 import streamlit as st
 import requests
 import json
-from transcritor import ouvir_e_transcrever
+from streamlit_mic_recorder import mic_recorder
+from transcritor import transcrever_audio_bytes
 
-# IMPORTANTE: Quando você hospedar a API, este endereço deverá ser alterado
-# para a URL pública que o serviço (ex: Render) lhe der.
-API_URL = "https://shaulamed-api.onrender.com"
+# IMPORTANTE: Esta URL deve ser o endereço público do seu back-end no Render
+API_URL = "https://shaulamed-api.onrender.com" # Exemplo, use a sua URL real
 
 # --- Configuração da Página e Estilo ---
 st.set_page_config(
@@ -19,22 +19,13 @@ st.set_page_config(
 # Injetamos CSS para o tema "Pleiades" e outros detalhes visuais
 st.markdown("""
 <style>
-    /* Estilo para a caixa de sugestão da IA (st.json) */
     .stJson {
-        border: 1px solid #8A2BE2 !important; /* Borda Lilás */
-        box-shadow: 0 0 15px rgba(138, 43, 226, 0.5) !important; /* Efeito de aura/brilho */
-        border-radius: 10px !important; /* Bordas arredondadas */
+        border: 1px solid #8A2BE2 !important;
+        box-shadow: 0 0 15px rgba(138, 43, 226, 0.5) !important;
+        border-radius: 10px !important;
     }
-    /* Estilo para a jornada da consulta */
-    .step-active {
-        font-weight: bold;
-        color: #E0E0E0; /* Branco Suave */
-        border-bottom: 2px solid #8A2BE2; /* Lilás */
-        padding-bottom: 5px;
-    }
-    .step-inactive {
-        color: #555; /* Cinza escuro para etapas inativas */
-    }
+    .step-active { font-weight: bold; color: #E0E0E0; border-bottom: 2px solid #8A2BE2; padding-bottom: 5px; }
+    .step-inactive { color: #555; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -57,7 +48,6 @@ def desenhar_indicador_confianca(nivel: float):
             nivel = float(str(nivel).split(" ")[0].replace(",", "."))
         except (ValueError, IndexError):
             nivel = 0.0
-            
     estrelas_preenchidas = int(nivel * 10)
     estrelas_vazias = 10 - estrelas_preenchidas
     display_html = f"<div style='font-size: 1.2rem; color: #FFD700;'>{'★' * estrelas_preenchidas}<span style='color: #555;'>{'☆' * estrelas_vazias}</span></div>"
@@ -69,9 +59,7 @@ def desenhar_indicador_confianca(nivel: float):
 def pagina_consulta():
     st.header("Consulta ao Vivo")
     
-    # Lógica de estado para controlar a jornada da consulta
-    if 'etapa' not in st.session_state:
-        st.session_state.etapa = 1
+    if 'etapa' not in st.session_state: st.session_state.etapa = 1
 
     if st.session_state.etapa == 1:
         desenhar_jornada(1)
@@ -84,24 +72,35 @@ def pagina_consulta():
                 st.session_state.texto_transcrito = ""
                 st.rerun()
             else:
-                st.error("API offline. Verifique se o servidor está rodando.")
+                st.error(f"API offline ou com erro. Status: {response.status_code}")
 
     elif st.session_state.etapa == 2:
         desenhar_jornada(2)
         col1, col2 = st.columns([1, 1.2])
         with col1:
-            if st.button("🎙️ Gravar Fala do Paciente"):
-                with st.spinner("Ouvindo..."):
-                    texto = ouvir_e_transcrever()
-                    if texto:
+            st.markdown("##### Gravação da Consulta")
+            audio_gravado = mic_recorder(start_prompt="🎙️ Gravar Fala", stop_prompt="⏹️ Parar", key='recorder')
+            
+            if audio_gravado:
+                st.session_state.audio_gravado = audio_gravado['bytes']
+                st.audio(audio_gravado['bytes'])
+
+            if 'audio_gravado' in st.session_state and st.session_state.audio_gravado:
+                if st.button("Processar Áudio Gravado"):
+                    with st.spinner("A transcrever e a processar..."):
+                        texto = transcrever_audio_bytes(st.session_state.audio_gravado)
                         st.session_state.texto_transcrito = texto
-                        dados = {"texto": texto}
-                        response = requests.post(f"{API_URL}/consulta/processar", json=dados)
-                        if response.status_code == 200:
-                            st.session_state.sugestao = response.json().get("sugestao")
-                        else: st.error("Erro ao processar a fala.")
-                    else: st.warning("Não foi possível transcrever.")
-            if st.session_state.texto_transcrito:
+                        if texto:
+                            dados = {"texto": texto}
+                            response = requests.post(f"{API_URL}/consulta/processar", json=dados)
+                            if response.status_code == 200:
+                                st.session_state.sugestao = response.json().get("sugestao")
+                            else: st.error("Erro ao processar a fala na API.")
+                        else: st.warning("Não foi possível transcrever.")
+                        st.session_state.audio_gravado = None
+                        st.rerun()
+
+            if 'texto_transcrito' in st.session_state and st.session_state.texto_transcrito:
                 st.info(f"**Última Transcrição:** \"_{st.session_state.texto_transcrito}_\"")
 
         with col2:
@@ -112,15 +111,10 @@ def pagina_consulta():
                 conduta = sugestao.get("sugestao_conduta", "N/A")
                 exames = sugestao.get("exames_sugeridos", [])
                 confianca = sugestao.get("nivel_confianca_ia", 0.0)
-
-                with st.expander("**Hipóteses Diagnósticas**", expanded=True):
-                    st.write(hipoteses)
-                st.markdown("**Conduta Sugerida:**")
-                st.write(conduta)
-                with st.expander("**Exames Sugeridos**"):
-                    st.write(exames)
-                st.markdown("---")
-                desenhar_indicador_confianca(confianca)
+                with st.expander("**Hipóteses Diagnósticas**", expanded=True): st.write(hipoteses)
+                st.markdown("**Conduta Sugerida:**"); st.write(conduta)
+                with st.expander("**Exames Sugeridos**"): st.write(exames)
+                st.markdown("---"); desenhar_indicador_confianca(confianca)
             else:
                 st.info("Aguardando processamento da fala para exibir sugestões.")
         
@@ -131,52 +125,47 @@ def pagina_consulta():
     elif st.session_state.etapa == 3:
         desenhar_jornada(3)
         st.success("Consulta pronta para ser finalizada.")
-        decisao_final = st.text_area("Insira a decisão clínica final e o resumo para o prontuário:")
-        if st.button("Salvar e Concluir Sessão", type="primary"):
-            if decisao_final:
-                dados = {"decisao": decisao_final, "resumo": "..."}
-                requests.post(f"{API_URL}/consulta/finalizar", json=dados)
-                st.session_state.etapa = 1
-                st.info("Consulta finalizada e salva com sucesso!")
-                st.balloons()
-            else:
-                st.warning("Por favor, insira a decisão final antes de salvar.")
+        with st.form("finalizar_form"):
+            decisao_final = st.text_area("Insira a decisão clínica final e o resumo para o prontuário:")
+            submitted = st.form_submit_button("Salvar e Concluir Sessão")
+            if submitted:
+                if decisao_final:
+                    dados = {"decisao": decisao_final, "resumo": "..."}
+                    requests.post(f"{API_URL}/consulta/finalizar", json=dados)
+                    st.session_state.etapa = 1
+                    st.info("Consulta finalizada e salva com sucesso!")
+                    st.balloons()
+                else:
+                    st.warning("Por favor, insira a decisão final antes de salvar.")
 
 def pagina_relatorio():
     st.header("Painel Reflexivo")
-    st.info("Aqui você pode gerar e visualizar a análise da IA sobre a sua prática clínica recente.")
-
+    st.info("Aqui pode gerar e visualizar a análise da IA sobre a sua prática clínica recente.")
     if st.button("Gerar Relatório da Sessão", type="primary"):
         with st.spinner("A IA está a refletir sobre as consultas..."):
             response = requests.get(f"{API_URL}/relatorio")
             if response.status_code == 200:
-                relatorio = response.json().get("relatorio")
-                st.session_state.relatorio_gerado = relatorio
+                st.session_state.relatorio_gerado = response.json().get("relatorio")
             else:
                 st.error("Não foi possível gerar o relatório.")
-                
     if 'relatorio_gerado' in st.session_state:
-        st.markdown("---")
-        st.markdown(st.session_state.relatorio_gerado)
-    
-
+        st.markdown("---"); st.markdown(st.session_state.relatorio_gerado)
 
 # --- Lógica de Navegação Principal ---
-if 'pagina' not in st.session_state:
-    st.session_state.pagina = "Consulta"
+if 'pagina' not in st.session_state: st.session_state.pagina = "Consulta"
 
 with st.sidebar:
     st.title("🩺 ShaulaMed")
-    st.caption(f"v0.6 - Dr. Thalles")
+    st.caption(f"v0.7 - Online")
     
     if st.button("Consulta ao Vivo", use_container_width=True, type="primary" if st.session_state.pagina == "Consulta" else "secondary"):
         st.session_state.pagina = "Consulta"
+        st.rerun()
     if st.button("Painel Reflexivo", use_container_width=True, type="primary" if st.session_state.pagina == "Relatorio" else "secondary"):
         st.session_state.pagina = "Relatorio"
-        if 'relatorio_gerado' in st.session_state:
-             del st.session_state['relatorio_gerado'] # Limpa o relatório antigo
+        if 'relatorio_gerado' in st.session_state: del st.session_state['relatorio_gerado']
+        st.rerun()
 
-# Router que chama a função de página correta com base na seleção da barra lateral
 if st.session_state.pagina == "Consulta":
     pagina_consulta()
 elif st.session_state.pagina == "Relatorio":
