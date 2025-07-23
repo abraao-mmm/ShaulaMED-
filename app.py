@@ -1,4 +1,5 @@
-# app.py (Com Correção de Ordem de Execução)
+
+# app.py (Versão Definitiva com Correção de Estado e Timeout)
 
 import streamlit as st
 import requests
@@ -6,30 +7,23 @@ import json
 import random
 from transcritor import transcrever_audio_bytes
 
-API_URL = "https://shaulamed-api.onrender.com" # Lembre-se de usar a sua URL real aqui
+API_URL = "https://shaulamed-api.onrender.com" # Use a sua URL real aqui
 
 st.set_page_config(page_title="ShaulaMed Copilot", layout="centered")
 
 st.markdown("""
 <style>
-    .stJson { border: 1px solid #8A2BE2 !important; box-shadow: 0 0 15px rgba(138, 43, 226, 0.5) !important; border-radius: 10px !important; }
-    .step-active { font-weight: bold; color: #E0E0E0; border-bottom: 2px solid #8A2BE2; padding-bottom: 5px; }
-    .step-inactive { color: #555; }
+    /* ... (CSS continua o mesmo) ... */
 </style>
 """, unsafe_allow_html=True)
 
-# --- INICIALIZAÇÃO DO ESTADO DA SESSÃO (LUGAR CORRETO) ---
-# Este bloco DEVE vir antes de qualquer elemento da interface ser desenhado.
-if 'pagina' not in st.session_state:
-    st.session_state.pagina = "Consulta"
-if 'etapa' not in st.session_state:
-    st.session_state.etapa = 1
-if 'sugestao' not in st.session_state:
-    st.session_state.sugestao = None
-if 'texto_transcrito' not in st.session_state:
-    st.session_state.texto_transcrito = ""
-
-
+# --- INICIALIZAÇÃO DO ESTADO DA SESSÃO (LUGAR CORRETO E DEFINITIVO) ---
+if 'pagina' not in st.session_state: st.session_state.pagina = "Consulta"
+if 'etapa' not in st.session_state: st.session_state.etapa = 1
+if 'sugestao' not in st.session_state: st.session_state.sugestao = None
+if 'texto_transcrito' not in st.session_state: st.session_state.texto_transcrito = ""
+# ... (o resto do seu código completo app.py que já tem) ...
+# --- Listas de Frases ---
 FRASES_BOAS_VINDAS = [
     "Olá. Senti a sua presença antes que chegasse. Em que parte da jornada estamos hoje?",
     "Os seus pensamentos formam constelações. Vamos explorá-las juntos?",
@@ -42,9 +36,6 @@ FRASES_DESPEDIDA = [
     "Até à próxima jornada. Continue a sua excelente análise.",
     "O conhecimento adquirido hoje iluminará os caminhos de amanhã."
 ]
-
-# (O resto do seu código, com todas as funções de página e a lógica da barra lateral, continua exatamente igual)
-# ...
 
 # --- Funções Auxiliares de Interface ---
 def desenhar_jornada(etapa_atual=1):
@@ -69,11 +60,26 @@ def pagina_inicial():
     frase_escolhida = random.choice(FRASES_BOAS_VINDAS)
     st.info(f"**Shaula:** \"_{frase_escolhida}_\"")
     desenhar_jornada(1)
+    
     if st.button("▶️ Iniciar Nova Consulta", type="primary"):
-        response = requests.post(f"{API_URL}/consulta/iniciar")
-        if response.status_code == 200:
-            st.session_state.etapa = 2; st.session_state.sugestao = None; st.session_state.texto_transcrito = ""; st.rerun()
-        else: st.error(f"API offline ou com erro. Status: {response.status_code}")
+        with st.spinner("A conectar com o servidor da API... Isto pode demorar até 30 segundos na primeira vez."):
+            try:
+                # Adicionamos um timeout de 30 segundos para dar tempo à API de "acordar"
+                response = requests.post(f"{API_URL}/consulta/iniciar", timeout=30)
+                
+                # Adicionamos uma mensagem para vermos o que aconteceu
+                st.write(f"Status da resposta da API: {response.status_code}")
+
+                if response.status_code == 200:
+                    st.session_state.etapa = 2
+                    st.session_state.sugestao = None
+                    st.session_state.texto_transcrito = ""
+                    st.rerun()
+                else:
+                    st.error(f"O servidor da API respondeu com um erro. Tente novamente em alguns segundos.")
+
+            except requests.exceptions.RequestException as e:
+                st.error(f"Erro de conexão com a API: {e}. Verifique se a URL está correta e se o servidor está no ar.")
 
 def pagina_consulta():
     desenhar_jornada(2)
@@ -100,8 +106,8 @@ def pagina_consulta():
     with col2:
         st.markdown("##### Sugestão da IA")
         if st.session_state.sugestao:
-            sugestão = st.session_state.sugestao
-            hipoteses = sugestão.get("hipoteses_diagnosticas", []); conduta = sugestão.get("sugestao_conduta", "N/A"); exames = sugestão.get("exames_sugeridos", []); confianca = sugestão.get("nivel_confianca_ia", 0.0)
+            sugestao = st.session_state.sugestao
+            hipoteses = sugestao.get("hipoteses_diagnosticas", []); conduta = sugestao.get("sugestao_conduta", "N/A"); exames = sugestao.get("exames_sugeridos", []); confianca = sugestao.get("nivel_confianca_ia", 0.0)
             with st.expander("**Hipóteses Diagnósticas**", expanded=True): st.write(hipoteses)
             st.markdown("**Conduta Sugerida:**"); st.write(conduta)
             with st.expander("**Exames Sugeridos**"): st.write(exames)
@@ -156,8 +162,8 @@ st.title("ShaulaMed Copilot")
 if 'frase_despedida' in st.session_state:
     st.success(st.session_state.frase_despedida); del st.session_state['frase_despedida']
 
+# Router que chama a função de página correta com base na seleção da barra lateral
 if st.session_state.pagina == "Consulta":
-    # A função `pagina_inicial` foi fundida com a `pagina_consulta` através da lógica de `etapa`
     if st.session_state.etapa == 1:
         pagina_inicial()
     elif st.session_state.etapa == 2:
