@@ -1,10 +1,11 @@
-# medico.py (Versão 2.0 - Com Perfil Completo)
+# medico.py
 
 class Medico:
     """
     Representa um médico no sistema ShaulaMed, com seu perfil completo e
     estilo clínico sendo continuamente aprendido pela IA.
     """
+
     def __init__(self, uid: str, email: str, nome_completo: str, crm: str, especialidade: str, apelido: str = "", sexo: str = ""):
         # O ID do médico agora é o UID seguro do Firebase Authentication
         self.id = uid
