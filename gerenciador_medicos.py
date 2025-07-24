@@ -8,15 +8,23 @@ from rich.console import Console
 console = Console()
 
 class GerenciadorDeMedicos:
-    def __init__(self, caminho_credenciais="firebase-credentials.json"):
+    # --- ALTERAÇÃO AQUI ---
+    # O caminho para as credenciais agora aponta para a pasta de segredos do Render.
+    def __init__(self, caminho_credenciais="/etc/secrets/firebase-credentials.json"):
         if not firebase_admin._apps:
             try:
                 cred = credentials.Certificate(caminho_credenciais)
                 firebase_admin.initialize_app(cred)
                 console.print("[green]Conexão com o Firebase estabelecida com sucesso.[/green]")
             except Exception as e:
-                console.print(f"[bold red]ERRO: Não foi possível conectar ao Firebase.[/bold red]\n{e}")
-                raise e
+                # Se falhar, tentamos o caminho local (para continuar a funcionar no seu computador)
+                try:
+                    cred = credentials.Certificate("firebase-credentials.json")
+                    firebase_admin.initialize_app(cred)
+                    console.print("[green]Conexão com o Firebase (local) estabelecida com sucesso.[/green]")
+                except Exception as e_local:
+                    console.print(f"[bold red]ERRO: Não foi possível conectar ao Firebase.[/bold red]\n{e_local}")
+                    raise e_local
 
         self.db = firestore.client()
         self.medicos_ref = self.db.collection('medicos')
