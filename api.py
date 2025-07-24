@@ -1,10 +1,8 @@
-# api.py
-
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import os
 import json
-import openai
+import openai # Supondo OpenAI
 from medico import Medico
 from shaulamed_agent import ShaulaMedAgent
 from gerenciador_medicos import GerenciadorDeMedicos
@@ -15,14 +13,17 @@ app = FastAPI(title="ShaulaMed API", version="2.0")
 
 console = Console()
 gerenciador = GerenciadorDeMedicos()
-
-# Dicionário para guardar agentes ativos por UID de utilizador
 agentes_ativos: Dict[str, ShaulaMedAgent] = {}
 
 def obter_resposta_llm_api(prompt: str, modo: str = "API", schema: dict = None) -> dict:
     # A sua lógica de conexão com a IA (OpenAI, Groq, etc.) vai aqui.
-    # Lembre-se de usar variáveis de ambiente para a sua chave de API!
-    pass
+    # Esta é uma versão simulada para garantir que tudo funciona.
+    print(f"API: Enviando prompt para a LLM no modo '{modo}'...")
+    if modo == "Relatório Clínico":
+        return {"tipo": "texto", "conteudo": "[RELATÓRIO SIMULADO]: Análise gerada pela API."}
+    if modo == "Reflexão Pós-Consulta":
+        return {"tipo": "texto", "conteudo": "Reflexão simulada sobre a consulta."}
+    return {"tipo": "texto", "conteudo": json.dumps({"hipoteses_diagnosticas": ["Hipótese da API"]})}
 
 class UserSession(BaseModel):
     uid: str
@@ -38,14 +39,10 @@ class DecisaoFinal(BaseModel):
     decisao: str
     resumo: str
 
-# --- Endpoints de Sessão e Perfil ---
+# --- Endpoints ---
 
 @app.post("/sessao/ativar", tags=["Sessão"])
 def ativar_sessao(user: UserSession):
-    """
-    Quando um utilizador faz login no front-end, ele ativa a sua sessão no back-end.
-    O back-end carrega o seu perfil e cria uma instância do agente para ele.
-    """
     perfil_medico = gerenciador.carregar_ou_criar_perfil({"localId": user.uid, "email": user.email})
     if perfil_medico:
         agentes_ativos[user.uid] = ShaulaMedAgent(
@@ -55,6 +52,22 @@ def ativar_sessao(user: UserSession):
         )
         return {"status": "sucesso", "mensagem": f"Agente para Dr(a). {perfil_medico.apelido} ativado."}
     raise HTTPException(status_code=404, detail="Perfil do médico não encontrado no Firestore.")
+
+# --- O ENDPOINT QUE ESTÁ A FALTAR NO SERVIDOR ---
+@app.post("/medico/criar_perfil", tags=["Médico"])
+def criar_perfil_medico(perfil: PerfilMedico):
+    try:
+        medico_doc_ref = gerenciador.medicos_ref.document(perfil.uid)
+        dados_para_salvar = perfil.dict()
+        dados_para_salvar.update({
+            "id": perfil.uid, "nivel_confianca_ia": 1,
+            "estilo_clinico_observado": {"padrao_prescritivo": {}, "exames_mais_solicitados": [], "linguagem_resumo": "SOAP"},
+            "consultas_realizadas_count": 0
+        })
+        medico_doc_ref.set(dados_para_salvar)
+        return {"status": "sucesso", "mensagem": "Perfil do médico criado no Firestore."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao criar perfil no Firestore: {e}")
 
 @app.post("/medico/criar_perfil", tags=["Médico"])
 def criar_perfil_medico(perfil: PerfilMedico):
