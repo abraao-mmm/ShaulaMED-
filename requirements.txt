@@ -1,14 +1,22 @@
-# requirements.txt
+# Dependências do Back-End (FastAPI)
 fastapi
 uvicorn
 pydantic
-openai
 rich
+groq
+
+# Dependências do Front-End (Streamlit App)
 streamlit
 requests
+streamlit-mic-recorder
+
+# Dependências do Firebase
+firebase-admin
+pyrebase4
+
+# Dependências Partilhadas (IA e Processamento)
+openai
 openai-whisper
 soundfile
 numpy
-streamlit-mic-recorder
 ffmpeg-python
-groq
