@@ -6,5 +6,4 @@ pydantic
 rich
 groq
 openai
-openai-whisper
 firebase-admin
