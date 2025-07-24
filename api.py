@@ -8,7 +8,6 @@ from shaulamed_agent import ShaulaMedAgent
 from gerenciador_medicos import GerenciadorDeMedicos
 from rich.console import Console
 from typing import Dict
-
 app = FastAPI(title="ShaulaMed API", version="2.0")
 
 console = Console()
@@ -54,11 +53,23 @@ def ativar_sessao(user: UserSession):
     raise HTTPException(status_code=404, detail="Perfil do médico não encontrado no Firestore.")
 
 # --- O ENDPOINT QUE ESTÁ A FALTAR NO SERVIDOR ---
+# api.py
+
+# ... (outras importações e código)
+
 @app.post("/medico/criar_perfil", tags=["Médico"])
 def criar_perfil_medico(perfil: PerfilMedico):
+    """
+    Recebe os dados de um novo médico e cria o seu perfil no Firestore.
+    """
     try:
         medico_doc_ref = gerenciador.medicos_ref.document(perfil.uid)
-        dados_para_salvar = perfil.dict()
+        
+        # --- ALTERAÇÃO AQUI ---
+        # Trocamos o .dict() obsoleto pelo novo .model_dump()
+        dados_para_salvar = perfil.model_dump() 
+        
+        # O resto da função continua igual
         dados_para_salvar.update({
             "id": perfil.uid, "nivel_confianca_ia": 1,
             "estilo_clinico_observado": {"padrao_prescritivo": {}, "exames_mais_solicitados": [], "linguagem_resumo": "SOAP"},
@@ -69,20 +80,9 @@ def criar_perfil_medico(perfil: PerfilMedico):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao criar perfil no Firestore: {e}")
 
-@app.post("/medico/criar_perfil", tags=["Médico"])
-def criar_perfil_medico(perfil: PerfilMedico):
-    try:
-        medico_doc_ref = gerenciador.medicos_ref.document(perfil.uid)
-        dados_para_salvar = perfil.dict()
-        dados_para_salvar.update({
-            "id": perfil.uid, "nivel_confianca_ia": 1,
-            "estilo_clinico_observado": {"padrao_prescritivo": {}, "exames_mais_solicitados": [], "linguagem_resumo": "SOAP"},
-            "consultas_realizadas_count": 0
-        })
-        medico_doc_ref.set(dados_para_salvar)
-        return {"status": "sucesso", "mensagem": "Perfil do médico criado no Firestore."}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao criar perfil no Firestore: {e}")
+# ... (o resto do seu código api.py)
+
+
 
 # --- Endpoints da Aplicação (Agora precisam do UID) ---
 
