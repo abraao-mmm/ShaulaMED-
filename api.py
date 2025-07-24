@@ -11,6 +11,7 @@ from shaulamed_agent import ShaulaMedAgent
 from gerenciador_medicos import GerenciadorDeMedicos
 from rich.console import Console
 
+
 # --- Inicialização do Servidor ---
 app = FastAPI(
     title="ShaulaMed API",
@@ -111,3 +112,49 @@ def obter_despedida():
     """
     despedida = agente.gerar_despedida_do_dia(obter_resposta_llm_api)
     return {"status": "sucesso", "mensagem": despedida}
+
+# api.py (adicione este código no final, antes da última linha)
+
+# ... (o resto do seu código api.py)
+
+# --- NOVO MODELO DE DADOS PARA O PERFIL ---
+class PerfilMedico(BaseModel):
+    uid: str
+    email: str
+    nome_completo: str
+    apelido: str
+    crm: str
+    especialidade: str
+    sexo: str
+
+# --- NOVO ENDPOINT PARA CRIAR O PERFIL ---
+@app.post("/medico/criar_perfil", tags=["Médico"])
+def criar_perfil_medico(perfil: PerfilMedico):
+    """
+    Recebe os dados de um novo médico e cria o seu perfil no Firestore.
+    """
+    try:
+        # Usamos o UID da autenticação como o ID do documento no Firestore
+        medico_doc_ref = gerenciador.medicos_ref.document(perfil.uid)
+        # O método para_dict não existe na classe Medico, então criamos o dict manualmente
+        dados_para_salvar = {
+            "id": perfil.uid,
+            "email": perfil.email,
+            "nome_completo": perfil.nome_completo,
+            "crm": perfil.crm,
+            "especialidade": perfil.especialidade,
+            "apelido": perfil.apelido,
+            "sexo": perfil.sexo,
+            "nivel_confianca_ia": 1,
+            "estilo_clinico_observado": {
+                "padrao_prescritivo": {},
+                "exames_mais_solicitados": [],
+                "linguagem_resumo": "SOAP"
+            },
+            "consultas_realizadas_count": 0
+        }
+        medico_doc_ref.set(dados_para_salvar)
+        return {"status": "sucesso", "mensagem": "Perfil do médico criado no Firestore."}
+    except Exception as e:
+        # Se houver um erro, devolvemos uma resposta de erro
+        return {"status": "erro", "mensagem": f"Erro ao criar perfil no Firestore: {e}"}
