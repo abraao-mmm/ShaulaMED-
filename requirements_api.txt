@@ -1,9 +1,8 @@
 # requirements_api.txt
-
 fastapi
 uvicorn
 pydantic
+openai
 rich
 groq
-openai
 firebase-admin
