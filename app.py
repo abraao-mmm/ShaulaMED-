@@ -1,4 +1,4 @@
-# app.py (Versão 2.0 - Com Autenticação)
+# app.py
 
 import streamlit as st
 import requests
@@ -6,23 +6,52 @@ import json
 import random
 from streamlit_mic_recorder import mic_recorder
 from transcritor import transcrever_audio_bytes
-from login import pagina_login # Importa a nossa nova página de login
+from login import pagina_login
 
 # --- INICIALIZAÇÃO DO ESTADO DA SESSÃO ---
-# Verifica se a informação do utilizador logado já existe na sessão
+# Garante que a variável para guardar os dados do utilizador logado exista desde o início.
 if 'utilizador_logado' not in st.session_state:
     st.session_state.utilizador_logado = None
 
-# --- FUNÇÃO DA APLICAÇÃO PRINCIPAL (SHAULAMED) ---
-# Todo o nosso código antigo do ShaulaMed agora vive dentro desta função
+# --- FUNÇÃO DA APLICAÇÃO PRINCIPAL (O CORAÇÃO DO SHAULAMED) ---
 def shaulamed_app():
-    API_URL = "https://shaulamed-api.onrender.com" # A URL da sua API no Render
+    # A URL da sua API no Render (back-end)
+    API_URL = "https://shaulamed-api.onrender.com"
+    
+    # Obtém o UID do utilizador logado para todas as chamadas à API
+    uid = st.session_state.utilizador_logado.get('localId') if st.session_state.utilizador_logado else None
+    if not uid:
+        st.error("Erro de sessão. Por favor, faça o login novamente.")
+        st.session_state.utilizador_logado = None
+        st.rerun()
+        return
 
-    # Configuração da Página e Estilo
-    st.set_page_config(page_title="ShaulaMed Copilot", layout="centered", initial_sidebar_state="expanded")
+    # --- Configuração da Página e Estilo ---
+    st.set_page_config(
+        page_title="ShaulaMed Copilot",
+        layout="centered",
+        initial_sidebar_state="expanded"
+    )
+
+    # Estilo CSS completo para a identidade visual "Pleiades"
     st.markdown("""
     <style>
-        .stJson { border: 1px solid #8A2BE2 !important; box-shadow: 0 0 15px rgba(138, 43, 226, 0.5) !important; border-radius: 10px !important; }
+        [data-testid="stAppViewContainer"] { background-color: #0A0A2A; }
+        [data-testid="stSidebar"] { background-color: #1E1E3F; }
+        .stButton > button {
+            border-radius: 8px; border: 1px solid #8A2BE2;
+            background-color: transparent; color: #E0E0E0;
+            transition: all 0.2s ease-in-out;
+        }
+        .stButton > button:hover {
+            border-color: #E0E0E0; background-color: #6A1B9A; color: white;
+        }
+        .stButton > button[kind="primary"] { background-color: #8A2BE2; color: white; }
+        .stJson {
+            border: 1px solid #8A2BE2 !important;
+            box-shadow: 0 0 15px rgba(138, 43, 226, 0.5) !important;
+            border-radius: 10px !important;
+        }
         .step-active { font-weight: bold; color: #E0E0E0; border-bottom: 2px solid #8A2BE2; padding-bottom: 5px; }
         .step-inactive { color: #555; }
     </style>
@@ -34,17 +63,21 @@ def shaulamed_app():
     if 'sugestao' not in st.session_state: st.session_state.sugestao = None
     if 'texto_transcrito' not in st.session_state: st.session_state.texto_transcrito = ""
 
-    # Listas de Frases
     FRASES_BOAS_VINDAS = [
         "Olá. Senti a sua presença. Em que parte da jornada estamos hoje?",
         "Os seus pensamentos formam constelações. Vamos explorá-las juntos?",
         "Bem-vindo(a) de volta. O universo aguardava o seu raciocínio."
     ]
 
-    # Funções Auxiliares de Interface
+    # --- Funções Auxiliares de Interface ---
     def desenhar_jornada(etapa_atual=1):
         etapas = ["1. Iniciar", "2. Ouvir & Processar", "3. Finalizar"]
-        cols = st.columns(3); st.markdown("---")
+        cols = st.columns(3)
+        for i, col in enumerate(cols):
+            with col:
+                if (i + 1) == etapa_atual: st.markdown(f'<p class="step-active">{etapas[i]}</p>', unsafe_allow_html=True)
+                else: st.markdown(f'<p class="step-inactive">{etapas[i]}</p>', unsafe_allow_html=True)
+        st.markdown("---")
 
     def desenhar_indicador_confianca(nivel: float):
         if not isinstance(nivel, (float, int)):
@@ -54,7 +87,7 @@ def shaulamed_app():
         display_html = f"<div style='font-size: 1.2rem; color: #FFD700;'>{'★' * estrelas_preenchidas}<span style='color: #555;'>{'☆' * estrelas_vazias}</span></div>"
         st.markdown("##### Nível de Confiança da IA"); st.markdown(display_html, unsafe_allow_html=True)
 
-    # Funções de Página
+    # --- Funções de Página ---
     def pagina_inicial():
         if 'ultima_reflexao' in st.session_state and st.session_state.ultima_reflexao:
             st.success(f"**Reflexão da Shaula:** \"_{st.session_state.ultima_reflexao}_\"")
@@ -62,10 +95,10 @@ def shaulamed_app():
         else:
             st.info(f"**Shaula:** \"_{random.choice(FRASES_BOAS_VINDAS)}_\"")
         desenhar_jornada(1)
-        if st.button("▶️ Iniciar Nova Consulta", type="primary"):
-            with st.spinner("A conectar com o servidor da API..."):
+        if st.button("▶️ Iniciar Nova Consulta"):
+            with st.spinner("A iniciar sessão de consulta..."):
                 try:
-                    response = requests.post(f"{API_URL}/consulta/iniciar", timeout=30)
+                    response = requests.post(f"{API_URL}/consulta/iniciar/{uid}", timeout=30)
                     if response.status_code == 200: st.session_state.etapa = 2; st.rerun()
                     else: st.error(f"O servidor da API respondeu com um erro ({response.status_code}).")
                 except requests.exceptions.RequestException as e: st.error(f"Erro de conexão: {e}")
@@ -74,7 +107,7 @@ def shaulamed_app():
         desenhar_jornada(2)
         col1, col2 = st.columns([1, 1.2])
         with col1:
-            audio_gravado = mic_recorder(start_prompt="🎙️ Gravar Fala", stop_prompt="⏹️ Parar", key='recorder')
+            audio_gravado = mic_recorder(start_prompt="🎙️ Gravar Fala", stop_prompt="⏹️ Parar", key='recorder', format="wav")
             if audio_gravado:
                 st.session_state.audio_gravado = audio_gravado['bytes']; st.audio(audio_gravado['bytes'])
             if 'audio_gravado' in st.session_state and st.session_state.audio_gravado:
@@ -83,7 +116,7 @@ def shaulamed_app():
                         texto = transcrever_audio_bytes(st.session_state.audio_gravado)
                         if texto:
                             st.session_state.texto_transcrito = texto
-                            response = requests.post(f"{API_URL}/consulta/processar", json={"texto": texto})
+                            response = requests.post(f"{API_URL}/consulta/processar/{uid}", json={"texto": texto})
                             if response.status_code == 200: st.session_state.sugestao = response.json().get("sugestao")
                             else: st.error("Erro ao processar.")
                         else: st.warning("Não foi possível transcrever.")
@@ -109,7 +142,7 @@ def shaulamed_app():
                 if decisao_final:
                     with st.spinner("A finalizar e a gerar reflexão..."):
                         dados = {"decisao": decisao_final, "resumo": "..."}
-                        response = requests.post(f"{API_URL}/consulta/finalizar", json=dados)
+                        response = requests.post(f"{API_URL}/consulta/finalizar/{uid}", json=dados)
                         if response.status_code == 200:
                             st.session_state.ultima_reflexao = response.json().get("reflexao")
                         st.session_state.etapa = 1; st.rerun()
@@ -117,18 +150,14 @@ def shaulamed_app():
     
     def pagina_relatorio():
         st.header("Painel Reflexivo")
-        if st.button("Gerar Relatório", type="primary"):
-            with st.spinner("A IA está a refletir..."):
-                response = requests.get(f"{API_URL}/relatorio")
-                if response.status_code == 200: st.session_state.relatorio_gerado = response.json().get("relatorio")
-                else: st.error("Não foi possível gerar.")
-        if 'relatorio_gerado' in st.session_state: st.markdown("---"); st.markdown(st.session_state.relatorio_gerado)
+        # (A lógica do relatório precisa de ser adaptada para passar o UID também)
+        st.info("Funcionalidade em desenvolvimento.")
 
     # Lógica de Navegação da Aplicação Principal
     with st.sidebar:
         st.title("🩺 ShaulaMed")
-        if 'utilizador_logado' in st.session_state and st.session_state.utilizador_logado is not None:
-             st.caption(f"Médico: {st.session_state.utilizador_logado.get('email', '')}")
+        email_utilizador = st.session_state.utilizador_logado.get('email', 'N/A')
+        st.caption(f"Médico: {email_utilizador}")
         if st.button("Consulta", use_container_width=True, type="primary" if st.session_state.pagina == "Consulta" else "secondary"):
             st.session_state.pagina = "Consulta"; st.rerun()
         if st.button("Relatórios", use_container_width=True, type="primary" if st.session_state.pagina == "Relatorio" else "secondary"):
@@ -153,4 +182,5 @@ if st.session_state.utilizador_logado:
     shaulamed_app()
 else:
     # Se não está logado, mostra a página de login
+    st.set_page_config(page_title="Login - ShaulaMed")
     pagina_login()
