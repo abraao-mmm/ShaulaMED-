@@ -9,5 +9,5 @@ __pycache__/
 .vscode/
 .idea/
 
-# Ficheiros de Segredos (APENAS A CHAVE MESTRA)
+# Ficheiros de Segredos (APENAS A CHAVE MESTRA DO BACK-END)
 firebase-credentials.json
