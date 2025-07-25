@@ -9,6 +9,5 @@ __pycache__/
 .vscode/
 .idea/
 
-# Ficheiros de Segredos e Chaves de API
+# Ficheiros de Segredos (APENAS A CHAVE MESTRA)
 firebase-credentials.json
-firebase_config.py
