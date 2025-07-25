@@ -8,3 +8,7 @@ __pycache__/
 # Ficheiros de configuração de IDEs
 .vscode/
 .idea/
+
+# Ficheiros de Segredos e Chaves de API
+firebase-credentials.json
+firebase_config.py
