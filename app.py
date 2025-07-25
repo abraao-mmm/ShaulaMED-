@@ -16,7 +16,7 @@ if 'utilizador_logado' not in st.session_state:
 # --- FUNÇÃO DA APLICAÇÃO PRINCIPAL (O CORAÇÃO DO SHAULAMED) ---
 def shaulamed_app():
     # A URL da sua API no Render (back-end)
-    API_URL = "https://shaulamed-api.onrender.com"
+    API_URL = "https://shaulamed-api-1x9x.onrender.com"
     
     # Obtém o UID do utilizador logado para todas as chamadas à API
     uid = st.session_state.utilizador_logado.get('localId') if st.session_state.utilizador_logado else None
