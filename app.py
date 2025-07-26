@@ -5,7 +5,7 @@ import requests
 import json
 import random
 from login import pagina_login
-# As importações de áudio foram removidas temporariamente para garantir a estabilidade
+# As importações de áudio foram removidas temporariamente.
 # from streamlit_mic_recorder import mic_recorder
 # from transcritor import transcrever_audio_bytes
 
@@ -95,7 +95,7 @@ def shaulamed_app():
         if st.button("▶️ Iniciar Nova Consulta"):
             with st.spinner("A iniciar sessão de consulta..."):
                 try:
-                    response = requests.post(f"{API_URL}/consulta/iniciar/{uid}", timeout=30)
+                    response = requests.post(f"{API_URL}/consulta/iniciar/{uid}", timeout=40)
                     if response.status_code == 200:
                         st.session_state.etapa = 2; st.session_state.sugestao = None; st.session_state.texto_transcrito = ""; st.rerun()
                     else:
@@ -120,7 +120,7 @@ def shaulamed_app():
                             st.session_state.sugestao = response.json().get("sugestao")
                         else:
                             st.error("Erro ao processar o texto na API.")
-                        st.rerun()
+                        # Não precisa de rerun aqui, o Streamlit atualiza a tela
                 else:
                     st.warning("Por favor, insira o relato do paciente.")
 
