@@ -1,4 +1,4 @@
-# gerenciador_medicos.py
+# gerenciador_medicos.py (Versão Final e Robusta)
 
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -11,13 +11,11 @@ class GerenciadorDeMedicos:
     def __init__(self, caminho_credenciais="firebase-credentials.json"):
         if not firebase_admin._apps:
             try:
-                # Tenta o caminho do servidor primeiro
                 cred = credentials.Certificate(f"/etc/secrets/{caminho_credenciais}")
                 firebase_admin.initialize_app(cred)
                 console.print("[green]Conexão com o Firebase (Servidor) estabelecida.[/green]")
             except Exception:
                 try:
-                    # Se falhar, tenta o caminho local
                     cred = credentials.Certificate(caminho_credenciais)
                     firebase_admin.initialize_app(cred)
                     console.print("[green]Conexão com o Firebase (Local) estabelecida.[/green]")
@@ -38,14 +36,25 @@ class GerenciadorDeMedicos:
         try:
             doc_ref = self.medicos_ref.document(uid)
             doc = doc_ref.get()
+            
             if doc.exists:
                 console.print(f"Perfil do médico com email '{email}' carregado do Firestore.")
                 return Medico.de_dict(uid, doc.to_dict())
             else:
-                console.print(f"[yellow]Aviso: Utilizador autenticado mas sem perfil no Firestore.[/yellow]")
-                return None
+                # --- LÓGICA DE FALLBACK (SE O PERFIL NÃO EXISTIR) ---
+                console.print(f"[yellow]Aviso: Perfil para UID {uid} não encontrado. A criar um perfil básico.[/yellow]")
+                novo_medico = Medico(
+                    uid=uid,
+                    email=email,
+                    nome_completo=email.split('@')[0], # Usa o início do email como nome temporário
+                    crm="0000",
+                    especialidade="Não definida"
+                )
+                doc_ref.set(novo_medico.para_dict())
+                console.print("Perfil básico criado no Firestore.")
+                return novo_medico
         except Exception as e:
-            console.print(f"[bold red]Erro ao carregar perfil do Firestore:[/bold red] {e}")
+            console.print(f"[bold red]Erro ao carregar ou criar perfil no Firestore:[/bold red] {e}")
             return None
 
     def salvar_medico(self, medico: Medico):
