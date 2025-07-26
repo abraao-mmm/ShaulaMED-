@@ -5,6 +5,9 @@ import requests
 import json
 import random
 from login import pagina_login
+# As importações de áudio foram removidas temporariamente para garantir a estabilidade
+# from streamlit_mic_recorder import mic_recorder
+# from transcritor import transcrever_audio_bytes
 
 # --- CONFIGURAÇÃO DA PÁGINA (ÚNICO E NO TOPO) ---
 st.set_page_config(
@@ -24,7 +27,8 @@ def shaulamed_app():
     
     if not uid:
         st.error("Erro de sessão. Por favor, faça o login novamente.")
-        st.session_state.utilizador_logado = None; st.rerun()
+        st.session_state.utilizador_logado = None
+        st.rerun()
         return
 
     # Estilo CSS completo
@@ -63,7 +67,6 @@ def shaulamed_app():
         "Bem-vindo(a) de volta. O universo aguardava o seu raciocínio."
     ]
 
-    # --- Funções Auxiliares de Interface ---
     def desenhar_jornada(etapa_atual=1):
         etapas = ["1. Iniciar", "2. Processar", "3. Finalizar"]
         cols = st.columns(3)
@@ -81,7 +84,6 @@ def shaulamed_app():
         display_html = f"<div style='font-size: 1.2rem; color: #FFD700;'>{'★' * estrelas_preenchidas}<span style='color: #555;'>{'☆' * estrelas_vazias}</span></div>"
         st.markdown("##### Nível de Confiança da IA"); st.markdown(display_html, unsafe_allow_html=True)
 
-    # --- Funções de Página ---
     def pagina_inicial():
         if 'ultima_reflexao' in st.session_state and st.session_state.ultima_reflexao:
             st.success(f"**Reflexão da Shaula:** \"_{st.session_state.ultima_reflexao}_\"")
@@ -97,14 +99,13 @@ def shaulamed_app():
                     if response.status_code == 200:
                         st.session_state.etapa = 2; st.session_state.sugestao = None; st.session_state.texto_transcrito = ""; st.rerun()
                     else:
-                        st.error(f"O servidor da API respondeu com um erro ({response.status_code}).")
+                        st.error(f"O servidor da API respondeu com um erro ({response.status_code}). Detalhe: {response.text}")
                 except requests.exceptions.RequestException as e:
                     st.error(f"Erro de conexão: {e}")
 
     def pagina_consulta():
         desenhar_jornada(2)
         col1, col2 = st.columns([1, 1.2])
-
         with col1:
             st.markdown("##### Relato do Paciente")
             fala_paciente = st.text_area("Insira a fala do paciente aqui:", height=150, key="fala_texto")
@@ -130,11 +131,7 @@ def shaulamed_app():
             st.markdown("##### Sugestão da IA")
             if st.session_state.sugestao:
                 sugestao = st.session_state.sugestao
-                hipoteses = sugestao.get("hipoteses_diagnosticas", [])
-                conduta = sugestao.get("sugestao_conduta", "N/A")
-                exames = sugestao.get("exames_sugeridos", [])
-                confianca = sugestao.get("nivel_confianca_ia", 0.0)
-
+                hipoteses = sugestao.get("hipoteses_diagnosticas", []); conduta = sugestao.get("sugestao_conduta", "N/A"); exames = sugestao.get("exames_sugeridos", []); confianca = sugestao.get("nivel_confianca_ia", 0.0)
                 with st.expander("**Hipóteses**", expanded=True): st.write(hipoteses)
                 st.markdown("**Conduta Sugerida:**"); st.write(conduta)
                 with st.expander("**Exames Sugeridos**"): st.write(exames)
@@ -160,12 +157,11 @@ def shaulamed_app():
                         st.session_state.etapa = 1; st.rerun()
                 else:
                     st.warning("Por favor, insira a decisão final.")
-
+    
     def pagina_relatorio():
         st.header("Painel Reflexivo")
         st.info("Funcionalidade em desenvolvimento.")
 
-    # Lógica de Navegação da Aplicação Principal
     with st.sidebar:
         st.title("🩺 ShaulaMed")
         email_utilizador = st.session_state.utilizador_logado.get('email', 'N/A')
