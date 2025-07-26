@@ -4,13 +4,16 @@ uvicorn
 pydantic
 rich
 openai
-firebase-admin
-python-multipart  # <--- ADICIONADO AQUI
+firebase-admin  # <--- ADICIONADO AQUI
 
 # Dependências do Front-End (Streamlit)
 streamlit
 requests
 streamlit-mic-recorder
+openai-whisper
+soundfile
+numpy
+ffmpeg-python
 pyrebase4
 
 # Dependências Partilhadas (IA e Processamento)

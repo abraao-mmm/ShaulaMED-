@@ -1,9 +1,8 @@
-# requirements_api.txt
-
-fastapi
-uvicorn
-pydantic
-rich
-groq
-openai
-firebase-admin
+streamlit
+requests
+streamlit-mic-recorder
+openai-whisper
+soundfile
+numpy
+ffmpeg-python
+pyrebase4
