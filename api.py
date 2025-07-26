@@ -7,7 +7,6 @@ import json
 import openai
 from typing import Dict
 
-# Importamos a nossa lógica do ShaulaMed
 from medico import Medico
 from shaulamed_agent import ShaulaMedAgent
 from gerenciador_medicos import GerenciadorDeMedicos
@@ -90,3 +89,10 @@ def finalizar_consulta(uid: str, decisao: DecisaoFinal):
     agente.finalizar_consulta(decisao.decisao, decisao.resumo)
     reflexao = agente.gerar_reflexao_pos_consulta(encontro, obter_resposta_llm_api)
     return {"status": "sucesso", "reflexao": reflexao}
+
+@app.get("/relatorio/{uid}", tags=["Análise"])
+def obter_relatorio(uid: str):
+    agente = agentes_ativos.get(uid)
+    if not agente: raise HTTPException(status_code=404, detail="Sessão não encontrada.")
+    relatorio = agente.executar_analise_de_sessao(obter_resposta_llm_api)
+    return {"status": "sucesso", "relatorio": relatorio}
