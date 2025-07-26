@@ -24,7 +24,8 @@ def shaulamed_app():
     
     if not uid:
         st.error("Erro de sessão. Por favor, faça o login novamente.")
-        st.session_state.utilizador_logado = None; st.rerun()
+        st.session_state.utilizador_logado = None
+        st.rerun()
         return
 
     # Estilo CSS completo
@@ -89,7 +90,7 @@ def shaulamed_app():
         
         desenhar_jornada(1)
         if st.button("▶️ Iniciar Nova Consulta"):
-            with st.spinner("A iniciar sessão de consulta..."):
+            with st.spinner("A conectar com o servidor da API... Isto pode demorar até 40 segundos na primeira vez."):
                 try:
                     response = requests.post(f"{API_URL}/consulta/iniciar/{uid}", timeout=40)
                     if response.status_code == 200:
@@ -97,7 +98,7 @@ def shaulamed_app():
                     else:
                         st.error(f"O servidor da API respondeu com um erro ({response.status_code}). Detalhe: {response.text}")
                 except requests.exceptions.RequestException as e:
-                    st.error(f"Erro de conexão: {e}")
+                    st.error(f"Erro de conexão: {e}. O servidor pode estar a iniciar. Por favor, aguarde e tente novamente.")
 
     def pagina_consulta():
         desenhar_jornada(2)
