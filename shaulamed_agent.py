@@ -7,7 +7,7 @@ from clinical_inference_real import RealInferenceEngine
 from memoria_clinica import MemoriaClinica
 from analise_clinica import MotorDeAnaliseClinica
 from refinador_de_prompt import RefinadorDePrompt
-from gerenciador_medicos import GerenciadorDeMedicos # Importação importante
+from gerenciador_medicos import GerenciadorDeMedicos
 from rich.console import Console
 from typing import Callable, Optional
 
@@ -17,7 +17,7 @@ class ShaulaMedAgent:
     """
     def __init__(self, medico: Medico, gerenciador: GerenciadorDeMedicos, console_log: Console, obter_resposta_llm_func: Callable):
         self.medico = medico
-        self.gerenciador = gerenciador # Mantém uma referência ao gerenciador
+        self.gerenciador = gerenciador
         self.console = console_log
         self.memoria = MemoriaClinica()
         # Ao ser criado, o agente carrega o histórico de consultas deste médico
@@ -69,7 +69,7 @@ class ShaulaMedAgent:
         sugestao_ia_str = json.dumps(encontro.sugestao_ia)
         decisao_medico = encontro.decisao_medico_final
         prompt = (
-            f"Você é a Shaula. Analise a consulta abaixo e gere uma reflexão curta e perspicaz.\n\n"
+            "Você é a Shaula. Analise a consulta abaixo e gere uma reflexão curta e perspicaz.\n\n"
             f"**Sua Sugestão:**\n{sugestao_ia_str}\n\n"
             f"**Decisão do Médico:**\n\"{decisao_medico}\"\n\n"
             "**Sua Reflexão (seja conciso, como um pensamento para um colega):**"
@@ -78,10 +78,23 @@ class ShaulaMedAgent:
         return resposta_dict.get("conteudo", "Consulta finalizada.")
 
     def executar_analise_de_sessao(self, obter_resposta_llm_func: Callable) -> str:
-        """Gera o relatório reflexivo da sessão."""
+        """Gera o relatório reflexivo da sessão com base nas consultas em memória."""
         self.console.print("\n[bold magenta]Gerando Relatório Reflexivo da Sessão...[/bold magenta]")
         return self.motor_de_analise.gerar_relatorio_semanal(
             encontros=self.memoria.encontros_em_memoria,
             nome_medico=self.medico.apelido,
             obter_resposta_llm_func=obter_resposta_llm_func
         )
+        
+    def gerar_despedida_do_dia(self, obter_resposta_llm_func: Callable) -> str:
+        """Analisa as consultas do dia e gera uma mensagem de despedida personalizada."""
+        consultas_do_dia = self.memoria.encontros_em_memoria 
+        if not consultas_do_dia:
+            return "Nenhuma consulta registada hoje. Tenha um bom descanso."
+        temas = ", ".join(list(set([enc.sugestao_ia.get("hipoteses_diagnosticas", ["N/A"])[0] for enc in consultas_do_dia])))
+        prompt = f"Você é a Shaula. O dia de trabalho do Dr(a). {self.medico.apelido} terminou. Hoje, ele(a) atendeu casos sobre: {temas}. Crie uma mensagem de despedida curta e serena."
+        resposta_dict = obter_resposta_llm_func(prompt, modo="Despedida Reflexiva")
+        return resposta_dict.get("conteudo", "Bom trabalho hoje. Tenha um bom descanso.")
+
+    def salvar_memoria(self):
+        self.memoria.exportar_para_json()

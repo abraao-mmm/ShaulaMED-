@@ -1,6 +1,6 @@
 # api.py
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
 import os
 import json
@@ -10,9 +10,10 @@ from typing import Dict, Callable
 from medico import Medico
 from shaulamed_agent import ShaulaMedAgent
 from gerenciador_medicos import GerenciadorDeMedicos
+from transcritor import transcrever_audio_bytes
 from rich.console import Console
 
-app = FastAPI(title="ShaulaMed API", version="3.0 - Stateless")
+app = FastAPI(title="ShaulaMed API", version="3.0 - Final")
 
 console = Console()
 try:
@@ -21,30 +22,22 @@ try:
 except Exception as e:
     console.print(f"[bold red]ERRO CRÍTICO na inicialização da API: {e}[/bold red]")
 
+agentes_ativos: Dict[str, ShaulaMedAgent] = {}
+
 def obter_resposta_llm_api(prompt: str, modo: str = "API", schema: dict = None) -> dict:
-    # A sua lógica de conexão com a OpenAI vai aqui
-    pass
+    try:
+        if not openai.api_key:
+            return {"tipo": "erro", "conteudo": "Chave da API da OpenAI não configurada."}
+        mensagens = [{"role": "user", "content": prompt}]
+        response_format = {"type": "json_object"} if schema else {"type": "text"}
+        response = openai.chat.completions.create(model="gpt-4o", messages=mensagens, temperature=0.7, response_format=response_format)
+        return {"tipo": "texto", "conteudo": response.choices[0].message.content.strip()}
+    except Exception as e:
+        console.print(f"❌ Erro na chamada da OpenAI: {e}")
+        return {"tipo": "erro", "conteudo": "{}"}
 
-# --- Sistema de Dependência para obter o Agente ---
-def obter_agente_para_uid(uid: str) -> ShaulaMedAgent:
-    """
-    Esta função é uma "dependência" do FastAPI. Para cada pedido que a precisa,
-    ela carrega o perfil do médico e cria uma nova instância do agente.
-    """
-    console.print(f"A obter agente para o UID: {uid}...")
-    perfil_medico = gerenciador.carregar_ou_criar_perfil({"localId": uid})
-    if not perfil_medico:
-        raise HTTPException(status_code=404, detail="Perfil do médico não encontrado para este UID.")
-    
-    agente = ShaulaMedAgent(
-        medico=perfil_medico,
-        gerenciador=gerenciador, 
-        console_log=console, 
-        obter_resposta_llm_func=obter_resposta_llm_api
-    )
-    return agente
-
-# --- Modelos Pydantic (não mudam) ---
+class UserSession(BaseModel):
+    uid: str; email: str
 class PerfilMedico(BaseModel):
     uid: str; email: str; nome_completo: str; apelido: str; crm: str; especialidade: str; sexo: str
 class FalaPaciente(BaseModel):
@@ -52,7 +45,18 @@ class FalaPaciente(BaseModel):
 class DecisaoFinal(BaseModel):
     decisao: str; resumo: str
 
-# --- Endpoints ---
+@app.post("/sessao/ativar", tags=["Sessão"])
+def ativar_sessao(user: UserSession):
+    perfil_medico = gerenciador.carregar_ou_criar_perfil({"localId": user.uid, "email": user.email})
+    if perfil_medico:
+        agentes_ativos[user.uid] = ShaulaMedAgent(
+            medico=perfil_medico, 
+            gerenciador=gerenciador,
+            console_log=console, 
+            obter_resposta_llm_func=obter_resposta_llm_api
+        )
+        return {"status": "sucesso", "mensagem": f"Agente para Dr(a). {perfil_medico.apelido} ativado."}
+    raise HTTPException(status_code=404, detail="Perfil do médico não encontrado.")
 
 @app.post("/medico/criar_perfil", tags=["Médico"])
 def criar_perfil_medico(perfil: PerfilMedico):
@@ -69,21 +73,31 @@ def criar_perfil_medico(perfil: PerfilMedico):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/audio/transcrever", tags=["Áudio"])
+async def endpoint_transcrever_audio(ficheiro_audio: UploadFile = File(...)):
+    try:
+        audio_bytes = await ficheiro_audio.read()
+        texto = transcrever_audio_bytes(audio_bytes)
+        if texto is not None:
+            return {"status": "sucesso", "texto_transcrito": texto}
+        else:
+            raise HTTPException(status_code=400, detail="Não foi possível transcrever o áudio.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro no servidor de transcrição: {e}")
+
 @app.post("/consulta/iniciar/{uid}", tags=["Consulta"])
-def iniciar_consulta(uid: str, agente: ShaulaMedAgent = Depends(obter_agente_para_uid)):
-    # O FastAPI automaticamente chama obter_agente_para_uid e passa o resultado aqui
+def iniciar_consulta(uid: str):
+    agente = agentes_ativos.get(uid)
+    if not agente: raise HTTPException(status_code=404, detail="Sessão não encontrada. Por favor, ative a sessão novamente.")
     agente.iniciar_nova_consulta()
-    # ATENÇÃO: Esta versão não guarda o estado da consulta na API. O front-end precisará de gerir isso.
-    return {"status": "sucesso", "mensagem": "Lógica de início de consulta executada."}
+    return {"status": "sucesso"}
 
 @app.post("/consulta/processar/{uid}", tags=["Consulta"])
-def processar_fala(uid: str, fala: FalaPaciente, agente: ShaulaMedAgent = Depends(obter_agente_para_uid)):
-    # Para processar, precisamos de recriar um estado de consulta temporário
-    agente.iniciar_nova_consulta() # Inicia uma consulta "fantasma" para processamento
+def processar_fala(uid: str, fala: FalaPaciente):
+    agente = agentes_ativos.get(uid)
+    if not agente or not agente.consulta_atual: raise HTTPException(status_code=400, detail="Consulta não iniciada ou sessão inválida.")
     agente.processar_interacao(fala.texto)
     return {"status": "sucesso", "sugestao": agente.consulta_atual.sugestao_ia}
-
-# (Outros endpoints como finalizar, relatório, etc., seriam adaptados de forma semelhante)
 
 @app.post("/consulta/finalizar/{uid}", tags=["Consulta"])
 def finalizar_consulta(uid: str, decisao: DecisaoFinal):
@@ -100,3 +114,10 @@ def obter_relatorio(uid: str):
     if not agente: raise HTTPException(status_code=404, detail="Sessão não encontrada.")
     relatorio = agente.executar_analise_de_sessao(obter_resposta_llm_api)
     return {"status": "sucesso", "relatorio": relatorio}
+
+@app.get("/sessao/despedida/{uid}", tags=["Sessão"])
+def obter_despedida(uid: str):
+    agente = agentes_ativos.get(uid)
+    if not agente: raise HTTPException(status_code=404, detail="Sessão não encontrada.")
+    despedida = agente.gerar_despedida_do_dia(obter_resposta_llm_api)
+    return {"status": "sucesso", "mensagem": despedida}
