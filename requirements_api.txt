@@ -1,8 +1,0 @@
-streamlit
-requests
-streamlit-mic-recorder
-openai-whisper
-soundfile
-numpy
-ffmpeg-python
-pyrebase4

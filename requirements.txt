@@ -1,4 +1,16 @@
-# requirements.txt (Versão Simplificada para o Front-End)
+# Dependências do Back-End e Front-End
+fastapi
+uvicorn
+pydantic
+rich
+openai
+firebase-admin
+pyrebase4
 streamlit
 requests
-pyrebase4
+streamlit-mic-recorder
+openai-whisper
+soundfile
+numpy
+ffmpeg-python
+cryptography==38.0.4
