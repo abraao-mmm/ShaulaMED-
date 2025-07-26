@@ -1,12 +1,11 @@
-# Dependências do Back-End (API)
+# requirements.txt (Versão Final com Fix de Compatibilidade)
 fastapi
 uvicorn
 pydantic
 rich
 openai
-firebase-admin  # <--- ADICIONADO AQUI
-
-# Dependências do Front-End (Streamlit)
+firebase-admin
+pyrebase4
 streamlit
 requests
 streamlit-mic-recorder
@@ -14,10 +13,4 @@ openai-whisper
 soundfile
 numpy
 ffmpeg-python
-pyrebase4
-
-# Dependências Partilhadas (IA e Processamento)
-openai-whisper
-soundfile
-numpy
-ffmpeg-python
+cryptography==38.0.4
