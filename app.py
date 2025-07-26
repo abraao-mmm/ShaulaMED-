@@ -19,7 +19,7 @@ if 'utilizador_logado' not in st.session_state:
 
 # --- FUNÇÃO DA APLICAÇÃO PRINCIPAL (O CORAÇÃO DO SHAULAMED) ---
 def shaulamed_app():
-    API_URL = "https://shaulamed-api-1x9x.onrender.com" # A sua URL do Render
+    API_URL = "https://shaulamed-api.onrender.com" # A sua URL do Render
     uid = st.session_state.utilizador_logado.get('localId') if st.session_state.utilizador_logado else None
     
     if not uid:
@@ -90,7 +90,7 @@ def shaulamed_app():
         
         desenhar_jornada(1)
         if st.button("▶️ Iniciar Nova Consulta"):
-            with st.spinner("A conectar com o servidor da API... Isto pode demorar até 40 segundos na primeira vez."):
+            with st.spinner("A iniciar sessão de consulta..."):
                 try:
                     response = requests.post(f"{API_URL}/consulta/iniciar/{uid}", timeout=40)
                     if response.status_code == 200:
@@ -116,7 +116,7 @@ def shaulamed_app():
                         if response.status_code == 200:
                             st.session_state.sugestao = response.json().get("sugestao")
                         else:
-                            st.error("Erro ao processar o texto na API.")
+                            st.error(f"Erro ao processar o texto na API. Detalhe: {response.text}")
                 else:
                     st.warning("Por favor, insira o relato do paciente.")
 
