@@ -5,15 +5,19 @@ pydantic
 rich
 openai
 firebase-admin
-pyrebase4
 python-multipart
 
 # Dependências do Front-End (Streamlit)
 streamlit
 requests
 streamlit-mic-recorder
+pyrebase4
+
+# Dependências Partilhadas (Processamento de IA e Áudio)
 openai-whisper
 soundfile
 numpy
 ffmpeg-python
+
+# Fix de Compatibilidade para Deploy
 cryptography==38.0.4
