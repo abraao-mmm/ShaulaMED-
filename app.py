@@ -5,9 +5,6 @@ import requests
 import json
 import random
 from login import pagina_login
-# As importações de áudio foram removidas temporariamente.
-# from streamlit_mic_recorder import mic_recorder
-# from transcritor import transcrever_audio_bytes
 
 # --- CONFIGURAÇÃO DA PÁGINA (ÚNICO E NO TOPO) ---
 st.set_page_config(
@@ -27,8 +24,7 @@ def shaulamed_app():
     
     if not uid:
         st.error("Erro de sessão. Por favor, faça o login novamente.")
-        st.session_state.utilizador_logado = None
-        st.rerun()
+        st.session_state.utilizador_logado = None; st.rerun()
         return
 
     # Estilo CSS completo
@@ -120,7 +116,6 @@ def shaulamed_app():
                             st.session_state.sugestao = response.json().get("sugestao")
                         else:
                             st.error("Erro ao processar o texto na API.")
-                        # Não precisa de rerun aqui, o Streamlit atualiza a tela
                 else:
                     st.warning("Por favor, insira o relato do paciente.")
 
