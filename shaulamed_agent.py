@@ -97,4 +97,5 @@ class ShaulaMedAgent:
         return resposta_dict.get("conteudo", "Bom trabalho hoje. Tenha um bom descanso.")
 
     def salvar_memoria(self):
-        self.memoria.exportar_para_json()
+        # Este método torna-se menos relevante com o Firestore, mas pode ser mantido para backups locais se desejado.
+        pass
