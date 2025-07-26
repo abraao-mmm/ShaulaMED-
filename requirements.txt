@@ -1,4 +1,4 @@
-# Dependências do Back-End e Front-End
+# Dependências do Back-End (API)
 fastapi
 uvicorn
 pydantic
@@ -6,6 +6,9 @@ rich
 openai
 firebase-admin
 pyrebase4
+python-multipart
+
+# Dependências do Front-End (Streamlit)
 streamlit
 requests
 streamlit-mic-recorder
