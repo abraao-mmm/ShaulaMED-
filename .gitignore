@@ -7,3 +7,4 @@ __pycache__/
     
 # Ficheiros de Segredos (APENAS A CHAVE MESTRA DO BACK-END)
 firebase-credentials.json
+.env
