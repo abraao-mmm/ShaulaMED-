@@ -42,9 +42,15 @@ class GerenciadorDeMedicos:
                 console.print(f"Perfil do médico com email '{email}' carregado do Firestore.")
                 return Medico.de_dict(uid, doc.to_dict())
             else:
-                # Esta parte é um fallback. O perfil deveria ser criado no registo.
-                console.print(f"Perfil para UID {uid} não encontrado no Firestore.")
+                console.print(f"[yellow]Aviso: Utilizador autenticado mas sem perfil no Firestore.[/yellow]")
                 return None
         except Exception as e:
             console.print(f"[bold red]Erro ao carregar perfil do Firestore:[/bold red] {e}")
             return None
+
+    def salvar_medico(self, medico: Medico):
+        try:
+            self.medicos_ref.document(medico.id).set(medico.para_dict())
+            console.print(f"Perfil do Dr(a). {medico.nome_completo} salvo no Firestore.")
+        except Exception as e:
+            console.print(f"[bold red]Erro ao salvar perfil no Firestore:[/bold red] {e}")

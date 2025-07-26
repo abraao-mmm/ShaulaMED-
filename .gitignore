@@ -1,9 +1,10 @@
 # Ambiente Virtual
 venv/
 
-# Ficheiros de Cache do Python
+# Ficheiros de Cache
 __pycache__/
 *.pyc
     
-# Ficheiro de Segredos (A CHAVE MESTRA DO BACK-END)
+# Ficheiros de Segredos
 firebase-credentials.json
+firebase_config.py
