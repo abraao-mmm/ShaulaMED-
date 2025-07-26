@@ -11,11 +11,13 @@ class GerenciadorDeMedicos:
     def __init__(self, caminho_credenciais="firebase-credentials.json"):
         if not firebase_admin._apps:
             try:
+                # Tenta o caminho do servidor primeiro
                 cred = credentials.Certificate(f"/etc/secrets/{caminho_credenciais}")
                 firebase_admin.initialize_app(cred)
                 console.print("[green]Conexão com o Firebase (Servidor) estabelecida.[/green]")
             except Exception:
                 try:
+                    # Se falhar, tenta o caminho local
                     cred = credentials.Certificate(caminho_credenciais)
                     firebase_admin.initialize_app(cred)
                     console.print("[green]Conexão com o Firebase (Local) estabelecida.[/green]")
@@ -47,9 +49,10 @@ class GerenciadorDeMedicos:
                     uid=uid,
                     email=email,
                     nome_completo=email.split('@')[0], # Usa o início do email como nome temporário
-                    crm="0000",
+                    crm="Não preenchido",
                     especialidade="Não definida"
                 )
+                # Salva o novo perfil básico no Firestore
                 doc_ref.set(novo_medico.para_dict())
                 console.print("Perfil básico criado no Firestore.")
                 return novo_medico
