@@ -5,17 +5,17 @@ from pydantic import BaseModel
 import os
 import json
 import openai
-from typing import Dict, Callable
 from dotenv import load_dotenv # <<< NOVO!
+from typing import Dict
 
+# Carrega as variáveis do ficheiro .env para o ambiente
+load_dotenv() # <<< NOVO!
 
 # Importamos a nossa lógica do ShaulaMed
 from medico import Medico
 from encontro_clinico import EncontroClinico
 from shaulamed_agent import ShaulaMedAgent
 from gerenciador_medicos import GerenciadorDeMedicos
-from transcritor import transcrever_audio_bytes
-from rich.console import Console
 
 # --- INICIALIZAÇÃO E CONFIGURAÇÃO DA API ---
 app = FastAPI(title="ShaulaMed API", version="3.0 - Stateless Final")
