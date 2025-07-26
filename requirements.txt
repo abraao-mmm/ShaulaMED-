@@ -1,16 +1,4 @@
-# requirements.txt (Versão Final com Fix de Compatibilidade)
-fastapi
-uvicorn
-pydantic
-rich
-openai
-firebase-admin
-pyrebase4
+# requirements.txt (Versão Simplificada para o Front-End)
 streamlit
 requests
-streamlit-mic-recorder
-openai-whisper
-soundfile
-numpy
-ffmpeg-python
-cryptography==38.0.4
+pyrebase4
