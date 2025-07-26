@@ -5,13 +5,16 @@ pydantic
 rich
 openai
 firebase-admin
-openai-whisper
-soundfile
-numpy
-ffmpeg-python
+python-multipart  # <--- ADICIONADO AQUI
 
 # Dependências do Front-End (Streamlit)
 streamlit
 requests
 streamlit-mic-recorder
 pyrebase4
+
+# Dependências Partilhadas (IA e Processamento)
+openai-whisper
+soundfile
+numpy
+ffmpeg-python
