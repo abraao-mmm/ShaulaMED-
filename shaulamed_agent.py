@@ -7,21 +7,23 @@ from clinical_inference_real import RealInferenceEngine
 from memoria_clinica import MemoriaClinica
 from analise_clinica import MotorDeAnaliseClinica
 from refinador_de_prompt import RefinadorDePrompt
+from gerenciador_medicos import GerenciadorDeMedicos # Importação importante
 from rich.console import Console
 from typing import Callable, Optional
 
 class ShaulaMedAgent:
     """
-    O agente central do ShaulaMed, instanciado para um médico específico.
+    O agente central do ShaulaMed, instanciado para um médico específico por sessão.
     """
-    def __init__(self, medico: Medico, console_log: Console, obter_resposta_llm_func: Callable):
+    def __init__(self, medico: Medico, gerenciador: GerenciadorDeMedicos, console_log: Console, obter_resposta_llm_func: Callable):
         self.medico = medico
+        self.gerenciador = gerenciador # Mantém uma referência ao gerenciador
         self.console = console_log
         self.memoria = MemoriaClinica()
-        # Ao ser criado, o agente carrega o histórico de consultas deste médico específico
+        # Ao ser criado, o agente carrega o histórico de consultas deste médico
         self.memoria.carregar_encontros_do_medico(medico.id)
         
-        # Os "sentidos" do agente que usam a IA
+        # "Sentidos" do agente que usam a IA
         self.inference_engine = RealInferenceEngine(obter_resposta_llm_func)
         self.motor_de_analise = MotorDeAnaliseClinica()
         self.refinador = RefinadorDePrompt(obter_resposta_llm_func)
@@ -42,20 +44,19 @@ class ShaulaMedAgent:
             sugestao = self.inference_engine.gerar_hipoteses_com_ia(texto_refinado)
             self.consulta_atual.sugestao_ia = sugestao
         else:
-            self.console.print("[bold red]Erro: Nenhuma consulta foi iniciada para processar a interação.[/bold red]")
+            self.console.print("[bold red]Erro: Nenhuma consulta foi iniciada.[/bold red]")
 
     def finalizar_consulta(self, decisao_medico_final: str, resumo_prontuario: str):
-        """Finaliza a consulta atual e regista o aprendizado no Firestore."""
+        """Finaliza a consulta e regista o aprendizado no Firestore."""
         if self.consulta_atual:
-            self.console.print("--- Finalizando a consulta e aprendendo ---")
+            self.console.print("--- Finalizando consulta e aprendendo ---")
             self.consulta_atual.decisao_medico_final = decisao_medico_final
             self.consulta_atual.texto_gerado_prontuario = resumo_prontuario
             hipoteses = self.consulta_atual.sugestao_ia.get("hipoteses_diagnosticas", [])
             if hipoteses:
                 self.medico.aprender_com_conduta(hipoteses[0], decisao_medico_final)
-                # Salva o perfil atualizado do médico no Firestore
-                gerenciador_global = GerenciadorDeMedicos() # Assumindo acesso a um gerenciador global
-                gerenciador_global.salvar_medico(self.medico)
+                # Salva o perfil do médico atualizado no Firestore
+                self.gerenciador.salvar_medico(self.medico)
 
             self.memoria.registrar_encontro(self.consulta_atual)
             self.consulta_atual = None
@@ -77,20 +78,10 @@ class ShaulaMedAgent:
         return resposta_dict.get("conteudo", "Consulta finalizada.")
 
     def executar_analise_de_sessao(self, obter_resposta_llm_func: Callable) -> str:
-        """Gera o relatório reflexivo da sessão com base nas consultas em memória."""
+        """Gera o relatório reflexivo da sessão."""
         self.console.print("\n[bold magenta]Gerando Relatório Reflexivo da Sessão...[/bold magenta]")
         return self.motor_de_analise.gerar_relatorio_semanal(
             encontros=self.memoria.encontros_em_memoria,
             nome_medico=self.medico.apelido,
             obter_resposta_llm_func=obter_resposta_llm_func
         )
-
-    def gerar_despedida_do_dia(self, obter_resposta_llm_func: Callable) -> str:
-        """Analisa as consultas do dia e gera uma mensagem de despedida personalizada."""
-        consultas_do_dia = self.memoria.encontros_em_memoria
-        if not consultas_do_dia:
-            return "Nenhuma consulta registada hoje. Tenha um bom descanso."
-        temas = ", ".join(list(set([enc.sugestao_ia.get("hipoteses_diagnosticas", ["N/A"])[0] for enc in consultas_do_dia])))
-        prompt = f"Você é a Shaula. O dia de trabalho do Dr(a). {self.medico.apelido} terminou. Hoje, ele(a) atendeu casos sobre: {temas}. Crie uma mensagem de despedida curta e serena."
-        resposta_dict = obter_resposta_llm_func(prompt, modo="Despedida Reflexiva")
-        return resposta_dict.get("conteudo", "Bom trabalho hoje. Tenha um bom descanso.")
