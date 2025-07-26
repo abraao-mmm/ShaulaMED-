@@ -6,6 +6,8 @@ import os
 import json
 import openai
 from typing import Dict, Callable
+from dotenv import load_dotenv # <<< NOVO!
+
 
 # Importamos a nossa lógica do ShaulaMed
 from medico import Medico
