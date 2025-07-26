@@ -4,11 +4,6 @@ venv/
 # Ficheiros de Cache do Python
 __pycache__/
 *.pyc
-
-# Ficheiros de configuração de IDEs
-.vscode/
-.idea/
     
-# Ficheiros de Segredos
+# Ficheiro de Segredos (A CHAVE MESTRA DO BACK-END)
 firebase-credentials.json
-firebase_config.py

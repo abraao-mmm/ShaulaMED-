@@ -5,7 +5,6 @@ pydantic
 rich
 openai
 firebase-admin
-pyrebase4
 
 # Dependências do Front-End (Streamlit)
 streamlit
