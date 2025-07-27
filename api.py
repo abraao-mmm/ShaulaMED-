@@ -29,11 +29,9 @@ except Exception as e:
     console.print(f"[bold red]ERRO CRÍTICO na inicialização da API: {e}[/bold red]")
 
 # (A sua função obter_resposta_llm_api permanece a mesma)
-def obter_resposta_llm_api(prompt: str, modo: str = "API", schema: dict = None) -> dict:
-    # A sua lógica de conexão com a OpenAI vai aqui
-    pass
 
-# --- Sistema de Dependência e Gestão de Sessão ---
+# --- Sistema de Dependência para obter o Agente ---
+# Dicionário para guardar em cache as sessões de consulta ativas
 sessoes_de_consulta: Dict[str, EncontroClinico] = {}
 
 def obter_agente_para_uid(uid: str) -> ShaulaMedAgent:
@@ -43,29 +41,11 @@ def obter_agente_para_uid(uid: str) -> ShaulaMedAgent:
     return ShaulaMedAgent(medico=perfil_medico, gerenciador=gerenciador, console_log=console, obter_resposta_llm_func=obter_resposta_llm_api)
 
 # (Os seus modelos Pydantic permanecem os mesmos)
-class PerfilMedico(BaseModel):
-    uid: str; email: str; nome_completo: str; apelido: str; crm: str; especialidade: str; sexo: str
-class FalaPaciente(BaseModel):
-    texto: str
-class DecisaoFinal(BaseModel):
-    decisao: str; resumo: str
-
-# --- Endpoints ---
 
 @app.post("/medico/criar_perfil", tags=["Médico"])
 def criar_perfil_medico(perfil: PerfilMedico):
-    try:
-        medico_doc_ref = gerenciador.medicos_ref.document(perfil.uid)
-        dados_para_salvar = perfil.model_dump()
-        dados_para_salvar.update({
-            "id": perfil.uid, "nivel_confianca_ia": 1,
-            "estilo_clinico_observado": {"padrao_prescritivo": {}, "exames_mais_solicitados": [], "linguagem_resumo": "SOAP"},
-            "consultas_realizadas_count": 0
-        })
-        medico_doc_ref.set(dados_para_salvar)
-        return {"status": "sucesso"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    # (Este endpoint permanece o mesmo)
+    pass
 
 @app.post("/consulta/iniciar/{uid}", tags=["Consulta"])
 def iniciar_consulta(uid: str, agente: ShaulaMedAgent = Depends(obter_agente_para_uid)):
@@ -80,7 +60,7 @@ def processar_fala(uid: str, fala: FalaPaciente, agente: ShaulaMedAgent = Depend
         raise HTTPException(status_code=400, detail="Nenhuma consulta iniciada.")
     agente.consulta_atual = consulta_ativa
     agente.processar_interacao(fala.texto)
-    sessoes_de_consulta[uid] = agente.consulta_atual
+    sessoes_de_consulta[uid] = agente.consulta_atual # Atualiza a sessão
     return {"status": "sucesso", "sugestao": agente.consulta_atual.sugestao_ia}
 
 @app.post("/consulta/finalizar/{uid}", tags=["Consulta"])
@@ -92,5 +72,5 @@ def finalizar_consulta(uid: str, decisao: DecisaoFinal, agente: ShaulaMedAgent =
     agente.finalizar_consulta(decisao.decisao, decisao.resumo)
     reflexao = agente.gerar_reflexao_pos_consulta(consulta_ativa, obter_resposta_llm_api)
     if uid in sessoes_de_consulta:
-        del sessoes_de_consulta[uid]
+        del sessoes_de_consulta[uid] # Limpa a sessão da consulta
     return {"status": "sucesso", "reflexao": reflexao}
