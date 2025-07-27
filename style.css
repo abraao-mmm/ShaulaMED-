@@ -1,0 +1,43 @@
+[data-testid="stAppViewContainer"] {
+    background-color: #0A0A2A;
+}
+
+[data-testid="stSidebar"] {
+    background-color: #1E1E3F;
+}
+
+.stButton > button {
+    border-radius: 8px;
+    border: 1px solid #8A2BE2;
+    background-color: transparent;
+    color: #E0E0E0;
+    transition: all 0.2s ease-in-out;
+}
+
+.stButton > button:hover {
+    border-color: #E0E0E0;
+    background-color: #6A1B9A;
+    color: white;
+}
+
+.stButton > button[kind="primary"] {
+    background-color: #8A2BE2;
+    color: white;
+}
+
+.stJson {
+    border: 1px solid #8A2BE2 !important;
+    box-shadow: 0 0 15px rgba(138, 43, 226, 0.5) !important;
+    border-radius: 10px !important;
+}
+
+.step-active {
+    font-weight: bold;
+    color: #E0E0E0;
+    border-bottom: 2px solid #8A2BE2;
+    padding-bottom: 5px;
+}
+
+.step-inactive {
+    color: #555;
+}
