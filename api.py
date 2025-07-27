@@ -61,24 +61,16 @@ def obter_resposta_llm_api(prompt: str, modo: str = "API", schema: dict = None) 
 
 # --- MODELOS DE DADOS PYDANTIC ---
 class UserSession(BaseModel):
-    uid: str
-    email: str
+    uid: str; email: str
 
 class PerfilMedico(BaseModel):
-    uid: str
-    email: str
-    nome_completo: str
-    apelido: str
-    crm: str
-    especialidade: str
-    sexo: str
+    uid: str; email: str; nome_completo: str; apelido: str; crm: str; especialidade: str; sexo: str
 
 class FalaPaciente(BaseModel):
     texto: str
 
 class DecisaoFinal(BaseModel):
-    decisao: str
-    resumo: str
+    decisao: str; resumo: str
 
 # --- ENDPOINTS DA API ---
 
