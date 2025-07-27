@@ -1,53 +1,77 @@
 # api.py
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
 from pydantic import BaseModel
 import os
 import json
 import openai
-from typing import Dict
+from dotenv import load_dotenv
+from typing import Dict, Callable
 
 # Carrega as variáveis do ficheiro .env para o ambiente (para testes locais)
-from dotenv import load_dotenv
 load_dotenv()
 
-# Importamos a nossa lógica do ShaulaMed
+# Importamos a nossa lógica do ShaulaMed e as ferramentas necessárias
 from medico import Medico
+from encontro_clinico import EncontroClinico
 from shaulamed_agent import ShaulaMedAgent
 from gerenciador_medicos import GerenciadorDeMedicos
+from transcritor import transcrever_audio_bytes
 from rich.console import Console
 
-app = FastAPI(title="ShaulaMed API", version="2.3 - Final Sync")
+# --- INICIALIZAÇÃO DA API E OBJETOS GLOBAIS ---
+app = FastAPI(title="ShaulaMed API", version="3.2 - Final")
 
 console = Console()
+
+# --- CONEXÃO SEGURA COM A OPENAI ---
 try:
     openai.api_key = os.getenv("OPENAI_API_KEY")
-    gerenciador = GerenciadorDeMedicos()
+    if not openai.api_key:
+        console.print("[bold red]AVISO: A variável de ambiente OPENAI_API_KEY não foi encontrada.[/bold red]")
 except Exception as e:
-    console.print(f"[bold red]ERRO CRÍTICO na inicialização da API: {e}[/bold red]")
+    console.print(f"[bold red]Erro ao configurar o cliente OpenAI: {e}[/bold red]")
 
-# Dicionário para guardar agentes ativos por UID de utilizador
+# --- OBJETOS GLOBAIS ---
+gerenciador = GerenciadorDeMedicos()
+# O dicionário de agentes ativos é a nossa "memória de curto prazo" para as sessões
 agentes_ativos: Dict[str, ShaulaMedAgent] = {}
 
 def obter_resposta_llm_api(prompt: str, modo: str = "API", schema: dict = None) -> dict:
-    # A sua lógica de conexão com a OpenAI vai aqui
-    # Esta é uma versão simulada para garantir que tudo funciona sem custos
-    console.print(f"\n[dim][API -> IA (SIMULADA): Núcleo de '{modo}' ativado...][/dim]")
-    if modo == "Reflexão Pós-Consulta":
-        return {"tipo": "texto", "conteudo": "Esta é uma reflexão simulada sobre a consulta."}
-    return {"tipo": "texto", "conteudo": json.dumps({
-        "hipoteses_diagnosticas": ["Hipótese (API Online)"],
-        "sugestao_conduta": "Conduta (API Online).",
-        "exames_sugeridos": ["Exame A", "Exame B"],
-        "nivel_confianca_ia": "0.8"
-    })}
+    """Função REAL que se conecta à API da OpenAI para obter respostas."""
+    console.print(f"\n[dim][API -> OpenAI: Núcleo de '{modo}' ativado...][/dim]")
+    try:
+        if not openai.api_key:
+            raise ValueError("A chave de API da OpenAI não está configurada.")
+        
+        mensagens = [{"role": "user", "content": prompt}]
+        response_format = {"type": "json_object"} if schema else {"type": "text"}
 
+        response = openai.chat.completions.create(
+            model="gpt-4o",
+            messages=mensagens,
+            temperature=0.7,
+            response_format=response_format
+        )
+        conteudo = response.choices[0].message.content.strip()
+        return {"tipo": "texto", "conteudo": conteudo}
+    except Exception as e:
+        console.print(f"❌ [bold red]API: Erro na chamada da OpenAI: {e}[/bold red]")
+        return {"tipo": "erro", "conteudo": "{}"}
+
+# --- MODELOS DE DADOS PYDANTIC ---
 class UserSession(BaseModel):
     uid: str
     email: str
 
 class PerfilMedico(BaseModel):
-    uid: str; email: str; nome_completo: str; apelido: str; crm: str; especialidade: str; sexo: str
+    uid: str
+    email: str
+    nome_completo: str
+    apelido: str
+    crm: str
+    especialidade: str
+    sexo: str
 
 class FalaPaciente(BaseModel):
     texto: str
@@ -55,6 +79,8 @@ class FalaPaciente(BaseModel):
 class DecisaoFinal(BaseModel):
     decisao: str
     resumo: str
+
+# --- ENDPOINTS DA API ---
 
 @app.post("/sessao/ativar", tags=["Sessão"])
 def ativar_sessao(user: UserSession):
@@ -83,6 +109,18 @@ def criar_perfil_medico(perfil: PerfilMedico):
         return {"status": "sucesso"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/audio/transcrever", tags=["Áudio"])
+async def endpoint_transcrever_audio(ficheiro_audio: UploadFile = File(...)):
+    try:
+        audio_bytes = await ficheiro_audio.read()
+        texto = transcrever_audio_bytes(audio_bytes)
+        if texto is not None:
+            return {"status": "sucesso", "texto_transcrito": texto}
+        else:
+            raise HTTPException(status_code=400, detail="Não foi possível transcrever o áudio.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro no servidor de transcrição: {e}")
 
 @app.post("/consulta/iniciar/{uid}", tags=["Consulta"])
 def iniciar_consulta(uid: str):
