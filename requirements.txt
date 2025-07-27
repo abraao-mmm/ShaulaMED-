@@ -11,13 +11,10 @@ pyrebase4
 python-multipart
 
 # Dependências do Front-End (Streamlit)
+# requirements.txt (Versão Simplificada para o Front-End)
 streamlit
 requests
-streamlit-mic-recorder
-openai-whisper
-soundfile
-numpy
-ffmpeg-python
+pyrebase4
 
 # Fix de Compatibilidade para Deploy
 cryptography==38.0.4
