@@ -1,17 +1,22 @@
 # api.py
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
 from pydantic import BaseModel
 import os
 import json
 import openai
+from dotenv import load_dotenv # <<< NOVO!
 from typing import Dict
 
-# Importamos TODAS as nossas classes
+# Carrega as variáveis do ficheiro .env para o ambiente
+load_dotenv() # <<< NOVO!
+
+# Importamos a nossa lógica do ShaulaMed
 from medico import Medico
-from encontro_clinico import EncontroClinico # <<< A LINHA QUE FALTAVA
+from encontro_clinico import EncontroClinico
 from shaulamed_agent import ShaulaMedAgent
 from gerenciador_medicos import GerenciadorDeMedicos
+# (o resto do seu api.py continua aqui...)
 from rich.console import Console
 
 app = FastAPI(title="ShaulaMed API", version="3.1 - Stateless Fix")
