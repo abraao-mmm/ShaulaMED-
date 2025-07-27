@@ -11,11 +11,13 @@ class GerenciadorDeMedicos:
     def __init__(self, caminho_credenciais="firebase-credentials.json"):
         if not firebase_admin._apps:
             try:
+                # Tenta o caminho do servidor primeiro
                 cred = credentials.Certificate(f"/etc/secrets/{caminho_credenciais}")
                 firebase_admin.initialize_app(cred)
                 console.print("[green]Conexão com o Firebase (Servidor) estabelecida.[/green]")
             except Exception:
                 try:
+                    # Se falhar, tenta o caminho local
                     cred = credentials.Certificate(caminho_credenciais)
                     firebase_admin.initialize_app(cred)
                     console.print("[green]Conexão com o Firebase (Local) estabelecida.[/green]")
@@ -41,16 +43,15 @@ class GerenciadorDeMedicos:
                 console.print(f"Perfil do médico com email '{email}' carregado do Firestore.")
                 return Medico.de_dict(uid, doc.to_dict())
             else:
-                console.print(f"[yellow]Aviso: Perfil para UID {uid} não encontrado. Foi criado um perfil básico.[/yellow]")
-                novo_medico = Medico(uid=uid, email=email, nome_completo=email.split('@')[0], crm="0000", especialidade="Não definida")
-                doc_ref.set(novo_medico.para_dict())
-                return novo_medico
+                console.print(f"[yellow]Aviso: Perfil para UID {uid} não encontrado.[/yellow]")
+                return None
         except Exception as e:
-            console.print(f"[bold red]Erro ao carregar ou criar perfil no Firestore:[/bold red] {e}")
+            console.print(f"[bold red]Erro ao carregar perfil do Firestore:[/bold red] {e}")
             return None
 
     def salvar_medico(self, medico: Medico):
         try:
             self.medicos_ref.document(medico.id).set(medico.para_dict())
+            console.print(f"Perfil do Dr(a). {medico.nome_completo} salvo no Firestore.")
         except Exception as e:
             console.print(f"[bold red]Erro ao salvar perfil no Firestore:[/bold red] {e}")
