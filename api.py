@@ -20,7 +20,16 @@ from transcritor import transcrever_audio_bytes
 from rich.console import Console
 
 # --- INICIALIZAÇÃO DA API E OBJETOS GLOBAIS ---
-app = FastAPI(title="ShaulaMed API", version="3.2 - Final")
+app = FastAPI(title="ShaulaMed API", version="DEBUG")
+
+# --- NOVO ENDPOINT DE DIAGNÓSTICO ---
+@app.get("/routes", tags=["Debug"])
+def get_all_routes():
+    """
+    Este endpoint especial lista todas as rotas registadas na aplicação.
+    Ajuda-nos a ver o que o servidor "conhece".
+    """
+    return [{"path": route.path, "name": route.name} for route in app.routes]
 
 console = Console()
 
