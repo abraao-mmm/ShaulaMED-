@@ -20,7 +20,7 @@ class ShaulaMedAgent:
         self.gerenciador = gerenciador
         self.console = console_log
         self.memoria = MemoriaClinica()
-        # Ao ser criado, o agente carrega o histórico de consultas deste médico
+        # Ao ser criado, o agente carrega o histórico de consultas deste médico específico
         self.memoria.carregar_encontros_do_medico(medico.id)
         
         # "Sentidos" do agente que usam a IA
