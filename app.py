@@ -116,7 +116,7 @@ def shaulamed_app():
                         if response.status_code == 200:
                             st.session_state.sugestao = response.json().get("sugestao")
                         else:
-                            st.error("Erro ao processar o texto na API.")
+                            st.error(f"Erro ao processar o texto na API. Detalhe: {response.text}")
                 else:
                     st.warning("Por favor, insira o relato do paciente.")
 

@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+pydantic
+rich
+openai
+firebase-admin
+python-dotenv
+python-multipart
+openai-whisper
+soundfile
+numpy
+ffmpeg-python

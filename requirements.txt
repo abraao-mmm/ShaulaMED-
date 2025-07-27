@@ -1,20 +1,4 @@
-python-dotenv
-
-# Dependências do Back-End (API)
-fastapi
-uvicorn
-pydantic
-rich
-openai
-firebase-admin
-pyrebase4
-python-multipart
-
-# Dependências do Front-End (Streamlit)
-# requirements.txt (Versão Simplificada para o Front-End)
 streamlit
 requests
 pyrebase4
-
-# Fix de Compatibilidade para Deploy
-cryptography==38.0.4
+streamlit-mic-recorder
