@@ -1,3 +1,4 @@
+# requirements.txt (Versão Simplificada para o Front-End)
 streamlit
 requests
 pyrebase4
