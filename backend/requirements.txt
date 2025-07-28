@@ -5,3 +5,4 @@ openai
 firebase-admin
 rich
 gunicorn 
+python-multipart
