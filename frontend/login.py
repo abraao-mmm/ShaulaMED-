@@ -4,9 +4,9 @@ import streamlit as st
 import pyrebase
 import requests
 import json
-from firebase_config import firebase_config
+from frontend.firebase_config import firebase_config
 
-API_URL = "https://shaulamed-api.onrender.com" 
+API_URL = "https://shaulamed-api-1x9x.onrender.com"
 
 try:
     firebase = pyrebase.initialize_app(firebase_config)
