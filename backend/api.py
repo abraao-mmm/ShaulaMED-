@@ -1,12 +1,12 @@
 # api.py
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
 import os
 import json
 import openai
 from dotenv import load_dotenv
-from typing import Dict, Callable
+from typing import Dict
 
 # Carrega as variáveis do ficheiro .env para o ambiente (para testes locais)
 load_dotenv()
@@ -20,7 +20,7 @@ from transcritor import transcrever_audio_bytes
 from rich.console import Console
 
 # --- INICIALIZAÇÃO DA API E OBJETOS GLOBAIS ---
-app = FastAPI(title="ShaulaMed API", version="3.3 - Final Sync")
+app = FastAPI(title="ShaulaMed API", version="3.3 - Final")
 
 console = Console()
 
@@ -33,13 +33,31 @@ try:
 except Exception as e:
     console.print(f"[bold red]ERRO CRÍTICO na inicialização: {e}[/bold red]")
 
-# "Memória de curto prazo" para as sessões
+# "Memória de curto prazo" para as sessões de agentes e consultas
 agentes_ativos: Dict[str, ShaulaMedAgent] = {}
 sessoes_de_consulta: Dict[str, EncontroClinico] = {}
 
 def obter_resposta_llm_api(prompt: str, modo: str = "API", schema: dict = None) -> dict:
-    # A sua lógica de conexão com a OpenAI vai aqui
-    pass
+    """Função REAL que se conecta à API da OpenAI para obter respostas."""
+    console.print(f"\n[dim][API -> OpenAI: Núcleo de '{modo}' ativado...][/dim]")
+    try:
+        if not openai.api_key:
+            raise ValueError("A chave de API da OpenAI não está configurada.")
+        
+        mensagens = [{"role": "user", "content": prompt}]
+        response_format = {"type": "json_object"} if schema else {"type": "text"}
+
+        response = openai.chat.completions.create(
+            model="gpt-4o",
+            messages=mensagens,
+            temperature=0.7,
+            response_format=response_format
+        )
+        conteudo = response.choices[0].message.content.strip()
+        return {"tipo": "texto", "conteudo": conteudo}
+    except Exception as e:
+        console.print(f"❌ [bold red]API: Erro na chamada da OpenAI: {e}[/bold red]")
+        return {"tipo": "erro", "conteudo": "{}"}
 
 # --- MODELOS DE DADOS PYDANTIC ---
 class UserSession(BaseModel):
