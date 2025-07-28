@@ -1,4 +1,4 @@
-# app.py (Versão Final Corrigida - Anti-Loop)
+# app.py (Versão Completa com Fluxo de Transcrição Otimizado)
 
 import streamlit as st
 import requests
@@ -26,9 +26,7 @@ if 'consulta_atual' not in st.session_state:
     st.session_state.consulta_atual = None
 if 'ultima_reflexao' not in st.session_state:
     st.session_state.ultima_reflexao = None
-if "texto_transcrito_caixa" not in st.session_state:
-    st.session_state.texto_transcrito_caixa = ""
-# NOVO: Flag para controlar o processamento do áudio e evitar loops
+# Flag para controlar o processamento do áudio e evitar loops
 if "audio_processado" not in st.session_state:
     st.session_state.audio_processado = False
 
@@ -101,7 +99,6 @@ def shaulamed_app():
                     if response.status_code == 200:
                         st.session_state.consulta_atual = response.json()
                         st.session_state.etapa = 2
-                        st.session_state.texto_transcrito_caixa = ""
                         st.session_state.audio_processado = False # Reseta a flag
                         st.rerun()
                     else:
@@ -124,44 +121,41 @@ def shaulamed_app():
                 key='recorder'
             )
 
-            # LÓGICA ANTI-LOOP
             if audio_info and audio_info['bytes'] and not st.session_state.audio_processado:
-                st.session_state.audio_processado = True # Ativa a flag para bloquear repetições
-                st.info("Áudio recebido. A transcrever na nuvem, por favor aguarde...")
+                st.session_state.audio_processado = True
                 audio_bytes = audio_info['bytes']
-                try:
-                    files = {'ficheiro_audio': ("audio.wav", audio_bytes, "audio/wav")}
-                    response_transcricao = requests.post(f"{API_URL}/audio/transcrever", files=files, timeout=60)
-                    if response_transcricao.status_code == 200:
-                        texto_transcrito = response_transcricao.json().get("texto_transcrito", "")
-                        st.session_state.texto_transcrito_caixa = texto_transcrito
-                        st.success("Transcrição concluída!")
-                        st.rerun()
-                    else:
-                        st.error(f"Erro na transcrição ({response_transcricao.status_code}): {response_transcricao.text}")
-                except requests.exceptions.RequestException as e:
-                    st.error(f"Erro de conexão ao transcrever: {e}")
-            
-            fala_paciente = st.text_area("Edite a transcrição ou insira o texto manualmente:", value=st.session_state.texto_transcrito_caixa, height=150, key="fala_texto")
-            
-            if st.button("Processar Relato", use_container_width=True):
-                if fala_paciente:
-                    st.session_state.texto_transcrito_caixa = ""
-                    st.session_state.audio_processado = False # Reseta a flag para permitir nova gravação
-                    with st.spinner("A processar na nuvem..."):
-                        dados = {"consulta_atual": st.session_state.consulta_atual, "fala": {"texto": fala_paciente}}
-                        try:
-                            response = requests.post(f"{API_URL}/consulta/processar/{uid}", json=dados)
-                            if response.status_code == 200:
-                                st.session_state.consulta_atual = response.json()
-                                st.rerun()
+                
+                with st.spinner("A transcrever e a analisar clinicamente..."):
+                    try:
+                        # Passo 1: Transcrever o áudio
+                        files = {'ficheiro_audio': ("audio.wav", audio_bytes, "audio/wav")}
+                        response_transcricao = requests.post(f"{API_URL}/audio/transcrever", files=files, timeout=60)
+                        
+                        if response_transcricao.status_code == 200:
+                            texto_transcrito = response_transcricao.json().get("texto_transcrito", "")
+                            st.success(f"Transcrição: \"_{texto_transcrito}_\"")
+                            
+                            # Passo 2: Enviar a transcrição diretamente para processamento
+                            if texto_transcrito:
+                                dados_processamento = {"consulta_atual": st.session_state.consulta_atual, "fala": {"texto": texto_transcrito}}
+                                response_processamento = requests.post(f"{API_URL}/consulta/processar/{uid}", json=dados_processamento)
+                                
+                                if response_processamento.status_code == 200:
+                                    st.session_state.consulta_atual = response_processamento.json()
+                                    st.rerun()
+                                else:
+                                    st.error(f"Erro ao processar na API ({response_processamento.status_code}): {response_processamento.text}")
                             else:
-                                st.error(f"Erro ao processar na API ({response.status_code}): {response.text}")
-                        except requests.exceptions.RequestException as e:
-                            st.error(f"Erro de conexão ao processar: {e}")
-                else:
-                    st.warning("Por favor, insira o relato do paciente.")
+                                st.warning("A transcrição resultou em texto vazio. Por favor, grave novamente.")
+                                st.session_state.audio_processado = False # Permite nova gravação
+                        else:
+                            st.error(f"Erro na transcrição ({response_transcricao.status_code}): {response_transcricao.text}")
+                            st.session_state.audio_processado = False # Permite nova gravação
 
+                    except requests.exceptions.RequestException as e:
+                        st.error(f"Erro de conexão: {e}")
+                        st.session_state.audio_processado = False # Permite nova gravação
+            
             if transcricao_atual:
                 st.info(f"**Relatos Processados:**\n\n\"_{transcricao_atual}_\"")
 
@@ -179,7 +173,7 @@ def shaulamed_app():
                     for e in exames: st.markdown(f"- {e}")
                 st.markdown("---"); desenhar_indicador_confianca(confianca)
             else:
-                st.info("Aguardando processamento do relato.")
+                st.info("Aguardando relato do paciente...")
         
         st.markdown("---")
         if st.button("⏹️ Finalizar Consulta", use_container_width=True, type="primary"):
@@ -218,6 +212,7 @@ def shaulamed_app():
     if st.session_state.etapa == 1: pagina_inicial()
     elif st.session_state.etapa == 2: pagina_consulta()
     elif st.session_state.etapa == 3: pagina_finalizacao()
+
 
 # --- ROUTER PRINCIPAL (Verifica se está logado) ---
 if st.session_state.utilizador_logado:
