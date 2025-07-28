@@ -1,4 +1,5 @@
-# requirements.txt (Versão Simplificada para o Front-End)
+# requirements.txt
 streamlit
 requests
 pyrebase4
+streamlit-webaudio

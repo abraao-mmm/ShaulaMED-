@@ -1,8 +1,9 @@
+# requirements.txt (Backend)
 fastapi
 uvicorn
+gunicorn
 python-dotenv
 openai
 firebase-admin
 rich
-gunicorn 
 python-multipart

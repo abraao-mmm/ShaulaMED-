@@ -1,10 +1,11 @@
-# app.py (VERSÃO REATORADA - STATELESS)
+# app.py (Versão Completa com Transcrição de Voz)
 
 import streamlit as st
 import requests
 import json
 import random
 from login import pagina_login
+from streamlit_webaudio import webaudio # Importação para captura de áudio
 
 # --- CONFIGURAÇÃO DA PÁGINA E URL DA API ---
 st.set_page_config(
@@ -12,8 +13,9 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="expanded"
 )
-# Use a URL da sua API no Render. Garanta que ela não tenha espaços no final.
+# URL ÚNICO E CORRETO DA API
 API_URL = "https://shaulamed-api-1x9x.onrender.com"
+
 # --- INICIALIZAÇÃO DO ESTADO DA SESSÃO ---
 if 'utilizador_logado' not in st.session_state:
     st.session_state.utilizador_logado = None
@@ -21,11 +23,14 @@ if 'pagina' not in st.session_state:
     st.session_state.pagina = "Consulta"
 if 'etapa' not in st.session_state:
     st.session_state.etapa = 1
-# NOVO: O objeto da consulta agora vive no estado da sessão do front-end
 if 'consulta_atual' not in st.session_state:
     st.session_state.consulta_atual = None
 if 'ultima_reflexao' not in st.session_state:
     st.session_state.ultima_reflexao = None
+# Guarda o texto da caixa de texto entre recarregamentos da página
+if "texto_transcrito_caixa" not in st.session_state:
+    st.session_state.texto_transcrito_caixa = ""
+
 
 # --- FUNÇÃO DA APLICAÇÃO PRINCIPAL ---
 def shaulamed_app():
@@ -36,7 +41,7 @@ def shaulamed_app():
         st.rerun()
         return
 
-    # Estilo CSS (sem alterações)
+    # Estilo CSS completo
     st.markdown("""
     <style>
         [data-testid="stAppViewContainer"] { background-color: #0A0A2A; }
@@ -59,9 +64,13 @@ def shaulamed_app():
         .step-inactive { color: #555; }
     </style>
     """, unsafe_allow_html=True)
-    
-    # --- Funções Auxiliares de UI (sem alterações) ---
-    FRASES_BOAS_VINDAS = ["Olá. Senti a sua presença. Em que parte da jornada estamos hoje?", "Bem-vindo(a) de volta. O universo aguardava o seu raciocínio."]
+
+    FRASES_BOAS_VINDAS = [
+        "Olá. Senti a sua presença. Em que parte da jornada estamos hoje?",
+        "Os seus pensamentos formam constelações. Vamos explorá-las juntos?",
+        "Bem-vindo(a) de volta. O universo aguardava o seu raciocínio."
+    ]
+
     def desenhar_jornada(etapa_atual=1):
         etapas = ["1. Iniciar", "2. Processar", "3. Finalizar"]; cols = st.columns(3)
         for i, col in enumerate(cols):
@@ -69,55 +78,71 @@ def shaulamed_app():
                 st.markdown(f'<p class="{"step-active" if (i+1) == etapa_atual else "step-inactive"}">{etapas[i]}</p>', unsafe_allow_html=True)
         st.markdown("---")
 
-    def desenhar_indicador_confianca(nivel):
-        try: nivel = float(str(nivel).split(" ")[0].replace(",", "."))
-        except: nivel = 0.0
-        estrelas_cheias = '★' * int(nivel * 10); estrelas_vazias = '☆' * (10 - int(nivel * 10))
-        st.markdown("##### Nível de Confiança da IA"); st.markdown(f"<div style='font-size: 1.2rem; color: #FFD700;'>{estrelas_cheias}<span style='color: #555;'>{estrelas_vazias}</span></div>", unsafe_allow_html=True)
+    def desenhar_indicador_confianca(nivel: float):
+        if not isinstance(nivel, (float, int)):
+            try: nivel = float(str(nivel).split(" ")[0].replace(",", "."))
+            except (ValueError, IndexError): nivel = 0.0
+        estrelas_preenchidas = int(nivel * 10); estrelas_vazias = 10 - estrelas_preenchidas
+        display_html = f"<div style='font-size: 1.2rem; color: #FFD700;'>{'★' * estrelas_preenchidas}<span style='color: #555;'>{'☆' * estrelas_vazias}</span></div>"
+        st.markdown("##### Nível de Confiança da IA"); st.markdown(display_html, unsafe_allow_html=True)
 
-    # --- LÓGICA DAS PÁGINAS (REATORADA) ---
     def pagina_inicial():
         if st.session_state.ultima_reflexao:
             st.success(f"**Reflexão da Shaula:** \"_{st.session_state.ultima_reflexao}_\"")
-            st.session_state.ultima_reflexao = None # Limpa a reflexão após mostrar
+            st.session_state.ultima_reflexao = None
         else:
             st.info(f"**Shaula:** \"_{random.choice(FRASES_BOAS_VINDAS)}_\"")
         
         desenhar_jornada(1)
         if st.button("▶️ Iniciar Nova Consulta", use_container_width=True):
-            with st.spinner("A preparar novo formulário de consulta..."):
+            with st.spinner("A iniciar sessão de consulta..."):
                 try:
-                    # 1. Chama o novo endpoint para obter um objeto de consulta em branco
                     response = requests.post(f"{API_URL}/consulta/iniciar/{uid}", timeout=40)
                     if response.status_code == 200:
-                        st.session_state.consulta_atual = response.json() # 2. Armazena no estado da sessão
+                        st.session_state.consulta_atual = response.json()
                         st.session_state.etapa = 2
+                        st.session_state.texto_transcrito_caixa = "" # Limpa a caixa de texto
                         st.rerun()
                     else:
                         st.error(f"O servidor da API respondeu com um erro ({response.status_code}). Detalhe: {response.text}")
                 except requests.exceptions.RequestException as e:
-                    st.error(f"Erro de conexão: {e}. O servidor pode estar a iniciar. Tente novamente.")
+                    st.error(f"Erro de conexão: {e}. O servidor pode estar a iniciar. Por favor, aguarde e tente novamente.")
 
     def pagina_consulta():
         desenhar_jornada(2)
-        
-        # Guardamos a transcrição para exibir na UI, mesmo que o objeto completo seja complexo
         transcricao_atual = st.session_state.consulta_atual.get('transcricao_consulta', "")
-
+        
         col1, col2 = st.columns([1, 1.2])
         with col1:
             st.markdown("##### Relato do Paciente")
-            fala_paciente = st.text_area("Insira a fala do paciente aqui:", height=150, key="fala_texto")
+            st.write("Clique no microfone para gravar o relato do paciente:")
+            audio_bytes = webaudio(send_every_ms=3000)
+
+            if audio_bytes is not None:
+                st.info("Áudio recebido. A transcrever na nuvem, por favor aguarde...")
+                try:
+                    files = {'ficheiro_audio': ("audio.wav", audio_bytes, "audio/wav")}
+                    response_transcricao = requests.post(f"{API_URL}/audio/transcrever", files=files, timeout=60)
+                    if response_transcricao.status_code == 200:
+                        texto_transcrito = response_transcricao.json().get("texto_transcrito", "")
+                        st.session_state.texto_transcrito_caixa = texto_transcrito
+                        st.success("Transcrição concluída!")
+                        st.rerun()
+                    else:
+                        st.error(f"Erro na transcrição ({response_transcricao.status_code}): {response_transcricao.text}")
+                except requests.exceptions.RequestException as e:
+                    st.error(f"Erro de conexão ao transcrever: {e}")
+            
+            fala_paciente = st.text_area("Edite a transcrição ou insira o texto manualmente:", value=st.session_state.texto_transcrito_caixa, height=150, key="fala_texto")
             
             if st.button("Processar Relato", use_container_width=True):
                 if fala_paciente:
+                    st.session_state.texto_transcrito_caixa = ""
                     with st.spinner("A processar na nuvem..."):
-                        # 1. Prepara o payload com o estado atual da consulta e a nova fala
                         dados = {"consulta_atual": st.session_state.consulta_atual, "fala": {"texto": fala_paciente}}
                         try:
                             response = requests.post(f"{API_URL}/consulta/processar/{uid}", json=dados)
                             if response.status_code == 200:
-                                # 2. Atualiza o estado da consulta com a resposta da API
                                 st.session_state.consulta_atual = response.json()
                                 st.rerun()
                             else:
@@ -135,9 +160,18 @@ def shaulamed_app():
             sugestao = st.session_state.consulta_atual.get('sugestao_ia', {})
             if sugestao:
                 hipoteses = sugestao.get("hipoteses_diagnosticas", []); conduta = sugestao.get("sugestao_conduta", "N/A"); exames = sugestao.get("exames_sugeridos", []); confianca = sugestao.get("nivel_confianca_ia", 0.0)
-                with st.expander("**Hipóteses**", expanded=True): st.write(hipoteses)
-                st.markdown("**Conduta Sugerida:**"); st.write(conduta)
-                with st.expander("**Exames Sugeridos**"): st.write(exames)
+                
+                st.markdown("**Hipóteses:**")
+                if hipoteses:
+                    for h in hipoteses: st.markdown(f"- {h}")
+                
+                st.markdown("**Conduta Sugerida:**")
+                st.write(conduta)
+
+                st.markdown("**Exames Sugeridos:**")
+                if exames:
+                    for e in exames: st.markdown(f"- {e}")
+
                 st.markdown("---"); desenhar_indicador_confianca(confianca)
             else:
                 st.info("Aguardando processamento do relato.")
@@ -148,44 +182,39 @@ def shaulamed_app():
 
     def pagina_finalizacao():
         desenhar_jornada(3)
-        st.info("Revise os dados e insira sua conduta final para registrar o aprendizado da IA.")
         with st.form("finalizar_form"):
-            decisao_final = st.text_area("Insira a decisão clínica final:", height=150)
+            decisao_final = st.text_area("Insira a decisão clínica final:")
             submitted = st.form_submit_button("Salvar e Concluir Sessão")
             if submitted:
                 if decisao_final:
-                    with st.spinner("A finalizar, a salvar no banco de dados e a gerar reflexão..."):
-                        # 1. Prepara o payload final
+                    with st.spinner("A finalizar e a gerar reflexão..."):
                         dados = {"consulta_atual": st.session_state.consulta_atual, "decisao": {"decisao": decisao_final, "resumo": "..."}}
                         try:
                             response = requests.post(f"{API_URL}/consulta/finalizar/{uid}", json=dados)
                             if response.status_code == 200:
-                                # 2. Guarda a reflexão para mostrar na próxima tela
                                 st.session_state.ultima_reflexao = response.json().get("reflexao")
-                                # 3. Limpa o estado e volta para o início
-                                st.session_state.etapa = 1
-                                st.session_state.consulta_atual = None
-                                st.rerun()
-                            else:
-                                st.error(f"Erro ao finalizar na API ({response.status_code}): {response.text}")
+                            st.session_state.etapa = 1
+                            st.session_state.consulta_atual = None
+                            st.rerun()
                         except requests.exceptions.RequestException as e:
                             st.error(f"Erro de conexão ao finalizar: {e}")
                 else:
                     st.warning("Por favor, insira a decisão final.")
     
-    # --- ROTEADOR DA INTERFACE ---
     with st.sidebar:
         st.title("🩺 ShaulaMed")
-        st.caption(f"Médico: {st.session_state.utilizador_logado.get('email', 'N/A')}")
+        email_utilizador = st.session_state.utilizador_logado.get('email', 'N/A')
+        st.caption(f"Médico: {email_utilizador}")
+        st.markdown("---")
         if st.button("Sair", use_container_width=True):
             st.session_state.utilizador_logado = None; st.rerun()
-    
-    st.title("ShaulaMed Copilot")
 
-    if st.session_state.pagina == "Consulta":
-        if st.session_state.etapa == 1: pagina_inicial()
-        elif st.session_state.etapa == 2: pagina_consulta()
-        elif st.session_state.etapa == 3: pagina_finalizacao()
+    st.title("ShaulaMed Copilot")
+    
+    if st.session_state.etapa == 1: pagina_inicial()
+    elif st.session_state.etapa == 2: pagina_consulta()
+    elif st.session_state.etapa == 3: pagina_finalizacao()
+
 
 # --- ROUTER PRINCIPAL (Verifica se está logado) ---
 if st.session_state.utilizador_logado:
