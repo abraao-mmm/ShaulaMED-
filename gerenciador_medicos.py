@@ -43,10 +43,12 @@ class GerenciadorDeMedicos:
                 console.print(f"Perfil do médico com email '{email}' carregado do Firestore.")
                 return Medico.de_dict(uid, doc.to_dict())
             else:
-                console.print(f"[yellow]Aviso: Perfil para UID {uid} não encontrado.[/yellow]")
-                return None
+                console.print(f"[yellow]Aviso: Perfil para UID {uid} não encontrado. Foi criado um perfil básico.[/yellow]")
+                novo_medico = Medico(uid=uid, email=email, nome_completo=email.split('@')[0], crm="0000", especialidade="Não definida")
+                doc_ref.set(novo_medico.para_dict())
+                return novo_medico
         except Exception as e:
-            console.print(f"[bold red]Erro ao carregar perfil do Firestore:[/bold red] {e}")
+            console.print(f"[bold red]Erro ao carregar ou criar perfil no Firestore:[/bold red] {e}")
             return None
 
     def salvar_medico(self, medico: Medico):

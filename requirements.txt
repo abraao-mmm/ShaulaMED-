@@ -1,4 +1,15 @@
+# Dependências do Back-End e Front-End
+fastapi
+uvicorn
+pydantic
+rich
+openai
+firebase-admin
+pyrebase4
+python-dotenv
+python-multipart
 streamlit
 requests
-pyrebase4
 streamlit-mic-recorder
+# Fix de Compatibilidade para Deploy
+cryptography==38.0.4
