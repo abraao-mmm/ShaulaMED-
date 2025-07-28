@@ -1,12 +1,14 @@
-# login.py
+# login.py (CORRIGIDO)
 
 import streamlit as st
 import pyrebase
 import requests
 import json
-from frontend.firebase_config import firebase_config
+from firebase_config import firebase_config
 
-API_URL = "https://shaulamed-api-1x9x.onrender.com"
+# --- URL ÚNICO E CORRETO DA API ---
+# Certifique-se de que este é o URL correto do seu serviço no Render
+API_URL = "https://shaulamed-api-1x9x.onrender.com" 
 
 try:
     firebase = pyrebase.initialize_app(firebase_config)
@@ -34,6 +36,7 @@ def pagina_login():
                         utilizador = auth.sign_in_with_email_and_password(email, senha)
                         uid = utilizador['localId']
                         
+                        # Chama o endpoint para validar a sessão
                         response_ativar = requests.post(f"{API_URL}/sessao/ativar", json={"uid": uid, "email": email}, timeout=40)
                         
                         if response_ativar.status_code == 200:
@@ -44,8 +47,14 @@ def pagina_login():
 
                 except requests.exceptions.RequestException as e:
                      st.error(f"Erro de conexão com a API: {e}. O servidor pode estar a iniciar. Por favor, tente novamente em 30 segundos.")
-                except Exception:
-                    st.error("Email ou senha incorretos. Por favor, tente novamente.")
+                except Exception as e:
+                    # Captura o erro específico do Pyrebase para dar uma mensagem mais clara
+                    error_json = e.args[1]
+                    error_message = json.loads(error_json)['error']['message']
+                    if "INVALID_LOGIN_CREDENTIALS" in error_message:
+                        st.error("Email ou senha incorretos. Por favor, tente novamente.")
+                    else:
+                        st.error(f"Erro de autenticação: {error_message}")
 
     with tab_registo:
         st.subheader("Criar Nova Conta")
@@ -58,7 +67,7 @@ def pagina_login():
             nome_completo = st.text_input("Nome Completo*")
             apelido = st.text_input("Como prefere ser chamado(a)?")
             crm = st.text_input("CRM*")
-            especialidade = st.selectbox("Especialidade*", ["Otorrinolaringologia"])
+            especialidade = st.selectbox("Especialidade*", ["Otorrinolaringologia", "Clínica Geral", "Cardiologia", "Pediatria"])
             sexo = st.selectbox("Sexo", ["Masculino", "Feminino", "Outro", "Prefiro não informar"])
             
             register_button = st.form_submit_button("Criar Conta")
