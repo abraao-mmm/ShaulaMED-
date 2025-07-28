@@ -1,11 +1,11 @@
-# app.py (Versão Completa com a NOVA biblioteca de áudio)
+# app.py (Versão Final Corrigida - Anti-Loop)
 
 import streamlit as st
 import requests
 import json
 import random
 from login import pagina_login
-from streamlit_mic_recorder import mic_recorder # NOVA IMPORTAÇÃO
+from streamlit_mic_recorder import mic_recorder
 
 # --- CONFIGURAÇÃO DA PÁGINA E URL DA API ---
 st.set_page_config(
@@ -28,6 +28,9 @@ if 'ultima_reflexao' not in st.session_state:
     st.session_state.ultima_reflexao = None
 if "texto_transcrito_caixa" not in st.session_state:
     st.session_state.texto_transcrito_caixa = ""
+# NOVO: Flag para controlar o processamento do áudio e evitar loops
+if "audio_processado" not in st.session_state:
+    st.session_state.audio_processado = False
 
 
 # --- FUNÇÃO DA APLICAÇÃO PRINCIPAL ---
@@ -99,6 +102,7 @@ def shaulamed_app():
                         st.session_state.consulta_atual = response.json()
                         st.session_state.etapa = 2
                         st.session_state.texto_transcrito_caixa = ""
+                        st.session_state.audio_processado = False # Reseta a flag
                         st.rerun()
                     else:
                         st.error(f"O servidor da API respondeu com um erro ({response.status_code}). Detalhe: {response.text}")
@@ -114,14 +118,15 @@ def shaulamed_app():
             st.markdown("##### Relato do Paciente")
             st.write("Clique no microfone para gravar e de novo para parar:")
             
-            # LÓGICA DE GRAVAÇÃO ATUALIZADA
             audio_info = mic_recorder(
                 start_prompt="Clique para Gravar 🎙️",
                 stop_prompt="Clique para Parar ⏹️",
                 key='recorder'
             )
 
-            if audio_info and audio_info['bytes']:
+            # LÓGICA ANTI-LOOP
+            if audio_info and audio_info['bytes'] and not st.session_state.audio_processado:
+                st.session_state.audio_processado = True # Ativa a flag para bloquear repetições
                 st.info("Áudio recebido. A transcrever na nuvem, por favor aguarde...")
                 audio_bytes = audio_info['bytes']
                 try:
@@ -142,6 +147,7 @@ def shaulamed_app():
             if st.button("Processar Relato", use_container_width=True):
                 if fala_paciente:
                     st.session_state.texto_transcrito_caixa = ""
+                    st.session_state.audio_processado = False # Reseta a flag para permitir nova gravação
                     with st.spinner("A processar na nuvem..."):
                         dados = {"consulta_atual": st.session_state.consulta_atual, "fala": {"texto": fala_paciente}}
                         try:
