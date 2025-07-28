@@ -1,4 +1,4 @@
-# shaulamed_agent.py
+# shaulamed_agent.py (Versão Corrigida)
 
 import json
 from medico import Medico
@@ -12,18 +12,17 @@ from rich.console import Console
 from typing import Callable, Optional
 
 class ShaulaMedAgent:
-    """
-    O agente central do ShaulaMed, instanciado para um médico específico por sessão.
-    """
     def __init__(self, medico: Medico, gerenciador: GerenciadorDeMedicos, console_log: Console, obter_resposta_llm_func: Callable):
         self.medico = medico
         self.gerenciador = gerenciador
         self.console = console_log
-        self.memoria = MemoriaClinica(medico_id=self.medico.id)
-        # Ao ser criado, o agente carrega o histórico de consultas deste médico específico
-        self.memoria.carregar_encontros_do_medico(medico.id)
         
-        # "Sentidos" do agente que usam a IA
+        # Ao ser criado, o agente cria a memória, que por sua vez já carrega o histórico no seu __init__.
+        self.memoria = MemoriaClinica(medico_id=self.medico.id)
+        
+        # A LINHA ABAIXO FOI REMOVIDA, pois era redundante e causava o erro.
+        # self.memoria.carregar_encontros_do_medico(medico.id) <--- REMOVER
+        
         self.inference_engine = RealInferenceEngine(obter_resposta_llm_func)
         self.motor_de_analise = MotorDeAnaliseClinica()
         self.refinador = RefinadorDePrompt(obter_resposta_llm_func)
