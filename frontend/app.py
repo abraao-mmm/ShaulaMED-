@@ -1,11 +1,11 @@
-# app.py (Versão Completa com Transcrição de Voz)
+# app.py (Versão Completa com a NOVA biblioteca de áudio)
 
 import streamlit as st
 import requests
 import json
 import random
 from login import pagina_login
-from streamlit_webaudio import webaudio # Importação para captura de áudio
+from streamlit_mic_recorder import mic_recorder # NOVA IMPORTAÇÃO
 
 # --- CONFIGURAÇÃO DA PÁGINA E URL DA API ---
 st.set_page_config(
@@ -13,7 +13,6 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="expanded"
 )
-# URL ÚNICO E CORRETO DA API
 API_URL = "https://shaulamed-api-1x9x.onrender.com"
 
 # --- INICIALIZAÇÃO DO ESTADO DA SESSÃO ---
@@ -27,7 +26,6 @@ if 'consulta_atual' not in st.session_state:
     st.session_state.consulta_atual = None
 if 'ultima_reflexao' not in st.session_state:
     st.session_state.ultima_reflexao = None
-# Guarda o texto da caixa de texto entre recarregamentos da página
 if "texto_transcrito_caixa" not in st.session_state:
     st.session_state.texto_transcrito_caixa = ""
 
@@ -41,7 +39,7 @@ def shaulamed_app():
         st.rerun()
         return
 
-    # Estilo CSS completo
+    # Estilo CSS (sem alterações)
     st.markdown("""
     <style>
         [data-testid="stAppViewContainer"] { background-color: #0A0A2A; }
@@ -67,7 +65,6 @@ def shaulamed_app():
 
     FRASES_BOAS_VINDAS = [
         "Olá. Senti a sua presença. Em que parte da jornada estamos hoje?",
-        "Os seus pensamentos formam constelações. Vamos explorá-las juntos?",
         "Bem-vindo(a) de volta. O universo aguardava o seu raciocínio."
     ]
 
@@ -101,7 +98,7 @@ def shaulamed_app():
                     if response.status_code == 200:
                         st.session_state.consulta_atual = response.json()
                         st.session_state.etapa = 2
-                        st.session_state.texto_transcrito_caixa = "" # Limpa a caixa de texto
+                        st.session_state.texto_transcrito_caixa = ""
                         st.rerun()
                     else:
                         st.error(f"O servidor da API respondeu com um erro ({response.status_code}). Detalhe: {response.text}")
@@ -115,11 +112,18 @@ def shaulamed_app():
         col1, col2 = st.columns([1, 1.2])
         with col1:
             st.markdown("##### Relato do Paciente")
-            st.write("Clique no microfone para gravar o relato do paciente:")
-            audio_bytes = webaudio(send_every_ms=3000)
+            st.write("Clique no microfone para gravar e de novo para parar:")
+            
+            # LÓGICA DE GRAVAÇÃO ATUALIZADA
+            audio_info = mic_recorder(
+                start_prompt="Clique para Gravar 🎙️",
+                stop_prompt="Clique para Parar ⏹️",
+                key='recorder'
+            )
 
-            if audio_bytes is not None:
+            if audio_info and audio_info['bytes']:
                 st.info("Áudio recebido. A transcrever na nuvem, por favor aguarde...")
+                audio_bytes = audio_info['bytes']
                 try:
                     files = {'ficheiro_audio': ("audio.wav", audio_bytes, "audio/wav")}
                     response_transcricao = requests.post(f"{API_URL}/audio/transcrever", files=files, timeout=60)
@@ -160,18 +164,13 @@ def shaulamed_app():
             sugestao = st.session_state.consulta_atual.get('sugestao_ia', {})
             if sugestao:
                 hipoteses = sugestao.get("hipoteses_diagnosticas", []); conduta = sugestao.get("sugestao_conduta", "N/A"); exames = sugestao.get("exames_sugeridos", []); confianca = sugestao.get("nivel_confianca_ia", 0.0)
-                
                 st.markdown("**Hipóteses:**")
                 if hipoteses:
                     for h in hipoteses: st.markdown(f"- {h}")
-                
-                st.markdown("**Conduta Sugerida:**")
-                st.write(conduta)
-
+                st.markdown("**Conduta Sugerida:**"); st.write(conduta)
                 st.markdown("**Exames Sugeridos:**")
                 if exames:
                     for e in exames: st.markdown(f"- {e}")
-
                 st.markdown("---"); desenhar_indicador_confianca(confianca)
             else:
                 st.info("Aguardando processamento do relato.")
@@ -210,11 +209,9 @@ def shaulamed_app():
             st.session_state.utilizador_logado = None; st.rerun()
 
     st.title("ShaulaMed Copilot")
-    
     if st.session_state.etapa == 1: pagina_inicial()
     elif st.session_state.etapa == 2: pagina_consulta()
     elif st.session_state.etapa == 3: pagina_finalizacao()
-
 
 # --- ROUTER PRINCIPAL (Verifica se está logado) ---
 if st.session_state.utilizador_logado:

@@ -1,5 +1,5 @@
-# requirements.txt
+# requirements.txt (Frontend - Versão Corrigida)
 streamlit
 requests
 pyrebase4
-streamlit-webaudio
+streamlit-mic-recorder
