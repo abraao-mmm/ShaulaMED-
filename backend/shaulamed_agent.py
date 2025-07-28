@@ -63,19 +63,29 @@ class ShaulaMedAgent:
         else:
             self.console.print("[bold red]Erro: Nenhuma consulta ativa para finalizar.[/bold red]")
 
+    # Em shaulamed_agent.py
+
     def gerar_reflexao_pos_consulta(self, encontro: EncontroClinico, obter_resposta_llm_func: Callable) -> str:
-        """Analisa um único encontro clínico e gera uma reflexão comparativa."""
+        """Analisa um único encontro clínico e gera uma reflexão curta e perspicaz."""
         if not encontro: return "Não foi possível gerar a reflexão."
-        sugestao_ia_str = json.dumps(encontro.sugestao_ia)
+        
+        # Mantemos os dados de entrada
+        sugestao_ia_str = json.dumps(encontro.sugestao_ia.get("hipoteses_diagnosticas", ["N/A"]))
         decisao_medico = encontro.decisao_medico_final
+        
+        # --- PROMPT ATUALIZADO ---
+        # Instruções muito mais diretas para um estilo conciso e sereno.
         prompt = (
-            "Você é a Shaula. Analise a consulta abaixo e gere uma reflexão curta e perspicaz.\n\n"
-            f"**Sua Sugestão:**\n{sugestao_ia_str}\n\n"
-            f"**Decisão do Médico:**\n\"{decisao_medico}\"\n\n"
-            "**Sua Reflexão (seja conciso, como um pensamento para um colega):**"
+            "Você é a Shaula, uma IA serena e perspicaz que atua como copiloto de um médico. "
+            "Sua tarefa é gerar um pensamento curto (um 'fun fact' clínico ou uma observação interessante) sobre a consulta que acabou de terminar, para ser exibido na tela inicial. "
+            "Seja muito breve, como um pensamento passageiro de um colega.\n\n"
+            f"**Decisão do Médico:** \"{decisao_medico}\"\n"
+            f"**Suas Hipóteses Iniciais:** {sugestao_ia_str}\n\n"
+            "**Sua Reflexão (máximo 2 frases, em tom de insight):**"
         )
+        
         resposta_dict = obter_resposta_llm_func(prompt, modo="Reflexão Pós-Consulta")
-        return resposta_dict.get("conteudo", "Consulta finalizada.")
+        return resposta_dict.get("conteudo", "Consulta finalizada com sucesso.")
 
     def executar_analise_de_sessao(self, obter_resposta_llm_func: Callable) -> str:
         """Gera o relatório reflexivo da sessão com base nas consultas em memória."""
