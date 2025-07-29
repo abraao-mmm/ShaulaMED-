@@ -208,7 +208,7 @@ def shaulamed_app():
         if st.button("Sair", use_container_width=True):
             st.session_state.utilizador_logado = None; st.rerun()
 
-    st.title("ShaulaMed Copilot")
+    st.title("ShaulaMed")
     if st.session_state.etapa == 1: pagina_inicial()
     elif st.session_state.etapa == 2: pagina_consulta()
     elif st.session_state.etapa == 3: pagina_finalizacao()
