@@ -1,4 +1,4 @@
-# api.py (VERSÃO REATORADA - STATELESS)
+# api.py (Versão com Endpoint para o Painel Semanal)
 
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
@@ -6,9 +6,7 @@ import os
 import openai
 from dotenv import load_dotenv
 from typing import Dict, Optional
-
-# Carrega as variáveis de ambiente
-load_dotenv()
+from datetime import datetime, timedelta # Importação para lidar com datas
 
 # Importações dos módulos do projeto
 from medico import Medico
@@ -16,18 +14,19 @@ from encontro_clinico import EncontroClinico
 from shaulamed_agent import ShaulaMedAgent
 from gerenciador_medicos import GerenciadorDeMedicos
 from transcritor import transcrever_audio_bytes
+from analise_clinica import MotorDeAnaliseClinica # Importamos o motor de análise
+from memoria_clinica import MemoriaClinica # Importamos a MemoriaClinica
 from rich.console import Console
 
 # --- INICIALIZAÇÃO DA API E OBJETOS GLOBAIS ---
 app = FastAPI(
     title="ShaulaMed API",
     description="API Stateless para o Copiloto Clínico ShaulaMed.",
-    version="4.0 - Stateless"
+    version="4.1 - Painel Semanal"
 )
 console = Console()
 
 # --- INICIALIZAÇÃO DE SERVIÇOS ---
-# O gerenciador de médicos e a chave da API são inicializados uma vez.
 try:
     openai.api_key = os.getenv("OPENAI_API_KEY")
     if not openai.api_key:
@@ -35,19 +34,15 @@ try:
     gerenciador = GerenciadorDeMedicos()
 except Exception as e:
     console.print(f"[bold red]ERRO CRÍTICO na inicialização da API: {e}[/bold red]")
-    # Em caso de erro crítico na inicialização, a API não deve iniciar.
     raise e
 
-# --- FUNÇÃO DE CONEXÃO COM A LLM ---
+# --- FUNÇÃO DE CONEXÃO COM A LLM (sem alterações) ---
 def obter_resposta_llm_api(prompt: str, modo: str = "API") -> dict:
-    """Função que se conecta à API da OpenAI para obter respostas."""
     console.print(f"\n[dim][API -> OpenAI: Núcleo de '{modo}' ativado...][/dim]")
     try:
         if not openai.api_key:
             raise ValueError("A chave de API da OpenAI não está configurada.")
-        
         mensagens = [{"role": "user", "content": prompt}]
-        
         response = openai.chat.completions.create(
             model="gpt-4o",
             messages=mensagens,
@@ -60,7 +55,7 @@ def obter_resposta_llm_api(prompt: str, modo: str = "API") -> dict:
         console.print(f"❌ [bold red]API: Erro na chamada da OpenAI: {e}[/bold red]")
         raise HTTPException(status_code=500, detail=f"Erro na comunicação com a IA: {e}")
 
-# --- MODELOS DE DADOS (PYDANTIC) PARA AS REQUISIÇÕES ---
+# --- MODELOS DE DADOS (PYDANTIC) (sem alterações) ---
 class UserSession(BaseModel):
     uid: str
     email: str
@@ -75,7 +70,6 @@ class DecisaoFinal(BaseModel):
     decisao: str
     resumo: str
 
-# Modelos para a arquitetura stateless
 class ProcessarPayload(BaseModel):
     consulta_atual: dict
     fala: FalaPaciente
@@ -84,7 +78,9 @@ class FinalizarPayload(BaseModel):
     consulta_atual: dict
     decisao: DecisaoFinal
 
-# --- ENDPOINTS DA API (REATORADOS) ---
+# --- ENDPOINTS DA API (com a adição do novo endpoint) ---
+
+# ... (todos os outros endpoints como /sessao/ativar, /medico/criar_perfil, /consulta/iniciar, etc. permanecem aqui sem alterações) ...
 
 @app.get("/", tags=["Status"])
 def read_root():
@@ -92,7 +88,6 @@ def read_root():
 
 @app.post("/sessao/ativar", tags=["Sessão"])
 def ativar_sessao(user: UserSession):
-    """Verifica se o perfil do médico existe. Não guarda mais estado na memória."""
     console.print(f"Ativando sessão para UID: {user.uid}")
     perfil_medico = gerenciador.carregar_ou_criar_perfil({"localId": user.uid, "email": user.email})
     if perfil_medico:
@@ -101,7 +96,6 @@ def ativar_sessao(user: UserSession):
 
 @app.post("/medico/criar_perfil", tags=["Médico"])
 def criar_perfil_medico(perfil: PerfilMedico):
-    """Cria o perfil do médico no Firestore. Endpoint já era stateless."""
     try:
         medico_doc_ref = gerenciador.medicos_ref.document(perfil.uid)
         dados_para_salvar = perfil.model_dump()
@@ -117,7 +111,6 @@ def criar_perfil_medico(perfil: PerfilMedico):
 
 @app.post("/audio/transcrever", tags=["Áudio"])
 async def endpoint_transcrever_audio(ficheiro_audio: UploadFile = File(...)):
-    """Transcreve áudio usando Whisper. Endpoint já era stateless."""
     try:
         audio_bytes = await ficheiro_audio.read()
         texto = transcrever_audio_bytes(audio_bytes)
@@ -127,53 +120,68 @@ async def endpoint_transcrever_audio(ficheiro_audio: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro no servidor de transcrição: {e}")
 
-# --- NOVOS ENDPOINTS DE CONSULTA (STATELESS) ---
-
 @app.post("/consulta/iniciar/{uid}", tags=["Consulta"])
 def iniciar_consulta(uid: str):
-    """Cria um objeto de consulta em branco e o retorna para o front-end."""
     console.print(f"[{uid}] Nova consulta iniciada.")
     nova_consulta = EncontroClinico(medico_id=uid, transcricao_consulta="")
     return nova_consulta.para_dict()
 
 @app.post("/consulta/processar/{uid}", tags=["Consulta"])
 def processar_fala(uid: str, payload: ProcessarPayload):
-    """Recebe o estado da consulta, processa e retorna o estado atualizado."""
     console.print(f"[{uid}] Processando fala...")
-    # 1. Carrega o perfil do médico e instancia o agente na hora
     medico = gerenciador.carregar_ou_criar_perfil({"localId": uid, "email": ""})
     if not medico:
         raise HTTPException(status_code=404, detail="Médico não encontrado.")
-    
     agente = ShaulaMedAgent(medico=medico, gerenciador=gerenciador, console_log=console, obter_resposta_llm_func=obter_resposta_llm_api)
-    
-    # 2. Hidrata o estado da consulta a partir do que o front-end enviou
     agente.consulta_atual = EncontroClinico.de_dict(payload.consulta_atual)
-    
-    # 3. Processa a nova interação
     agente.processar_interacao(payload.fala.texto)
-    
-    # 4. Retorna o objeto da consulta totalmente atualizado
     return agente.consulta_atual.para_dict()
 
 @app.post("/consulta/finalizar/{uid}", tags=["Consulta"])
 def finalizar_consulta(uid: str, payload: FinalizarPayload):
-    """Recebe o estado final da consulta, salva no banco e retorna a reflexão."""
     console.print(f"[{uid}] Finalizando consulta...")
-    # 1. Carrega o perfil e instancia o agente
     medico = gerenciador.carregar_ou_criar_perfil({"localId": uid, "email": ""})
     if not medico:
         raise HTTPException(status_code=404, detail="Médico não encontrado.")
-
     agente = ShaulaMedAgent(medico=medico, gerenciador=gerenciador, console_log=console, obter_resposta_llm_func=obter_resposta_llm_api)
-    
-    # 2. Hidrata o estado da consulta
     agente.consulta_atual = EncontroClinico.de_dict(payload.consulta_atual)
-    
-    # 3. Gera a reflexão ANTES de finalizar e limpar os dados
     reflexao = agente.gerar_reflexao_pos_consulta(agente.consulta_atual, obter_resposta_llm_api)
-    
-    # 4. Finaliza a consulta (salva no Firestore)
     agente.finalizar_consulta(payload.decisao.decisao, payload.decisao.resumo)
-    
     return {"status": "sucesso", "reflexao": reflexao}
+
+# --- NOVO ENDPOINT PARA O PAINEL SEMANAL ---
+@app.get("/medico/{uid}/relatorio_semanal", tags=["Relatórios"])
+def get_relatorio_semanal(uid: str):
+    console.print(f"[{uid}] A gerar relatório semanal...")
+    try:
+        # 1. Carrega o perfil do médico para obter o nome
+        medico = gerenciador.carregar_ou_criar_perfil({"localId": uid, "email": ""})
+        if not medico:
+            raise HTTPException(status_code=404, detail="Médico não encontrado.")
+        
+        # 2. Busca as consultas da última semana diretamente da subcoleção
+        memoria = MemoriaClinica(medico_id=uid) # A memória já carrega todas as consultas
+        
+        # Filtra as consultas para a última semana
+        uma_semana_atras = datetime.now() - timedelta(days=7)
+        consultas_da_semana = [
+            enc for enc in memoria.encontros_em_memoria 
+            if enc.timestamp >= uma_semana_atras
+        ]
+        
+        if not consultas_da_semana:
+            return {"relatorio": "Nenhuma consulta registada na última semana para análise."}
+            
+        # 3. Usa o Motor de Análise para gerar o relatório
+        motor_analise = MotorDeAnaliseClinica()
+        relatorio_texto = motor_analise.gerar_relatorio_semanal(
+            encontros=consultas_da_semana,
+            nome_medico=medico.apelido,
+            obter_resposta_llm_func=obter_resposta_llm_api
+        )
+        
+        return {"relatorio": relatorio_texto}
+        
+    except Exception as e:
+        console.print(f"❌ [bold red]Erro ao gerar relatório semanal: {e}[/bold red]")
+        raise HTTPException(status_code=500, detail=f"Erro interno ao gerar o relatório: {e}")

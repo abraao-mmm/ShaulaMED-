@@ -1,4 +1,4 @@
-# app.py (Versão Completa com Fluxo de Transcrição Otimizado)
+# app.py (Versão Completa com Painel Semanal)
 
 import streamlit as st
 import requests
@@ -26,7 +26,6 @@ if 'consulta_atual' not in st.session_state:
     st.session_state.consulta_atual = None
 if 'ultima_reflexao' not in st.session_state:
     st.session_state.ultima_reflexao = None
-# Flag para controlar o processamento do áudio e evitar loops
 if "audio_processado" not in st.session_state:
     st.session_state.audio_processado = False
 
@@ -61,6 +60,13 @@ def shaulamed_app():
         }
         .step-active { font-weight: bold; color: #E0E0E0; border-bottom: 2px solid #8A2BE2; padding-bottom: 5px; }
         .step-inactive { color: #555; }
+        .report-box { 
+            background-color: #1E1E3F; 
+            border-left: 5px solid #8A2BE2; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-top: 20px;
+        }
     </style>
     """, unsafe_allow_html=True)
 
@@ -99,7 +105,7 @@ def shaulamed_app():
                     if response.status_code == 200:
                         st.session_state.consulta_atual = response.json()
                         st.session_state.etapa = 2
-                        st.session_state.audio_processado = False # Reseta a flag
+                        st.session_state.audio_processado = False
                         st.rerun()
                     else:
                         st.error(f"O servidor da API respondeu com um erro ({response.status_code}). Detalhe: {response.text}")
@@ -109,62 +115,43 @@ def shaulamed_app():
     def pagina_consulta():
         desenhar_jornada(2)
         transcricao_atual = st.session_state.consulta_atual.get('transcricao_consulta', "")
-        
         col1, col2 = st.columns([1, 1.2])
         with col1:
             st.markdown("##### Relato do Paciente")
             st.write("Clique no microfone para gravar e de novo para parar:")
-            
-            audio_info = mic_recorder(
-                start_prompt="Clique para Gravar 🎙️",
-                stop_prompt="Clique para Parar ⏹️",
-                key='recorder'
-            )
-
+            audio_info = mic_recorder(start_prompt="Clique para Gravar 🎙️", stop_prompt="Clique para Parar ⏹️", key='recorder')
             if audio_info and audio_info['bytes'] and not st.session_state.audio_processado:
                 st.session_state.audio_processado = True
                 audio_bytes = audio_info['bytes']
-                
                 with st.spinner("A transcrever e a analisar clinicamente..."):
                     try:
-                        # Passo 1: Transcrever o áudio
                         files = {'ficheiro_audio': ("audio.wav", audio_bytes, "audio/wav")}
                         response_transcricao = requests.post(f"{API_URL}/audio/transcrever", files=files, timeout=60)
-                        
                         if response_transcricao.status_code == 200:
                             texto_transcrito = response_transcricao.json().get("texto_transcrito", "")
                             st.success(f"Transcrição: \"_{texto_transcrito}_\"")
-                            
-                            # Passo 2: Enviar a transcrição diretamente para processamento
                             if texto_transcrito:
                                 dados_processamento = {"consulta_atual": st.session_state.consulta_atual, "fala": {"texto": texto_transcrito}}
                                 response_processamento = requests.post(f"{API_URL}/consulta/processar/{uid}", json=dados_processamento)
-                                
                                 if response_processamento.status_code == 200:
                                     st.session_state.consulta_atual = response_processamento.json()
                                     st.rerun()
                                 else:
                                     st.error(f"Erro ao processar na API ({response_processamento.status_code}): {response_processamento.text}")
                             else:
-                                st.warning("A transcrição resultou em texto vazio. Por favor, grave novamente.")
-                                st.session_state.audio_processado = False # Permite nova gravação
+                                st.warning("A transcrição resultou em texto vazio. Por favor, grave novamente."); st.session_state.audio_processado = False
                         else:
-                            st.error(f"Erro na transcrição ({response_transcricao.status_code}): {response_transcricao.text}")
-                            st.session_state.audio_processado = False # Permite nova gravação
-
+                            st.error(f"Erro na transcrição ({response_transcricao.status_code}): {response_transcricao.text}"); st.session_state.audio_processado = False
                     except requests.exceptions.RequestException as e:
-                        st.error(f"Erro de conexão: {e}")
-                        st.session_state.audio_processado = False # Permite nova gravação
-            
+                        st.error(f"Erro de conexão: {e}"); st.session_state.audio_processado = False
             if transcricao_atual:
                 st.info(f"**Relatos Processados:**\n\n\"_{transcricao_atual}_\"")
-
         with col2:
             st.markdown("##### Sugestão da IA")
             sugestao = st.session_state.consulta_atual.get('sugestao_ia', {})
             if sugestao:
                 hipoteses = sugestao.get("hipoteses_diagnosticas", []); conduta = sugestao.get("sugestao_conduta", "N/A"); exames = sugestao.get("exames_sugeridos", []); confianca = sugestao.get("nivel_confianca_ia", 0.0)
-                st.markdown("**Hipóteses:**")
+                st.markdown("**Hipóteses:**"); 
                 if hipoteses:
                     for h in hipoteses: st.markdown(f"- {h}")
                 st.markdown("**Conduta Sugerida:**"); st.write(conduta)
@@ -174,7 +161,6 @@ def shaulamed_app():
                 st.markdown("---"); desenhar_indicador_confianca(confianca)
             else:
                 st.info("Aguardando relato do paciente...")
-        
         st.markdown("---")
         if st.button("⏹️ Finalizar Consulta", use_container_width=True, type="primary"):
             st.session_state.etapa = 3; st.rerun()
@@ -200,21 +186,63 @@ def shaulamed_app():
                 else:
                     st.warning("Por favor, insira a decisão final.")
     
+    # --- NOVA PÁGINA PARA O PAINEL SEMANAL ---
+    def pagina_relatorio():
+        st.title("Painel Semanal")
+        st.caption("Uma análise reflexiva da sua prática na última semana, gerada pela Shaula.")
+
+        if st.button("Gerar Relatório da Semana", use_container_width=True):
+            with st.spinner("A analisar as consultas da última semana... Isto pode demorar um pouco."):
+                try:
+                    response = requests.get(f"{API_URL}/medico/{uid}/relatorio_semanal", timeout=120)
+                    if response.status_code == 200:
+                        st.session_state.relatorio_semanal = response.json().get("relatorio")
+                    else:
+                        st.error(f"Erro ao gerar o relatório ({response.status_code}): {response.text}")
+                except requests.exceptions.RequestException as e:
+                    st.error(f"Erro de conexão: {e}")
+        
+        if 'relatorio_semanal' in st.session_state and st.session_state.relatorio_semanal:
+            st.markdown(f'<div class="report-box">{st.session_state.relatorio_semanal.replace("n", "<br>")}</div>', unsafe_allow_html=True)
+
+    # --- ATUALIZAÇÃO DA BARRA LATERAL E ROTEAMENTO ---
     with st.sidebar:
         st.title("🩺 ShaulaMed")
         email_utilizador = st.session_state.utilizador_logado.get('email', 'N/A')
         st.caption(f"Médico: {email_utilizador}")
+        
+        # Lógica para realçar o botão da página ativa
+        page_type = "primary" if st.session_state.pagina == "Consulta" else "secondary"
+        if st.button("Consulta", use_container_width=True, type=page_type):
+            st.session_state.pagina = "Consulta"
+            st.rerun()
+
+        page_type = "primary" if st.session_state.pagina == "Relatorio" else "secondary"
+        if st.button("Painel Semanal", use_container_width=True, type=page_type):
+            st.session_state.pagina = "Relatorio"
+            # Limpa o relatório antigo ao mudar de página
+            if 'relatorio_semanal' in st.session_state:
+                del st.session_state.relatorio_semanal
+            st.rerun()
+            
         st.markdown("---")
         if st.button("Sair", use_container_width=True):
-            st.session_state.utilizador_logado = None; st.rerun()
+            st.session_state.utilizador_logado = None
+            # Limpa todo o estado da sessão ao sair
+            for key in st.session_state.keys():
+                del st.session_state[key]
+            st.rerun()
 
-    st.title("ShaulaMed")
-    if st.session_state.etapa == 1: pagina_inicial()
-    elif st.session_state.etapa == 2: pagina_consulta()
-    elif st.session_state.etapa == 3: pagina_finalizacao()
+    # Roteamento principal
+    if st.session_state.pagina == "Consulta":
+        st.title("ShaulaMed Copilot")
+        if st.session_state.etapa == 1: pagina_inicial()
+        elif st.session_state.etapa == 2: pagina_consulta()
+        elif st.session_state.etapa == 3: pagina_finalizacao()
+    elif st.session_state.pagina == "Relatorio":
+        pagina_relatorio()
 
-
-# --- ROUTER PRINCIPAL (Verifica se está logado) ---
+# --- ROUTER GERAL (Verifica se está logado) ---
 if st.session_state.utilizador_logado:
     shaulamed_app()
 else:
