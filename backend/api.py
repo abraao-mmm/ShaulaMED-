@@ -149,38 +149,37 @@ def finalizar_consulta(uid: str, payload: FinalizarPayload):
     agente.finalizar_consulta(payload.decisao.decisao, payload.decisao.resumo)
     return {"status": "sucesso", "reflexao": reflexao}
 
-# --- NOVO ENDPOINT PARA O PAINEL SEMANAL ---
+# Em api.py
+
+# ... (todo o resto do ficheiro permanece igual) ...
+
+# --- ENDPOINT ATUALIZADO PARA O PAINEL SEMANAL ---
 @app.get("/medico/{uid}/relatorio_semanal", tags=["Relatórios"])
 def get_relatorio_semanal(uid: str):
-    console.print(f"[{uid}] A gerar relatório semanal...")
+    console.print(f"[{uid}] A gerar relatório semanal completo...")
     try:
-        # 1. Carrega o perfil do médico para obter o nome
         medico = gerenciador.carregar_ou_criar_perfil({"localId": uid, "email": ""})
         if not medico:
             raise HTTPException(status_code=404, detail="Médico não encontrado.")
         
-        # 2. Busca as consultas da última semana diretamente da subcoleção
-        memoria = MemoriaClinica(medico_id=uid) # A memória já carrega todas as consultas
+        memoria = MemoriaClinica(medico_id=uid)
         
-        # Filtra as consultas para a última semana
         uma_semana_atras = datetime.now() - timedelta(days=7)
         consultas_da_semana = [
             enc for enc in memoria.encontros_em_memoria 
             if enc.timestamp >= uma_semana_atras
         ]
         
-        if not consultas_da_semana:
-            return {"relatorio": "Nenhuma consulta registada na última semana para análise."}
-            
-        # 3. Usa o Motor de Análise para gerar o relatório
         motor_analise = MotorDeAnaliseClinica()
-        relatorio_texto = motor_analise.gerar_relatorio_semanal(
+        
+        # Chama a nova função que retorna o JSON completo
+        relatorio_completo = motor_analise.gerar_relatorio_semanal_completo(
             encontros=consultas_da_semana,
             nome_medico=medico.apelido,
             obter_resposta_llm_func=obter_resposta_llm_api
         )
         
-        return {"relatorio": relatorio_texto}
+        return relatorio_completo
         
     except Exception as e:
         console.print(f"❌ [bold red]Erro ao gerar relatório semanal: {e}[/bold red]")

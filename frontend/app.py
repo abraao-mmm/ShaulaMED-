@@ -1,11 +1,13 @@
 # app.py (Versão Completa com Painel Semanal)
 
+import pandas as pd # Adicione esta linha no topo do seu app.py
 import streamlit as st
 import requests
 import json
 import random
 from login import pagina_login
 from streamlit_mic_recorder import mic_recorder
+
 
 # --- CONFIGURAÇÃO DA PÁGINA E URL DA API ---
 st.set_page_config(
@@ -188,66 +190,94 @@ def shaulamed_app():
     
     # Em app.py, substitua a sua função pagina_relatorio por esta:
 
+# Em app.py, adicione 'import pandas as pd' no topo do ficheiro.
+# Depois, substitua a função pagina_relatorio por esta:
+
+
+
     def pagina_relatorio():
         st.title("Painel Semanal")
         st.caption("Uma análise reflexiva da sua prática na última semana, gerada pela Shaula.")
 
         if st.button("Gerar Relatório da Semana", use_container_width=True):
-            with st.spinner("A analisar as consultas da última semana... Isto pode demorar um pouco."):
+            with st.spinner("A analisar as consultas da última semana..."):
                 try:
                     response = requests.get(f"{API_URL}/medico/{uid}/relatorio_semanal", timeout=120)
                     if response.status_code == 200:
-                        st.session_state.relatorio_semanal = response.json().get("relatorio")
+                        # Guarda a resposta JSON completa no estado da sessão
+                        st.session_state.relatorio_semanal_completo = response.json()
                     else:
                         st.error(f"Erro ao gerar o relatório ({response.status_code}): {response.text}")
                 except requests.exceptions.RequestException as e:
                     st.error(f"Erro de conexão: {e}")
         
-        if 'relatorio_semanal' in st.session_state and st.session_state.relatorio_semanal:
-            # --- CORREÇÃO APLICADA AQUI ---
-            # Trocamos "n" por "\n" para substituir corretamente as quebras de linha
-            relatorio_formatado = st.session_state.relatorio_semanal.replace("\n", "<br>")
-            st.markdown(f'<div class="report-box">{relatorio_formatado}</div>', unsafe_allow_html=True)
-
-    # --- ATUALIZAÇÃO DA BARRA LATERAL E ROTEAMENTO ---
-    with st.sidebar:
-        st.title("🩺 ShaulaMed")
-        email_utilizador = st.session_state.utilizador_logado.get('email', 'N/A')
-        st.caption(f"Médico: {email_utilizador}")
-        
-        # Lógica para realçar o botão da página ativa
-        page_type = "primary" if st.session_state.pagina == "Consulta" else "secondary"
-        if st.button("Consulta", use_container_width=True, type=page_type):
-            st.session_state.pagina = "Consulta"
-            st.rerun()
-
-        page_type = "primary" if st.session_state.pagina == "Relatorio" else "secondary"
-        if st.button("Painel Semanal", use_container_width=True, type=page_type):
-            st.session_state.pagina = "Relatorio"
-            # Limpa o relatório antigo ao mudar de página
-            if 'relatorio_semanal' in st.session_state:
-                del st.session_state.relatorio_semanal
-            st.rerun()
+        # Verifica se os dados completos existem no estado da sessão
+        if 'relatorio_semanal_completo' in st.session_state and st.session_state.relatorio_semanal_completo:
+            relatorio_data = st.session_state.relatorio_semanal_completo
             
-        st.markdown("---")
-        if st.button("Sair", use_container_width=True):
-            st.session_state.utilizador_logado = None
-            # Limpa todo o estado da sessão ao sair
-            for key in st.session_state.keys():
-                del st.session_state[key]
-            st.rerun()
+            # 1. Exibe o texto do coach
+            texto_coach = relatorio_data.get("texto_coach")
+            if texto_coach:
+                st.markdown(f'<div class="report-box">{texto_coach.replace("\n", "<br>")}</div>', unsafe_allow_html=True)
 
-    # Roteamento principal
-    if st.session_state.pagina == "Consulta":
-        st.title("ShaulaMed Copilot")
-        if st.session_state.etapa == 1: pagina_inicial()
-        elif st.session_state.etapa == 2: pagina_consulta()
-        elif st.session_state.etapa == 3: pagina_finalizacao()
-    elif st.session_state.pagina == "Relatorio":
-        pagina_relatorio()
+            dados_estruturados = relatorio_data.get("dados_estruturados")
+            if dados_estruturados:
+                st.markdown("---")
+                # 2. Desenha a Tabela de Concordância
+                st.subheader("Tabela de Concordância")
+                tabela_df = pd.DataFrame(dados_estruturados.get("tabela_concordancia", []))
+                st.dataframe(tabela_df, use_container_width=True, hide_index=True)
 
-# --- ROUTER GERAL (Verifica se está logado) ---
-if st.session_state.utilizador_logado:
-    shaulamed_app()
-else:
-    pagina_login()
+                st.markdown("---")
+                # 3. Desenha o Gráfico de Estatísticas
+                st.subheader("Estatísticas da Semana")
+                stats = dados_estruturados.get("stats_semanais", {})
+                if stats:
+                    # Transforma o dicionário para um formato que o bar_chart aceita
+                    stats_df = pd.DataFrame(list(stats.items()), columns=['Métrica', 'Valor'])
+                    st.bar_chart(stats_df.set_index('Métrica'))
+                else:
+                    st.info("Não há estatísticas para exibir.")
+
+        # --- ATUALIZAÇÃO DA BARRA LATERAL E ROTEAMENTO ---
+        with st.sidebar:
+            st.title("🩺 ShaulaMed")
+            email_utilizador = st.session_state.utilizador_logado.get('email', 'N/A')
+            st.caption(f"Médico: {email_utilizador}")
+            
+            # Lógica para realçar o botão da página ativa
+            page_type = "primary" if st.session_state.pagina == "Consulta" else "secondary"
+            if st.button("Consulta", use_container_width=True, type=page_type):
+                st.session_state.pagina = "Consulta"
+                st.rerun()
+
+            page_type = "primary" if st.session_state.pagina == "Relatorio" else "secondary"
+            if st.button("Painel Semanal", use_container_width=True, type=page_type):
+                st.session_state.pagina = "Relatorio"
+                # Limpa o relatório antigo ao mudar de página
+                if 'relatorio_semanal' in st.session_state:
+                    del st.session_state.relatorio_semanal
+                st.rerun()
+                
+            st.markdown("---")
+            if st.button("Sair", use_container_width=True):
+                st.session_state.utilizador_logado = None
+                # Limpa todo o estado da sessão ao sair
+                for key in st.session_state.keys():
+                    del st.session_state[key]
+                st.rerun()
+
+        # Roteamento principal
+        if st.session_state.pagina == "Consulta":
+            st.title("ShaulaMed Copilot")
+            if st.session_state.etapa == 1: pagina_inicial()
+            elif st.session_state.etapa == 2: pagina_consulta()
+            elif st.session_state.etapa == 3: pagina_finalizacao()
+        elif st.session_state.pagina == "Relatorio":
+            pagina_relatorio()
+
+    # --- ROUTER GERAL (Verifica se está logado) ---
+    if st.session_state.utilizador_logado:
+        shaulamed_app()
+    else:
+        pagina_login()
