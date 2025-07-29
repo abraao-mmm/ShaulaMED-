@@ -1,4 +1,4 @@
-# app.py (Versão Completa com Painel Semanal Avançado)
+# app.py (Versão Completa com Diálogo Reflexivo)
 
 import streamlit as st
 import requests
@@ -149,9 +149,9 @@ def shaulamed_app():
                 st.info(f"**Relatos Processados:**\n\n\"_{transcricao_atual}_\"")
         with col2:
             st.markdown("##### Sugestão da IA")
-            sugestão = st.session_state.consulta_atual.get('sugestao_ia', {})
-            if sugestão:
-                hipoteses = sugestão.get("hipoteses_diagnosticas", []); conduta = sugestão.get("sugestao_conduta", "N/A"); exames = sugestão.get("exames_sugeridos", []); confianca = sugestão.get("nivel_confianca_ia", 0.0)
+            sugestao = st.session_state.consulta_atual.get('sugestao_ia', {})
+            if sugestao:
+                hipoteses = sugestao.get("hipoteses_diagnosticas", []); conduta = sugestao.get("sugestao_conduta", "N/A"); exames = sugestao.get("exames_sugeridos", []); confianca = sugestao.get("nivel_confianca_ia", 0.0)
                 st.markdown("**Hipóteses:**"); 
                 if hipoteses:
                     for h in hipoteses: st.markdown(f"- {h}")
@@ -206,11 +206,30 @@ def shaulamed_app():
             relatorio_data = st.session_state.relatorio_semanal_completo
             
             texto_coach = relatorio_data.get("texto_coach")
+            dados_estruturados = relatorio_data.get("dados_estruturados")
+
             if texto_coach:
                 texto_formatado_html = texto_coach.replace("\n", "<br>")
                 st.markdown(f'<div class="report-box">{texto_formatado_html}</div>', unsafe_allow_html=True)
 
-            dados_estruturados = relatorio_data.get("dados_estruturados")
+                caso_divergente = dados_estruturados.get("exemplo_divergencia")
+                if caso_divergente:
+                    st.markdown("##### Diálogo Reflexivo")
+                    chave_resposta = f"resposta_{caso_divergente['id']}"
+                    resposta_medico = st.text_area("Sua reflexão sobre o caso:", key=chave_resposta, placeholder="Escreva aqui seu raciocínio (opcional)...")
+                    
+                    if st.button("Enviar Reflexão para Shaula", key=f"btn_{chave_resposta}"):
+                        if resposta_medico:
+                            with st.spinner("A enviar sua reflexão..."):
+                                url = f"{API_URL}/consulta/{caso_divergente['id']}/salvar_reflexao_medico?uid={uid}"
+                                response = requests.post(url, json={"texto_resposta": resposta_medico})
+                                if response.status_code == 200:
+                                    st.success("Obrigado! A sua reflexão ajuda-me a aprender.")
+                                else:
+                                    st.error("Não foi possível salvar a sua reflexão.")
+                        else:
+                            st.warning("Por favor, escreva algo antes de enviar.")
+
             if dados_estruturados:
                 st.markdown("---")
                 st.subheader("Estatísticas da Semana")
@@ -218,8 +237,6 @@ def shaulamed_app():
                 if stats:
                     stats_df = pd.DataFrame(list(stats.items()), columns=['Métrica', 'Valor'])
                     st.bar_chart(stats_df.set_index('Métrica'))
-                else:
-                    st.info("Não há estatísticas para exibir.")
                 
                 st.markdown("---")
                 st.subheader("Detalhe das Consultas")

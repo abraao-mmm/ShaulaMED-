@@ -1,4 +1,4 @@
-# api.py (Versão com Endpoint para o Painel Semanal)
+# api.py (Versão com Diálogo Reflexivo e Tom Profissional)
 
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
@@ -6,7 +6,7 @@ import os
 import openai
 from dotenv import load_dotenv
 from typing import Dict, Optional
-from datetime import datetime, timedelta # Importação para lidar com datas
+from datetime import datetime, timedelta
 
 # Importações dos módulos do projeto
 from medico import Medico
@@ -14,15 +14,15 @@ from encontro_clinico import EncontroClinico
 from shaulamed_agent import ShaulaMedAgent
 from gerenciador_medicos import GerenciadorDeMedicos
 from transcritor import transcrever_audio_bytes
-from analise_clinica import MotorDeAnaliseClinica # Importamos o motor de análise
-from memoria_clinica import MemoriaClinica # Importamos a MemoriaClinica
+from analise_clinica import MotorDeAnaliseClinica
+from memoria_clinica import MemoriaClinica
 from rich.console import Console
 
 # --- INICIALIZAÇÃO DA API E OBJETOS GLOBAIS ---
 app = FastAPI(
     title="ShaulaMed API",
     description="API Stateless para o Copiloto Clínico ShaulaMed.",
-    version="4.1 - Painel Semanal"
+    version="4.2 - Diálogo Reflexivo"
 )
 console = Console()
 
@@ -36,7 +36,7 @@ except Exception as e:
     console.print(f"[bold red]ERRO CRÍTICO na inicialização da API: {e}[/bold red]")
     raise e
 
-# --- FUNÇÃO DE CONEXÃO COM A LLM (sem alterações) ---
+# --- FUNÇÃO DE CONEXÃO COM A LLM ---
 def obter_resposta_llm_api(prompt: str, modo: str = "API") -> dict:
     console.print(f"\n[dim][API -> OpenAI: Núcleo de '{modo}' ativado...][/dim]")
     try:
@@ -55,7 +55,7 @@ def obter_resposta_llm_api(prompt: str, modo: str = "API") -> dict:
         console.print(f"❌ [bold red]API: Erro na chamada da OpenAI: {e}[/bold red]")
         raise HTTPException(status_code=500, detail=f"Erro na comunicação com a IA: {e}")
 
-# --- MODELOS DE DADOS (PYDANTIC) (sem alterações) ---
+# --- MODELOS DE DADOS (PYDANTIC) ---
 class UserSession(BaseModel):
     uid: str
     email: str
@@ -78,9 +78,10 @@ class FinalizarPayload(BaseModel):
     consulta_atual: dict
     decisao: DecisaoFinal
 
-# --- ENDPOINTS DA API (com a adição do novo endpoint) ---
+class DialogoResposta(BaseModel):
+    texto_resposta: str
 
-# ... (todos os outros endpoints como /sessao/ativar, /medico/criar_perfil, /consulta/iniciar, etc. permanecem aqui sem alterações) ...
+# --- ENDPOINTS DA API ---
 
 @app.get("/", tags=["Status"])
 def read_root():
@@ -88,7 +89,6 @@ def read_root():
 
 @app.post("/sessao/ativar", tags=["Sessão"])
 def ativar_sessao(user: UserSession):
-    console.print(f"Ativando sessão para UID: {user.uid}")
     perfil_medico = gerenciador.carregar_ou_criar_perfil({"localId": user.uid, "email": user.email})
     if perfil_medico:
         return {"status": "sucesso", "mensagem": f"Sessão para Dr(a). {perfil_medico.apelido} validada."}
@@ -122,13 +122,11 @@ async def endpoint_transcrever_audio(ficheiro_audio: UploadFile = File(...)):
 
 @app.post("/consulta/iniciar/{uid}", tags=["Consulta"])
 def iniciar_consulta(uid: str):
-    console.print(f"[{uid}] Nova consulta iniciada.")
     nova_consulta = EncontroClinico(medico_id=uid, transcricao_consulta="")
     return nova_consulta.para_dict()
 
 @app.post("/consulta/processar/{uid}", tags=["Consulta"])
 def processar_fala(uid: str, payload: ProcessarPayload):
-    console.print(f"[{uid}] Processando fala...")
     medico = gerenciador.carregar_ou_criar_perfil({"localId": uid, "email": ""})
     if not medico:
         raise HTTPException(status_code=404, detail="Médico não encontrado.")
@@ -139,7 +137,6 @@ def processar_fala(uid: str, payload: ProcessarPayload):
 
 @app.post("/consulta/finalizar/{uid}", tags=["Consulta"])
 def finalizar_consulta(uid: str, payload: FinalizarPayload):
-    console.print(f"[{uid}] Finalizando consulta...")
     medico = gerenciador.carregar_ou_criar_perfil({"localId": uid, "email": ""})
     if not medico:
         raise HTTPException(status_code=404, detail="Médico não encontrado.")
@@ -149,14 +146,8 @@ def finalizar_consulta(uid: str, payload: FinalizarPayload):
     agente.finalizar_consulta(payload.decisao.decisao, payload.decisao.resumo)
     return {"status": "sucesso", "reflexao": reflexao}
 
-# Em api.py
-
-# ... (todo o resto do ficheiro permanece igual) ...
-
-# --- ENDPOINT ATUALIZADO PARA O PAINEL SEMANAL ---
 @app.get("/medico/{uid}/relatorio_semanal", tags=["Relatórios"])
 def get_relatorio_semanal(uid: str):
-    console.print(f"[{uid}] A gerar relatório semanal completo...")
     try:
         medico = gerenciador.carregar_ou_criar_perfil({"localId": uid, "email": ""})
         if not medico:
@@ -172,7 +163,6 @@ def get_relatorio_semanal(uid: str):
         
         motor_analise = MotorDeAnaliseClinica()
         
-        # Chama a nova função que retorna o JSON completo
         relatorio_completo = motor_analise.gerar_relatorio_semanal_completo(
             encontros=consultas_da_semana,
             nome_medico=medico.apelido,
@@ -184,3 +174,16 @@ def get_relatorio_semanal(uid: str):
     except Exception as e:
         console.print(f"❌ [bold red]Erro ao gerar relatório semanal: {e}[/bold red]")
         raise HTTPException(status_code=500, detail=f"Erro interno ao gerar o relatório: {e}")
+
+@app.post("/consulta/{consulta_id}/salvar_reflexao_medico", tags=["Relatórios"])
+def salvar_reflexao_medico(consulta_id: str, resposta: DialogoResposta, uid: str):
+    console.print(f"[{uid}] Salvando resposta do diálogo para a consulta {consulta_id}...")
+    try:
+        consulta_ref = gerenciador.medicos_ref.document(uid).collection('consultas').document(consulta_id)
+        consulta_ref.update({
+            "reflexao_medico": resposta.texto_resposta
+        })
+        return {"status": "sucesso", "mensagem": "Reflexão salva com sucesso."}
+    except Exception as e:
+        console.print(f"❌ [bold red]Erro ao salvar reflexão do médico: {e}[/bold red]")
+        raise HTTPException(status_code=500, detail=f"Erro interno ao salvar a reflexão: {e}")
