@@ -1,4 +1,4 @@
-# app.py (Versão Completa com Painel Semanal Corrigido)
+# app.py (Versão Completa com Painel Semanal Avançado)
 
 import streamlit as st
 import requests
@@ -149,9 +149,9 @@ def shaulamed_app():
                 st.info(f"**Relatos Processados:**\n\n\"_{transcricao_atual}_\"")
         with col2:
             st.markdown("##### Sugestão da IA")
-            sugestao = st.session_state.consulta_atual.get('sugestao_ia', {})
-            if sugestao:
-                hipoteses = sugestao.get("hipoteses_diagnosticas", []); conduta = sugestao.get("sugestao_conduta", "N/A"); exames = sugestao.get("exames_sugeridos", []); confianca = sugestao.get("nivel_confianca_ia", 0.0)
+            sugestão = st.session_state.consulta_atual.get('sugestao_ia', {})
+            if sugestão:
+                hipoteses = sugestão.get("hipoteses_diagnosticas", []); conduta = sugestão.get("sugestao_conduta", "N/A"); exames = sugestão.get("exames_sugeridos", []); confianca = sugestão.get("nivel_confianca_ia", 0.0)
                 st.markdown("**Hipóteses:**"); 
                 if hipoteses:
                     for h in hipoteses: st.markdown(f"- {h}")
@@ -178,7 +178,7 @@ def shaulamed_app():
                         try:
                             response = requests.post(f"{API_URL}/consulta/finalizar/{uid}", json=dados)
                             if response.status_code == 200:
-                                st.session_state.ultima_reflexao = response.json().get("reflexão")
+                                st.session_state.ultima_reflexao = response.json().get("reflexao")
                             st.session_state.etapa = 1
                             st.session_state.consulta_atual = None
                             st.rerun()
@@ -192,7 +192,7 @@ def shaulamed_app():
         st.caption("Uma análise reflexiva da sua prática na última semana, gerada pela Shaula.")
 
         if st.button("Gerar Relatório da Semana", use_container_width=True):
-            with st.spinner("A analisar as consultas da última semana... Isto pode demorar um pouco."):
+            with st.spinner("A analisar as consultas da última semana..."):
                 try:
                     response = requests.get(f"{API_URL}/medico/{uid}/relatorio_semanal", timeout=120)
                     if response.status_code == 200:
@@ -213,12 +213,6 @@ def shaulamed_app():
             dados_estruturados = relatorio_data.get("dados_estruturados")
             if dados_estruturados:
                 st.markdown("---")
-                st.subheader("Tabela de Concordância")
-                tabela_df = pd.DataFrame(dados_estruturados.get("tabela_concordancia", []))
-                if not tabela_df.empty:
-                    st.dataframe(tabela_df.set_index("Caso"), use_container_width=True)
-
-                st.markdown("---")
                 st.subheader("Estatísticas da Semana")
                 stats = dados_estruturados.get("stats_semanais", {})
                 if stats:
@@ -226,6 +220,12 @@ def shaulamed_app():
                     st.bar_chart(stats_df.set_index('Métrica'))
                 else:
                     st.info("Não há estatísticas para exibir.")
+                
+                st.markdown("---")
+                st.subheader("Detalhe das Consultas")
+                tabela_df = pd.DataFrame(dados_estruturados.get("tabela_concordancia", []))
+                if not tabela_df.empty:
+                    st.dataframe(tabela_df.set_index("Caso"), use_container_width=True)
 
     with st.sidebar:
         st.title("🩺 ShaulaMed")
