@@ -186,7 +186,8 @@ def shaulamed_app():
                 else:
                     st.warning("Por favor, insira a decisão final.")
     
-    # --- NOVA PÁGINA PARA O PAINEL SEMANAL ---
+    # Em app.py, substitua a sua função pagina_relatorio por esta:
+
     def pagina_relatorio():
         st.title("Painel Semanal")
         st.caption("Uma análise reflexiva da sua prática na última semana, gerada pela Shaula.")
@@ -203,7 +204,10 @@ def shaulamed_app():
                     st.error(f"Erro de conexão: {e}")
         
         if 'relatorio_semanal' in st.session_state and st.session_state.relatorio_semanal:
-            st.markdown(f'<div class="report-box">{st.session_state.relatorio_semanal.replace("n", "<br>")}</div>', unsafe_allow_html=True)
+            # --- CORREÇÃO APLICADA AQUI ---
+            # Trocamos "n" por "\n" para substituir corretamente as quebras de linha
+            relatorio_formatado = st.session_state.relatorio_semanal.replace("\n", "<br>")
+            st.markdown(f'<div class="report-box">{relatorio_formatado}</div>', unsafe_allow_html=True)
 
     # --- ATUALIZAÇÃO DA BARRA LATERAL E ROTEAMENTO ---
     with st.sidebar:
