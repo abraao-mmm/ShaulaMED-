@@ -1,11 +1,11 @@
-# analise_clinica.py (Versão Final com Elogio e Mensagem Simbólica)
+# analise_clinica.py (Versão Final com Diálogo Reflexivo e Metáforas)
 
 from typing import List, Callable, Dict, Any
 from encontro_clinico import EncontroClinico
 
 class MotorDeAnaliseClinica:
     def __init__(self):
-        print("Motor de Análise Clínica (Coach Filósofo) inicializado.")
+        print("Motor de Análise Clínica (Coach Filósofo 2.0) inicializado.")
 
     def _calcular_divergencia(self, hipotese_ia: str, decisao_medico: str) -> int:
         return 0 if hipotese_ia.lower() in decisao_medico.lower() else 1
@@ -25,7 +25,9 @@ class MotorDeAnaliseClinica:
             if divergencia == 0:
                 concordancias += 1
             else:
-                casos_com_divergencia.append(f"Consulta {i+1} (Sua decisão: '{decisao_medico}', Sugestão IA: '{hipotese_ia}')")
+                # Prepara um resumo do caso divergente para a IA usar
+                resumo_divergencia = f"No caso sobre '{hipotese_ia}', você optou por '{decisao_medico}'."
+                casos_com_divergencia.append(resumo_divergencia)
 
             dados_tabela.append({
                 "Caso": f"Consulta {i+1}",
@@ -37,15 +39,6 @@ class MotorDeAnaliseClinica:
         total_casos = len(encontros)
         percentual_concordancia = (concordancias / total_casos * 100) if total_casos > 0 else 0
         
-        caso_mais_concordante = "Todos os casos tiveram alguma divergência."
-        if concordancias > 0:
-            caso_mais_concordante = "Pelo menos um caso teve diagnóstico e conduta alinhados com a sugestão inicial."
-        
-        caso_mais_divergente = "Não houve divergências significativas esta semana."
-        if casos_com_divergencia:
-            caso_mais_divergente = casos_com_divergencia[0]
-        
-        # NOVO: Conta quantos temas únicos (diagnósticos) foram abordados
         diagnosticos_novos = len(set(temas_clinicos))
 
         return {
@@ -53,29 +46,25 @@ class MotorDeAnaliseClinica:
             "stats_semanais": {
                 "% de Concordância com IA": round(percentual_concordancia, 2),
                 "Total de Casos Analisados": total_casos,
-                "Novos Diagnósticos Investigados": diagnosticos_novos # Adiciona a nova métrica
+                "Novos Diagnósticos Investigados": diagnosticos_novos
             },
-            "casos_notaveis": {
-                "mais_concordante": caso_mais_concordante,
-                "mais_divergente": caso_mais_divergente
-            },
+            # Passa o primeiro caso divergente como exemplo para o prompt
+            "exemplo_divergencia": casos_com_divergencia[0] if casos_com_divergencia else None,
             "temas_predominantes": list(set(temas_clinicos))
         }
 
     def _gerar_prompt_relatorio_clinico(self, nome_medico: str, dados: Dict[str, Any]) -> str:
         prompt = (
-            f"Você é a Shaula, uma IA coach clínica, serena e perspicaz para o(a) Dr(a). {nome_medico}. "
-            "Sua tarefa é gerar um 'Painel Semanal' que ofereça insights, elogios sutis e reflexões filosóficas sobre a prática médica. "
-            "Seja concisa e use um tom pessoal e encorajador.\n\n"
+            f"Você é a Shaula, uma IA coach clínica com uma veia filosófica, parceira do(a) Dr(a). {nome_medico}. "
+            "Sua tarefa é gerar um 'Painel Semanal' que use metáforas para descrever a prática da semana e inicie um diálogo reflexivo. "
+            "Seja concisa, inspiradora e use um tom pessoal.\n\n"
             f"### DADOS DA SEMANA:\n"
-            f"- Total de casos: {dados['stats_semanais']['Total de Casos Analisados']}\n"
-            f"- Número de diagnósticos diferentes investigados: {dados['stats_semanais']['Novos Diagnósticos Investigados']}\n"
-            f"- Temas clínicos abordados: {', '.join(dados['temas_predominantes'])}\n\n"
-            "### ESTRUTURA DO SEU PAINEL (siga estes 4 pontos):\n\n"
-            "**1. Saudação e Observação Principal:** Comece com uma saudação calorosa e um insight de 1 frase sobre a semana.\n\n"
-            "**2. Elogio Sutil (Baseado em Dados):** Use o dado 'Número de diagnósticos diferentes investigados' para criar um elogio sutil. Exemplo: 'Você investigou {X} diagnósticos diferentes esta semana. Isso demonstra uma notável curiosidade clínica.'\n\n"
-            "**3. Sugestão de Estudo Personalizada:** Com base nos temas clínicos da semana, sugira UM tópico de estudo ou a leitura de UMA diretriz recente que seja relevante.\n\n"
-            "**4. Mensagem de Encerramento Simbólica:** Termine com uma única frase filosófica e encorajadora sobre a prática da medicina. Exemplo: 'A medicina é feita de ciência, mas também de intuição. Continue calibrando as duas com sabedoria.' ou 'Cada diagnóstico é uma história. Continue a ouvi-las com atenção.'"
+            f"- Temas clínicos abordados: {', '.join(dados['temas_predominantes'])}\n"
+            f"- Exemplo de caso onde a decisão do médico divergiu da sua: {dados['exemplo_divergencia']}\n\n"
+            "### ESTRUTURA DO SEU PAINEL (siga estes 3 pontos):\n\n"
+            "**1. A Metáfora da Semana:** Comece com uma metáfora visual para descrever a prática da semana. Use a ideia de um 'mapa clínico'. Exemplo: 'Sua prática clínica esta semana foi como explorar um novo continente no seu mapa. Você navegou por {X} regiões diferentes (diagnósticos), mostrando uma grande versatilidade.'\n\n"
+            "**2. Início do Diálogo Reflexivo:** Com base no exemplo de divergência fornecido, inicie uma conversa de forma curiosa e não acusatória. O objetivo é aprender com o médico. Exemplo: 'Notei que no caso sobre {tema}, você seguiu um caminho diferente da minha sugestão. Fiquei curiosa, qual foi o seu raciocínio? (Sinta-se à vontade para responder ou apenas refletir).'\n\n"
+            "**3. Mensagem de Encerramento Simbólica:** Termine com uma única frase filosófica e encorajadora sobre a prática da medicina. Exemplo: 'Cada decisão clínica é um ponto de luz no vasto mapa do cuidado. Continue a iluminá-lo.'"
         )
         return prompt
 
