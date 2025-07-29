@@ -1,4 +1,4 @@
-# app.py (Versão com Gravador Contínuo - Fase 1 do Modo Ambiente)
+# app.py (Versão Corrigida e Simplificada do Gravador)
 
 import streamlit as st
 import requests
@@ -27,10 +27,6 @@ if 'consulta_atual' not in st.session_state:
     st.session_state.consulta_atual = None
 if 'ultima_reflexao' not in st.session_state:
     st.session_state.ultima_reflexao = None
-# NOVO: Controla se estamos no modo de escuta ativa
-if "escutando" not in st.session_state:
-    st.session_state.escutando = False
-
 
 # --- FUNÇÃO DA APLICAÇÃO PRINCIPAL ---
 def shaulamed_app():
@@ -84,7 +80,6 @@ def shaulamed_app():
                     if response.status_code == 200:
                         st.session_state.consulta_atual = response.json()
                         st.session_state.etapa = 2
-                        st.session_state.escutando = False
                         st.rerun()
                     else:
                         st.error(f"O servidor da API respondeu com um erro ({response.status_code}). Detalhe: {response.text}")
@@ -97,42 +92,39 @@ def shaulamed_app():
         col1, col2 = st.columns([1, 1.2])
         with col1:
             st.markdown("##### Captura da Consulta")
+            
+            # --- LÓGICA DO GRAVADOR SIMPLIFICADA ---
+            # O componente agora gere o seu próprio estado de 'gravar/parar'.
+            # Nós apenas reagimos quando ele nos devolve os bytes do áudio.
+            audio_info = mic_recorder(
+                start_prompt="▶️ Iniciar Escuta",
+                stop_prompt="⏹️ Parar e Analisar",
+                key='recorder'
+            )
 
-            # --- LÓGICA DO GRAVADOR CONTÍNUO ---
-            if not st.session_state.escutando:
-                if st.button("▶️ Iniciar Escuta", use_container_width=True):
-                    st.session_state.escutando = True
-                    st.rerun()
-            else:
-                st.info("Shaula está a escutar... Clique em 'Parar' quando o relato principal terminar.")
-                audio_info = mic_recorder(
-                    start_prompt="🔴 A Gravar...",
-                    stop_prompt="⏹️ Parar Escuta",
-                    key='recorder'
-                )
-                if audio_info and audio_info['bytes']:
-                    st.session_state.escutando = False
-                    audio_bytes = audio_info['bytes']
-                    with st.spinner("A transcrever e a analisar a consulta..."):
-                        try:
-                            files = {'ficheiro_audio': ("audio.wav", audio_bytes, "audio/wav")}
-                            response_transcricao = requests.post(f"{API_URL}/audio/transcrever", files=files, timeout=90)
-                            if response_transcricao.status_code == 200:
-                                texto_transcrito = response_transcricao.json().get("texto_transcrito", "")
-                                if texto_transcrito:
-                                    dados = {"consulta_atual": st.session_state.consulta_atual, "fala": {"texto": texto_transcrito}}
-                                    response_proc = requests.post(f"{API_URL}/consulta/processar/{uid}", json=dados)
-                                    if response_proc.status_code == 200:
-                                        st.session_state.consulta_atual = response_proc.json()
-                                    else:
-                                        st.error(f"Erro ao processar: {response_proc.text}")
+            if audio_info and audio_info['bytes']:
+                audio_bytes = audio_info['bytes']
+                with st.spinner("A transcrever e a analisar a consulta..."):
+                    try:
+                        files = {'ficheiro_audio': ("audio.wav", audio_bytes, "audio/wav")}
+                        response_transcricao = requests.post(f"{API_URL}/audio/transcrever", files=files, timeout=90)
+                        
+                        if response_transcricao.status_code == 200:
+                            texto_transcrito = response_transcricao.json().get("texto_transcrito", "")
+                            if texto_transcrito:
+                                dados_proc = {"consulta_atual": st.session_state.consulta_atual, "fala": {"texto": texto_transcrito}}
+                                response_proc = requests.post(f"{API_URL}/consulta/processar/{uid}", json=dados_proc)
+                                if response_proc.status_code == 200:
+                                    st.session_state.consulta_atual = response_proc.json()
                                 else:
-                                    st.warning("Nenhuma fala detetada no áudio.")
+                                    st.error(f"Erro ao processar: {response_proc.text}")
                             else:
-                                st.error(f"Erro na transcrição: {response_transcricao.text}")
-                        except requests.exceptions.RequestException as e:
-                            st.error(f"Erro de conexão: {e}")
-                    st.rerun()
+                                st.warning("Nenhuma fala detetada no áudio.")
+                        else:
+                            st.error(f"Erro na transcrição: {response_transcricao.text}")
+                    except requests.exceptions.RequestException as e:
+                        st.error(f"Erro de conexão: {e}")
+                st.rerun() # Recarrega a página para mostrar os resultados
 
             st.markdown("---")
             st.markdown("##### Prontuário")
@@ -156,7 +148,7 @@ def shaulamed_app():
         
         st.markdown("---")
         if st.button("⏹️ Finalizar Consulta", use_container_width=True, type="primary"):
-            decisao_final = st.session_state.get("prontuario_texto", "Nenhuma nota inserida.")
+            decisao_final = st.session_state.get("prontuario_texto", "")
             if not decisao_final.strip():
                 st.warning("Por favor, insira a sua decisão final no campo de prontuário antes de finalizar.")
             else:
