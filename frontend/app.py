@@ -1,4 +1,4 @@
-# app.py (Versão com fluxo de áudio estável restaurado)
+# app.py (Versão com o Fluxo Otimizado e Estável)
 
 import streamlit as st
 import requests
@@ -29,8 +29,6 @@ if 'ultima_reflexao' not in st.session_state:
     st.session_state.ultima_reflexao = None
 if "audio_processado" not in st.session_state:
     st.session_state.audio_processado = False
-if "texto_transcrito_caixa" not in st.session_state:
-    st.session_state.texto_transcrito_caixa = ""
 
 # --- FUNÇÃO DA APLICAÇÃO PRINCIPAL ---
 def shaulamed_app():
@@ -38,7 +36,7 @@ def shaulamed_app():
     if not uid:
         st.error("Erro de sessão. Por favor, faça o login novamente."); st.session_state.utilizador_logado = None; st.rerun(); return
 
-    # Estilo CSS
+    # Estilo CSS (sem alterações)
     st.markdown("""
     <style>
         [data-testid="stAppViewContainer"] { background-color: #0A0A2A; }
@@ -85,7 +83,6 @@ def shaulamed_app():
                         st.session_state.consulta_atual = response.json()
                         st.session_state.etapa = 2
                         st.session_state.audio_processado = False
-                        st.session_state.texto_transcrito_caixa = ""
                         st.rerun()
                     else:
                         st.error(f"O servidor da API respondeu com um erro ({response.status_code}). Detalhe: {response.text}")
@@ -98,21 +95,33 @@ def shaulamed_app():
         col1, col2 = st.columns([1, 1.2])
         with col1:
             st.markdown("##### Captura da Consulta")
-            st.write("Clique no microfone para gravar e de novo para parar:")
             
-            audio_info = mic_recorder(start_prompt="▶️ Iniciar Escuta", stop_prompt="⏹️ Parar Escuta", key='recorder')
-            
+            # Lógica de gravação simplificada e estável
+            audio_info = mic_recorder(
+                start_prompt="▶️ Iniciar Escuta",
+                stop_prompt="⏹️ Parar e Analisar",
+                key='recorder'
+            )
+
             if audio_info and audio_info['bytes'] and not st.session_state.audio_processado:
                 st.session_state.audio_processado = True
                 audio_bytes = audio_info['bytes']
-                with st.spinner("A transcrever o áudio..."):
+                with st.spinner("A transcrever e a analisar a consulta..."):
                     try:
                         files = {'ficheiro_audio': ("audio.wav", audio_bytes, "audio/wav")}
                         response_transcricao = requests.post(f"{API_URL}/audio/transcrever", files=files, timeout=90)
+                        
                         if response_transcricao.status_code == 200:
                             texto_transcrito = response_transcricao.json().get("texto_transcrito", "")
-                            st.session_state.texto_transcrito_caixa = texto_transcrito
-                            st.success("Transcrição concluída. Edite se necessário e processe.")
+                            if texto_transcrito:
+                                dados_proc = {"consulta_atual": st.session_state.consulta_atual, "fala": {"texto": texto_transcrito}}
+                                response_proc = requests.post(f"{API_URL}/consulta/processar/{uid}", json=dados_proc)
+                                if response_proc.status_code == 200:
+                                    st.session_state.consulta_atual = response_proc.json()
+                                else:
+                                    st.error(f"Erro ao processar: {response_proc.text}")
+                            else:
+                                st.warning("Nenhuma fala detetada no áudio.")
                         else:
                             st.error(f"Erro na transcrição: {response_transcricao.text}")
                     except requests.exceptions.RequestException as e:
@@ -120,31 +129,13 @@ def shaulamed_app():
                 st.rerun()
 
             st.markdown("---")
-            fala_paciente = st.text_area("Edite a transcrição ou insira o texto manualmente:", value=st.session_state.texto_transcrito_caixa, height=150, key="fala_texto")
-            
-            if st.button("Processar Relato", use_container_width=True):
-                if fala_paciente:
-                    with st.spinner("A analisar clinicamente..."):
-                        dados_proc = {"consulta_atual": st.session_state.consulta_atual, "fala": {"texto": fala_paciente}}
-                        response_proc = requests.post(f"{API_URL}/consulta/processar/{uid}", json=dados_proc)
-                        if response_proc.status_code == 200:
-                            st.session_state.consulta_atual = response_proc.json()
-                            # Permite uma nova gravação após o processamento
-                            st.session_state.audio_processado = False
-                            st.session_state.texto_transcrito_caixa = ""
-                        else:
-                            st.error(f"Erro ao processar: {response_proc.text}")
-                    st.rerun()
-                else:
-                    st.warning("A caixa de texto está vazia.")
-
-            if transcricao_atual:
-                st.info(f"**Último Relato Processado:**\n\n\"_{transcricao_atual}_\"")
+            st.markdown("##### Prontuário")
+            st.text_area("Notas e Decisão Clínica:", height=150, key="prontuario_texto", placeholder="Insira aqui a sua decisão final, prescrição e notas...")
 
         with col2:
             st.markdown("##### Sugestão da IA")
             sugestao = st.session_state.consulta_atual.get('sugestao_ia', {})
-            if sugestao:
+            if sugestao and sugestao.get("hipoteses_diagnosticas"):
                 hipoteses = sugestao.get("hipoteses_diagnosticas", []); conduta = sugestao.get("sugestao_conduta", "N/A"); exames = sugestao.get("exames_sugeridos", []); confianca = sugestao.get("nivel_confianca_ia", 0.0)
                 st.markdown("**Hipóteses:**"); 
                 if hipoteses:
@@ -155,11 +146,11 @@ def shaulamed_app():
                     for e in exames: st.markdown(f"- {e}")
                 st.markdown("---"); desenhar_indicador_confianca(confianca)
             else:
-                st.info("Aguardando a escuta ou o processamento do relato...")
+                st.info("Aguardando a escuta da consulta...")
         
         st.markdown("---")
         if st.button("⏹️ Finalizar Consulta", use_container_width=True, type="primary"):
-            decisao_final = st.session_state.get("prontuario_texto", "") # Usaremos o prontuário para a decisão final
+            decisao_final = st.session_state.get("prontuario_texto", "")
             if not decisao_final.strip():
                 st.warning("Por favor, insira a sua decisão final no campo de prontuário antes de finalizar.")
             else:
@@ -185,7 +176,7 @@ def shaulamed_app():
                 except requests.exceptions.RequestException as e:
                     st.error(f"Erro de conexão ao finalizar: {e}")
 
-    # ... (O resto do ficheiro, com a sidebar, página de relatório e router principal, continua igual) ...
+    # ... (O resto do ficheiro, com a sidebar e o router principal, continua igual) ...
     with st.sidebar:
         st.title("🩺 ShaulaMed")
         email_utilizador = st.session_state.utilizador_logado.get('email', 'N/A')
@@ -195,21 +186,18 @@ def shaulamed_app():
         if st.button("Consulta", use_container_width=True, type=page_type):
             st.session_state.pagina = "Consulta"
             st.rerun()
-
         page_type = "primary" if st.session_state.pagina == "Relatorio" else "secondary"
         if st.button("Painel Semanal", use_container_width=True, type=page_type):
             st.session_state.pagina = "Relatorio"
             if 'relatorio_semanal_completo' in st.session_state:
                 del st.session_state.relatorio_semanal_completo
             st.rerun()
-            
         st.markdown("---")
         if st.button("Sair", use_container_width=True):
             st.session_state.utilizador_logado = None
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
             st.rerun()
-
     if st.session_state.pagina == "Consulta":
         st.title("ShaulaMed Copilot")
         if st.session_state.etapa == 1: pagina_inicial()
