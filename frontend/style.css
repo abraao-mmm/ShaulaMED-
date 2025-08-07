@@ -127,6 +127,7 @@ a {
 
 .login__icon, .login__eye {
     font-size: 1.25rem;
+    color: hsl(0, 0%, 70%); /* Adicione esta linha para deixar os ícones cinza-claro */
 }
 
 .login__input {
