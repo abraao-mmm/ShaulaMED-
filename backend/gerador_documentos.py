@@ -16,7 +16,9 @@ class GeradorDeDocumentos:
         exemplos_formato = {
             "receita": "RECEITUÁRIO MÉDICO\n\nPaciente: [Nome do Paciente, se disponível]\n\nUso Contínuo:\n1. [Medicamento] - [Dosagem]\n\n[Assinatura do Médico]\n[Nome Completo do Médico]\n[CRM]",
             "atestado": "ATESTADO MÉDICO\n\nAtesto, para os devidos fins, que o(a) Sr(a). [Nome do Paciente] necessita de [Número] dias de afastamento de suas atividades laborais a partir desta data, por motivos de doença (CID: [CID, se aplicável]).\n\n[Local, Data]\n\n[Assinatura do Médico]\n[Nome Completo do Médico]\n[CRM]",
-            "encaminhamento": "ENCAMINHAMENTO MÉDICO\n\nEncaminho o(a) paciente [Nome do Paciente] para avaliação com especialista em [Especialidade], por apresentar quadro de [Diagnóstico/Sintomas].\n\nAtenciosamente,\n\n[Assinatura do Médico]\n[Nome Completo do Médico]\n[CRM]"
+            "encaminhamento": "ENCAMINHAMENTO MÉDICO\n\nEncaminho o(a) paciente [Nome do Paciente] para avaliação com especialista em [Especialidade], por apresentar quadro de [Diagnóstico/Sintomas].\n\nAtenciosamente,\n\n[Assinatura do Médico]\n[Nome Completo do Médico]\n[CRM]",
+            "pedido_exame": "PEDIDO DE EXAME\n\nPaciente: [Nome do Paciente]\n\nSolicito o(s) seguinte(s) exame(s):\n- [Nome do Exame 1]\n- [Nome do Exame 2]\n\nHipótese Diagnóstica: [HD]\n\n[Assinatura do Médico]\n[Nome Completo do Médico]\n[CRM]",
+            "relatorio_convenio": "RELATÓRIO MÉDICO\n\nPaciente: [Nome do Paciente]\nData de Nascimento: [Data]\n\n[...] corpo do relatório detalhando o quadro clínico, tratamento realizado e justificativa para procedimentos/continuidade do tratamento [...]\n\n[Assinatura do Médico]\n[Nome Completo do Médico]\n[CRM]"
         }
 
         formato_exemplo = exemplos_formato.get(tipo_documento, "Formato padrão de documento médico.")
