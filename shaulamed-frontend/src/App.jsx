@@ -1,29 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import StartScreen from './components/StartScreen';
-import MagicBento from './components/MagicBento';
-
-// Estilos para o botão de finalizar, para não precisarmos de outro ficheiro CSS
-const finishButtonStyle = {
-    padding: '1rem 2rem',
-    fontSize: '1rem',
-    color: 'var(--white)',
-    backgroundColor: '#d9534f', // Cor vermelha para indicar "finalizar"
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    boxShadow: '0 0 20px rgba(217, 83, 79, 0.4)'
-};
-
-const buttonContainerStyle = {
-    textAlign: 'center',
-    padding: '2rem',
-    backgroundColor: '#060010' // Garante que o fundo do botão seja consistente
-};
-
+import ConsultationScreen from './components/ConsultationScreen'; // Importa a nova tela
 
 function App() {
-  const [currentView, setCurrentView] = useState('start'); // 'start' ou 'consultation'
+  const [currentView, setCurrentView] = useState('start');
+  
+  // Estado para guardar o ID do utilizador logado (será implementado no futuro)
+  // Por agora, usamos um ID de teste
+  const [userId, setUserId] = useState('TEST_UID_THALLES'); 
 
   const handleStartConsultation = () => {
     console.log("Iniciando a consulta...");
@@ -32,42 +16,28 @@ function App() {
 
   const handleFinishConsultation = () => {
     console.log("Finalizando a consulta...");
-    setCurrentView('start');
+    setCurrentView('start'); // Volta para a tela inicial
   };
 
-  if (currentView === 'start') {
-    return <StartScreen onStart={handleStartConsultation} />;
-  }
+  // Simula o login e define o ecrã inicial
+  useEffect(() => {
+      // No futuro, aqui virá a lógica de login do Firebase
+      // Por agora, vamos direto para a tela de início
+      setCurrentView('start');
+  }, []);
 
-  if (currentView === 'consultation') {
-    return (
-      <div>
-        <MagicBento
-          textAutoHide={true}
-          enableStars={true}
-          enableSpotlight={true}
-          enableBorderGlow={true}
-          enableTilt={true}
-          enableMagnetism={true}
-          clickEffect={true}
-          spotlightRadius={300}
-          particleCount={12}
-          glowColor="132, 0, 255"
+  return (
+    <div className="App">
+      {currentView === 'start' && <StartScreen onStart={handleStartConsultation} />}
+      
+      {currentView === 'consultation' && (
+        <ConsultationScreen 
+          userId={userId} 
+          onFinish={handleFinishConsultation} 
         />
-        <div style={buttonContainerStyle}>
-            <button 
-              style={finishButtonStyle}
-              onClick={handleFinishConsultation}
-            >
-              Finalizar Sessão e Salvar
-            </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Se nenhuma view corresponder, não renderiza nada (ou uma tela de erro)
-  return null;
+      )}
+    </div>
+  );
 }
 
 export default App;
