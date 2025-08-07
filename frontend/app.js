@@ -12,29 +12,32 @@ const firebaseConfig = {
     appId: "1:1089322609573:web:8cd64115a76c03fbb5d64c"
 };
 
-// --- INICIALIZAÇÃO DO FIREBASE ---
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-
 // --- GERENCIAMENTO DE ESTADO ---
 let currentUser = null;
 
+// --- ELEMENTOS DA UI ---
+const loadingContainer = document.getElementById('loading-container');
+const loadingSpinner = document.getElementById('loading-spinner');
+const loadingText = document.getElementById('loading-text');
+const loginContainer = document.getElementById('login-container');
+const mainContainer = document.querySelector('.main-container');
+
 // --- FUNÇÕES DE UI ---
 function showLoginScreen() {
-    document.getElementById('login-container').style.display = 'grid';
-    const mainContainer = document.querySelector('.main-container');
-    if (mainContainer) mainContainer.style.display = 'none';
+    if(loadingContainer) loadingContainer.style.display = 'none';
+    if(mainContainer) mainContainer.style.display = 'none';
+    if(loginContainer) loginContainer.style.display = 'grid';
 }
 
 function showAppScreen() {
-    document.getElementById('login-container').style.display = 'none';
-    const mainContainer = document.querySelector('.main-container');
-    if (mainContainer) mainContainer.style.display = 'block';
+    if(loadingContainer) loadingContainer.style.display = 'none';
+    if(loginContainer) loginContainer.style.display = 'none';
+    if(mainContainer) mainContainer.style.display = 'block';
 }
 
 // --- LÓGICA DE LOGIN ---
 async function handleLogin(event) {
-    event.preventDefault(); // Previne o recarregamento da página
+    event.preventDefault();
     const email = document.getElementById('email-input').value;
     const password = document.getElementById('password-input').value;
 
@@ -44,7 +47,7 @@ async function handleLogin(event) {
     }
 
     try {
-        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
         currentUser = userCredential.user;
         
         const response_ativar = await fetch(`${API_BASE_URL}/sessao/ativar`, {
@@ -55,8 +58,6 @@ async function handleLogin(event) {
         
         if (!response_ativar.ok) throw new Error("Falha ao ativar a sessão no backend.");
         
-        console.log("Sessão ativada no backend com sucesso.");
-        // A transição de tela será gerenciada pelo onAuthStateChanged
     } catch (error) {
         console.error("Erro no login:", error);
         alert(`Erro no login: ${error.message}`);
@@ -85,20 +86,33 @@ const showHiddenPass = (passInputId, eyeIconId) => {
 
 // --- INICIALIZAÇÃO DA PÁGINA ---
 document.addEventListener('DOMContentLoaded', () => {
-    const loginForm = document.getElementById('login-form');
-    if (loginForm) {
-        loginForm.addEventListener('submit', handleLogin);
-    }
+    try {
+        // Inicializa o Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
 
-    showHiddenPass('password-input', 'login-eye');
-
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            currentUser = user;
-            showAppScreen();
-        } else {
-            currentUser = null;
-            showLoginScreen();
+        // Anexa os eventos
+        const loginForm = document.getElementById('login-form');
+        if (loginForm) {
+            loginForm.addEventListener('submit', handleLogin);
         }
-    });
+        showHiddenPass('password-input', 'login-eye');
+
+        // Configura o observador de autenticação
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUser = user;
+                showAppScreen();
+            } else {
+                currentUser = null;
+                showLoginScreen();
+            }
+        });
+
+    } catch (error) {
+        // Se a inicialização do Firebase falhar, mostra uma mensagem de erro
+        console.error("Erro Crítico ao Inicializar o Firebase:", error);
+        if(loadingSpinner) loadingSpinner.style.display = 'none';
+        if(loadingText) loadingText.textContent = 'Erro ao conectar. Verifique sua conexão e atualize a página.';
+    }
 });
