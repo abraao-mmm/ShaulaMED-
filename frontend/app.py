@@ -195,13 +195,23 @@ def shaulamed_app():
             ("SOAP", "Livre (texto corrido)", "PEACE", "CAMPOS")
         )
         
+        # DENTRO da função pagina_finalizacao()
+
         if st.button(f"Confirmar e Gerar Resumo {formato_selecionado}", use_container_width=True, key="confirmar_resumo_btn"):
             with st.spinner(f"A finalizar, aprender e gerar o resumo no formato {formato_selecionado}..."):
+                
+                # --- CORREÇÃO APLICADA AQUI ---
+                # Agora o objeto 'decisao' inclui o campo 'resumo', como esperado pelo backend.
                 dados = {
                     "consulta_atual": st.session_state.consulta_atual,
-                    "decisao": {"decisao": decisao_final},
+                    "decisao": {
+                        "decisao": decisao_final,
+                        "resumo": decisao_final 
+                    },
                     "formato_resumo": formato_selecionado
                 }
+                # --- FIM DA CORREÇÃO ---
+
                 try:
                     response = requests.post(f"{API_URL}/consulta/finalizar/{uid}", json=dados, timeout=120)
                     
