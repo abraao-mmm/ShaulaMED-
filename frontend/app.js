@@ -3,15 +3,13 @@
 // --- CONFIGURAÇÕES ---
 const API_BASE_URL = "https://shaulamed-api-1x9x.onrender.com";
 
-// Cole aqui as credenciais do seu projeto Firebase (as mesmas do firebase_config.py)
 const firebaseConfig = {
-    "apiKey": "AIzaSyBwzlg3up7Lm1FYPxuBfHx6TFtYPziBBzE",
-    "authDomain": "shaulamed-mvp.firebaseapp.com",
-    "projectId": "shaulamed-mvp", 
-    "storageBucket": "shaulamed-mvp.firebasestorage.app",
-    "messagingSenderId": "1089322609573",
-    "appId": "1089322609573:web:8cd64115a76c03fbb5d64c",
-    "databaseURL": ""
+    apiKey: "AIzaSyBwzlg3up7Lm1FYPxuBfHx6TFtYPziBBzE",
+    authDomain: "shaulamed-mvp.firebaseapp.com",
+    projectId: "shaulamed-mvp",
+    storageBucket: "shaulamed-mvp.firebasestorage.app",
+    messagingSenderId: "1089322609573",
+    appId: "1:1089322609573:web:8cd64115a76c03fbb5d64c"
 };
 
 // --- INICIALIZAÇÃO DO FIREBASE ---
@@ -21,10 +19,10 @@ const auth = firebase.auth();
 // --- GERENCIAMENTO DE ESTADO ---
 let currentUser = null;
 
-// --- FUNÇÕES PRINCIPAIS ---
+// --- FUNÇÕES DE UI ---
 
 function showLoginScreen() {
-    document.getElementById('login-container').style.display = 'flex';
+    document.getElementById('login-container').style.display = 'grid'; // Usa grid para centralizar
     document.querySelector('.main-container').style.display = 'none';
 }
 
@@ -33,9 +31,28 @@ function showAppScreen() {
     document.querySelector('.main-container').style.display = 'block';
 }
 
-async function handleLogin(event) {
-    event.preventDefault(); // Impede o comportamento padrão do formulário
+/*-- MOSTRAR/ESCONDER SENHA --*/
+const showHiddenPass = (passInputId, eyeIconId) => {
+    const input = document.getElementById(passInputId);
+    const iconEye = document.getElementById(eyeIconId);
 
+    if (iconEye) {
+        iconEye.addEventListener('click', () => {
+            if (input.type === 'password') {
+                input.type = 'text';
+                iconEye.classList.add('ri-eye-line');
+                iconEye.classList.remove('ri-eye-off-line');
+            } else {
+                input.type = 'password';
+                iconEye.classList.remove('ri-eye-line');
+                iconEye.classList.add('ri-eye-off-line');
+            }
+        });
+    }
+};
+
+async function handleLogin(event) {
+    event.preventDefault(); // Impede o recarregamento da página
     const email = document.getElementById('email-input').value;
     const password = document.getElementById('password-input').value;
 
@@ -47,19 +64,15 @@ async function handleLogin(event) {
     try {
         const userCredential = await auth.signInWithEmailAndPassword(email, password);
         currentUser = userCredential.user;
-        console.log("Login bem-sucedido:", currentUser.uid);
-
-        // Ativa a sessão no backend
+        
         const response_ativar = await fetch(`${API_BASE_URL}/sessao/ativar`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application-json' },
             body: JSON.stringify({ uid: currentUser.uid, email: currentUser.email })
         });
-
-        if (!response_ativar.ok) {
-            throw new Error("Falha ao ativar a sessão no backend.");
-        }
-
+        
+        if (!response_ativar.ok) throw new Error("Falha ao ativar a sessão no backend.");
+        
         console.log("Sessão ativada no backend com sucesso.");
         showAppScreen();
 
@@ -71,17 +84,16 @@ async function handleLogin(event) {
 
 // --- INICIALIZAÇÃO DA PÁGINA ---
 document.addEventListener('DOMContentLoaded', () => {
-    const loginButton = document.getElementById('login-button');
-    loginButton.addEventListener('click', handleLogin);
+    const loginForm = document.getElementById('login-form');
+    loginForm.addEventListener('submit', handleLogin);
 
-    // Verifica se o usuário já está logado na sessão do navegador
+    showHiddenPass('password-input', 'login-eye');
+
     auth.onAuthStateChanged(user => {
         if (user) {
-            console.log("Usuário já está logado, a mostrar a aplicação.");
             currentUser = user;
             showAppScreen();
         } else {
-            console.log("Nenhum usuário logado, a mostrar a tela de login.");
             showLoginScreen();
         }
     });

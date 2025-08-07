@@ -1,193 +1,244 @@
 /* style.css */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap");
+
+:root {
+    --white-color: hsl(0,0%,100%);
+    --black-color: hsl(0, 0% , 0%);
+    --body-font: "Poppins", sans-serif;
+    --h1-font-size: 1.75rem;
+    --normal-font-size: 1rem;
+    --small-font-size: .813rem;
+    --font-medium: 500;
+}
+
+* {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+
+body, input, button {
+    font-size: var(--normal-font-size);
+    font-family: var(--body-font);
+}
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #0c0d14;
-    color: #e2e8f0;
-    margin: 0;
-    padding: 2rem;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    min-height: 100vh;
+    color: var(--white-color);
 }
 
-.main-container {
+input, button {
+    border: none;
+    outline: none;
+}
+
+a {
+    text-decoration: none;
+}
+
+/* --- EFEITO DE ESTRELAS DE FUNDO --- */
+.night {
+    position: fixed;
     width: 100%;
-    max-width: 1100px;
+    height: 100%;
+    transform: rotateZ(45deg);
+    z-index: -1;
+    background: #0c0d14; /* Cor de fundo principal */
 }
 
-h1 {
-    color: #e2e8f0;
-    font-weight: 600;
-    font-size: 2rem;
+.shooting_star {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    height: 2px;
+    background: linear-gradient(-45deg, rgba(148, 0, 211, 1), rgba(0, 0, 0, 0));
+    border-radius: 999px;
+    filter: drop-shadow(0 0 6px rgba(180, 0, 255, 1));
+    animation: tail 3s ease-in-out infinite, shooting 3s ease-in-out infinite;
+}
+
+.shooting_star:nth-child(2) {
+    top: calc(50% - 50px);
+    left: calc(50% - 300px);
+    animation-delay: 1s;
+}
+
+.shooting_star:nth-child(3) {
+    top: calc(50% - 100px);
+    left: calc(50% + 300px);
+    animation-delay: 3s;
+}
+
+@keyframes tail {
+    0% { width: 0; }
+    30% { width: 100px; }
+    100% { width: 0; }
+}
+
+@keyframes shooting {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(300px); }
+}
+
+/* --- ESTRUTURA DO LOGIN --- */
+.login {
+    position: relative;
+    height: 100vh;
+    display: grid;
+    align-items: center;
+    justify-content: center;
+}
+
+.login__form {
+    position: relative;
+    background-color: hsla(0, 0%, 10%, 0.1);
+    border: 2px solid var(--white-color);
+    margin-inline: 1.5rem;
+    padding: 2.5rem 1.5rem;
+    border-radius: 1rem;
+    backdrop-filter: blur(8px);
+}
+
+.login__title {
+    text-align: center;
+    font-size: var(--h1-font-size);
+    font-weight: var(--font-medium);
     margin-bottom: 2rem;
 }
 
-.bento-grid-container {
+.login__content, .login__box {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    grid-auto-rows: minmax(150px, auto);
-    gap: 1rem;
 }
 
-.bento-card {
-    background-color: #060010;
-    border: 1px solid #332355;
-    border-radius: 24px;
-    padding: 1.5rem;
-    color: #e2e8f0;
+.login__content {
+    row-gap: 1.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.login__box {
+    grid-template-columns: max-content 1fr;
+    align-items: center;
+    column-gap: 0.75rem;
+    border-bottom: 2px solid var(--white-color);
+}
+
+.login__icon, .login__eye {
+    font-size: 1.25rem;
+}
+
+.login__input {
+    width: 100%;
+    padding-block: 0.8rem;
+    background: none;
+    color: var(--white-color);
+    position: relative;
+    z-index: 1;
+}
+
+.login__box-input {
+    position: relative;
+}
+
+.login__label {
+    position: absolute;
+    left: 0;
+    top: 13px;
+    font-weight: var(--font-medium);
+    transition: top 0.3s, font-size 0.3s;
+    pointer-events: none; /* Permite clicar através da label */
+}
+
+.login__eye {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    cursor: pointer;
+}
+
+.login__box:nth-child(2) input {
+    padding-right: 1.8rem;
+}
+
+.login__check, .login__check-group {
     display: flex;
-    flex-direction: column;
+    align-items: center;
     justify-content: space-between;
 }
 
-.bento-card h3 {
-    font-size: 0.9rem;
-    color: #a79bbd;
-    margin: 0;
-    font-weight: 500;
+.login__check {
+    margin-bottom: 1.5rem;
 }
 
-.bento-card .content {
-    font-size: 1.1rem;
-    font-weight: 500;
-    color: #d1d5db;
+.login__check-label, .login__forgot, .login__register {
+    font-size: var(--small-font-size);
 }
 
-/* Posição e tamanho de cada bloco */
-.insights      { grid-column: span 2; grid-row: span 1; }
-.overview      { grid-column: span 2; grid-row: span 1; }
-.collaboration { grid-column: span 2; grid-row: span 2; }
-.efficiency    { grid-column: span 4; grid-row: span 2; }
-.connectivity  { grid-column: span 2; grid-row: span 1; }
-.protection    { grid-column: span 2; grid-row: span 1; }
-
-/* Estilos para a tela de login */
-#login-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background-color: #0c0d14; /* Cor de fundo da página de login */
+.login__check-group {
+    column-gap: 0.5rem;
 }
 
-.login-box {
-    position: relative;
-    width: 400px;
-    padding: 40px;
-    background: #060010;
-    border-radius: 10px;
-    box-shadow: 0 15px 35px rgba(0,0,0,.5);
+.login__check-input {
+    width: 16px;
+    height: 16px;
 }
 
-.led-border {
-    position: relative;
-    border-radius: 10px;
-    padding: 2px; /* Espaço para o efeito de brilho */
-    background: linear-gradient(45deg, #03a9f4, #f441a5, #ffeb3b, #03a9f4);
-    background-size: 800%;
-    animation: animateGlow 20s linear infinite;
-    z-index: 1;
-    overflow: hidden; /* Para conter o conteúdo dentro da borda */
+.login__forgot {
+    color: var(--white-color);
 }
 
-@keyframes animateGlow {
-    0%{
-        background-position: 0 0;
-    }
-    100%{
-        background-position: 400% 0;
-    }
+.login__forgot:hover {
+    text-decoration: underline;
 }
 
-.login-box form {
-    position: relative;
-    z-index: 2;
-}
-
-.login-box h2 {
-    margin: 0 0 30px;
-    padding: 0;
-    color: #fff;
-    text-align: center;
-    text-transform: uppercase;
-}
-
-.input-box {
-    position: relative;
-}
-
-.input-box input {
+.login__button {
     width: 100%;
-    padding: 10px 0;
-    font-size: 16px;
-    color: #fff;
-    margin-bottom: 30px;
-    border: none;
-    border-bottom: 1px solid #fff;
-    outline: none;
-    background: transparent;
-}
-
-.input-box label {
-    position: absolute;
-    top: 0;
-    left: 0;
-    padding: 10px 0;
-    font-size: 16px;
-    color: #fff;
-    pointer-events: none;
-    transition: .5s;
-}
-
-.input-box input:focus ~ label,
-.input-box input:valid ~ label {
-    top: -20px;
-    left: 0;
-    color: #03a9f4;
-    font-size: 12px;
-}
-
-.btn {
-    background: #03a9f4;
-    color: #fff;
-    border: none;
-    padding: 10px 20px;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background-color: var(--white-color);
+    color: var(--black-color);
+    font-weight: var(--font-medium);
     cursor: pointer;
-    border-radius: 5px;
-    font-size: 16px;
-    text-transform: uppercase;
-    margin-top: 10px;
+    margin-bottom: 2rem;
 }
 
-.btn:hover {
-    background: #17b9ff;
-}
-
-.forgot {
-    margin-top: 20px;
-}
-
-.forgot a {
-    color: #fff;
-    text-decoration: none;
-    font-size: 14px;
-}
-
-.signup-link {
-    color: #fff;
-    font-size: 14px;
-    margin-top: 15px;
+.login__register {
     text-align: center;
 }
 
-.signup-link a {
-    color: #03a9f4;
-    text-decoration: none;
+.login__register a {
+    color: var(--white-color);
+    font-weight: var(--font-medium);
 }
 
-/* Esconde o container principal até o login */
+.login__register a:hover {
+    text-decoration: underline;
+}
+
+/* Animação da Label do Input */
+.login__input:focus + .login__label {
+    top: -12px;
+    font-size: var(--small-font-size);
+}
+
+.login__input:not(:placeholder-shown) + .login__label {
+    top: -12px;
+    font-size: var(--small-font-size);
+}
+
+/* Media Queries para telas maiores */
+@media screen and (min-width: 576px) {
+    .login__form {
+        width: 432px;
+        padding: 4rem 3rem 3.5rem;
+        border-radius: 1.5rem;
+    }
+    .login__title {
+        font-size: 2rem;
+    }
+}
+
+/* Estilos da aplicação principal (escondida no login) */
 .main-container {
-    display: none;
+    /* ... seus estilos de main-container e bento-grid aqui ... */
 }
