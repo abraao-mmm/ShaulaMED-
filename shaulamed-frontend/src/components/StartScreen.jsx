@@ -23,7 +23,6 @@ const StartScreen = ({ onStart }) => {
       </div>
       
       <div className="start-screen-content">
-        
         <div className="centered-content-wrapper">
           <h1 className="animated-title">
             <span className="static-text">Shaula</span>
@@ -47,17 +46,14 @@ const StartScreen = ({ onStart }) => {
           </h1>
           <AnimatedSubtitle text="Amplificando seu raciocínio clínico." />
         </div>
-
         <div className="start-button-wrapper">
             <StarButton onClick={onStart}>
                 Iniciar Nova Consulta
             </StarButton>
         </div>
-
       </div>
     </div>
   );
 };
 
-// A CORREÇÃO ESTÁ AQUI:
 export default StartScreen;
