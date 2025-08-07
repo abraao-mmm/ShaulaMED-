@@ -497,7 +497,7 @@ const MagicBento = ({
     { label: "Insights", title: "Gravador e Transcrição", description: "" },
     { label: "Overview", title: "Queixa Principal", description: "" },
     { label: "Collaboration", title: "Ações e Prontuário", description: "" },
-    { label: "Efficiency", title: "Análise Clínica", description: "HDA, Antecedentes e Hipóteses" },
+    { label: "Efficiency", title: "Análise Clínica", description: "" },
     { label: "Connectivity", title: "Exames Sugeridos", description: "" },
     { label: "Protection", title: "Tratamentos Sugeridos", description: "" },
   ]
