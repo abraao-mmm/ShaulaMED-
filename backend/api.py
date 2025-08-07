@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from typing import Dict, Optional
 from datetime import datetime, timedelta
 
-# ===== IMPORTAÇÃO NECESSÁRIA PARA O CORS ===== (NOVO)
+# ===== IMPORTAÇÃO NECESSÁRIA PARA O CORS =====
 from fastapi.middleware.cors import CORSMiddleware
 
 # Importações dos módulos do projeto
@@ -32,19 +32,19 @@ app = FastAPI(
 )
 console = Console()
 
-# ===== CONFIGURAÇÃO DO CORS ===== (NOVO)
-# Adicione este bloco exatamente aqui, após a inicialização do 'app'.
+# ===== CONFIGURAÇÃO DO CORS =====
+# Esta é a parte mais importante para resolver o erro.
+# Ela permite que o seu frontend em localhost comunique com a API.
 
 origins = [
-    "http://127.0.0.1:5500",  # Permite o seu ambiente de desenvolvimento local
-    "http://localhost:5500",   # Outra variação do ambiente local
-    # Se você for hospedar o frontend em outro lugar, adicione o link aqui.
-    # Ex: "https://seu-frontend.onrender.com" 
+    "http://localhost:5173",  # Permite o seu projeto React (Vite)
+    "http://127.0.0.1:5500",  # Permitia o seu projeto antigo (pode manter)
+    "http://localhost:5500",   # Outra variação local
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Lista de origens que podem fazer pedidos
+    allow_origins=origins,  # Apenas estas origens podem fazer pedidos
     allow_credentials=True,
     allow_methods=["*"],  # Permite todos os métodos (GET, POST, etc.)
     allow_headers=["*"],  # Permite todos os cabeçalhos
