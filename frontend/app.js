@@ -33,7 +33,9 @@ function showAppScreen() {
     document.querySelector('.main-container').style.display = 'block';
 }
 
-async function handleLogin() {
+async function handleLogin(event) {
+    event.preventDefault(); // Impede o comportamento padrão do formulário
+
     const email = document.getElementById('email-input').value;
     const password = document.getElementById('password-input').value;
 
@@ -46,18 +48,18 @@ async function handleLogin() {
         const userCredential = await auth.signInWithEmailAndPassword(email, password);
         currentUser = userCredential.user;
         console.log("Login bem-sucedido:", currentUser.uid);
-        
+
         // Ativa a sessão no backend
         const response_ativar = await fetch(`${API_BASE_URL}/sessao/ativar`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uid: currentUser.uid, email: currentUser.email })
         });
-        
+
         if (!response_ativar.ok) {
             throw new Error("Falha ao ativar a sessão no backend.");
         }
-        
+
         console.log("Sessão ativada no backend com sucesso.");
         showAppScreen();
 
