@@ -24,8 +24,8 @@ body, input, button {
 
 body {
     color: var(--white-color);
-    background-color: #0c0d14; /* Cor de fundo principal */
-    overflow: hidden; /* Evita barras de rolagem por causa das animações */
+    background-color: #0c0d14; /* Cor de fundo para garantir que não haja flash branco */
+    overflow: hidden;
 }
 
 input, button {
@@ -37,13 +37,13 @@ a {
     text-decoration: none;
 }
 
-/* --- EFEITO DE ESTRELAS DE FUNDO --- */
+/* --- Fundo de Estrelas Animado --- */
 .night {
     position: fixed;
-    top: 0;
-    left: 0;
     width: 100%;
     height: 100%;
+    top: 0;
+    left: 0;
     transform: rotateZ(45deg);
     z-index: -1;
 }
@@ -82,7 +82,7 @@ a {
     100% { transform: translateX(300px); }
 }
 
-/* --- ESTRUTURA DO LOGIN --- */
+/* --- Formulário de Login --- */
 .login {
     position: relative;
     height: 100vh;
@@ -99,8 +99,7 @@ a {
     padding: 2.5rem 1.5rem;
     border-radius: 1rem;
     backdrop-filter: blur(8px);
-    width: 100%;
-    max-width: 432px;
+    z-index: 1; /* Para ficar na frente do fundo */
 }
 
 .login__title {
@@ -149,7 +148,7 @@ a {
     top: 13px;
     font-weight: var(--font-medium);
     transition: top 0.3s, font-size 0.3s;
-    pointer-events: none; /* Permite clicar através da label */
+    pointer-events: none;
 }
 
 .login__eye {
@@ -220,30 +219,19 @@ a {
     text-decoration: underline;
 }
 
-/* Animação da Label do Input */
-.login__input:focus + .login__label {
-    top: -12px;
-    font-size: var(--small-font-size);
-}
-
+.login__input:focus + .login__label,
 .login__input:not(:placeholder-shown) + .login__label {
     top: -12px;
     font-size: var(--small-font-size);
 }
 
-/* Media Queries para telas maiores */
 @media screen and (min-width: 576px) {
     .login__form {
+        width: 432px;
         padding: 4rem 3rem 3.5rem;
         border-radius: 1.5rem;
     }
     .login__title {
         font-size: 2rem;
     }
-}
-
-/* Estilos da aplicação principal (escondida no login) */
-.main-container {
-    display: none; /* Inicialmente escondido */
-    /* ... seus estilos de bento-grid irão aqui quando a tela for visível ... */
 }

@@ -20,39 +20,21 @@ const auth = firebase.auth();
 let currentUser = null;
 
 // --- FUNÇÕES DE UI ---
-
 function showLoginScreen() {
-    document.getElementById('login-container').style.display = 'grid'; // Usa grid para centralizar
-    document.querySelector('.main-container').style.display = 'none';
+    document.getElementById('login-container').style.display = 'grid';
+    const mainContainer = document.querySelector('.main-container');
+    if (mainContainer) mainContainer.style.display = 'none';
 }
 
 function showAppScreen() {
     document.getElementById('login-container').style.display = 'none';
-    document.querySelector('.main-container').style.display = 'block';
+    const mainContainer = document.querySelector('.main-container');
+    if (mainContainer) mainContainer.style.display = 'block';
 }
 
-/*-- MOSTRAR/ESCONDER SENHA --*/
-const showHiddenPass = (passInputId, eyeIconId) => {
-    const input = document.getElementById(passInputId);
-    const iconEye = document.getElementById(eyeIconId);
-
-    if (iconEye) {
-        iconEye.addEventListener('click', () => {
-            if (input.type === 'password') {
-                input.type = 'text';
-                iconEye.classList.add('ri-eye-line');
-                iconEye.classList.remove('ri-eye-off-line');
-            } else {
-                input.type = 'password';
-                iconEye.classList.remove('ri-eye-line');
-                iconEye.classList.add('ri-eye-off-line');
-            }
-        });
-    }
-};
-
+// --- LÓGICA DE LOGIN ---
 async function handleLogin(event) {
-    event.preventDefault(); // Impede o recarregamento da página
+    event.preventDefault(); // Previne o recarregamento da página
     const email = document.getElementById('email-input').value;
     const password = document.getElementById('password-input').value;
 
@@ -67,25 +49,46 @@ async function handleLogin(event) {
         
         const response_ativar = await fetch(`${API_BASE_URL}/sessao/ativar`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application-json' },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uid: currentUser.uid, email: currentUser.email })
         });
         
         if (!response_ativar.ok) throw new Error("Falha ao ativar a sessão no backend.");
         
         console.log("Sessão ativada no backend com sucesso.");
-        showAppScreen();
-
+        // A transição de tela será gerenciada pelo onAuthStateChanged
     } catch (error) {
         console.error("Erro no login:", error);
         alert(`Erro no login: ${error.message}`);
     }
 }
 
+// --- MOSTRAR/ESCONDER SENHA ---
+const showHiddenPass = (passInputId, eyeIconId) => {
+    const input = document.getElementById(passInputId);
+    const iconEye = document.getElementById(eyeIconId);
+
+    if (input && iconEye) {
+        iconEye.addEventListener('click', () => {
+            if (input.type === 'password') {
+                input.type = 'text';
+                iconEye.classList.add('ri-eye-line');
+                iconEye.classList.remove('ri-eye-off-line');
+            } else {
+                input.type = 'password';
+                iconEye.classList.remove('ri-eye-line');
+                iconEye.classList.add('ri-eye-off-line');
+            }
+        });
+    }
+};
+
 // --- INICIALIZAÇÃO DA PÁGINA ---
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
-    loginForm.addEventListener('submit', handleLogin);
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
 
     showHiddenPass('password-input', 'login-eye');
 
@@ -94,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentUser = user;
             showAppScreen();
         } else {
+            currentUser = null;
             showLoginScreen();
         }
     });
