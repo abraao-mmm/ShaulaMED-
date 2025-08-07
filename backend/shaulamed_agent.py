@@ -34,16 +34,27 @@ class ShaulaMedAgent:
         self.console.print(f"\n--- Iniciando nova consulta para Dr(a). {self.medico.apelido} ---")
         self.consulta_atual = EncontroClinico(medico_id=self.medico.id, transcricao_consulta="")
 
+    # ... (importações e __init__ permanecem os mesmos)
+
+# Dentro da classe ShaulaMedAgent
+
     def processar_interacao(self, transcricao_bruta: str):
-        """Recebe a transcrição bruta, a refina, e depois gera hipóteses."""
+        """Recebe a transcrição, a refina e gera a nota clínica estruturada."""
         if self.consulta_atual:
             self.console.print(f"Processando transcrição: '{transcricao_bruta[:70]}...'")
             texto_refinado = self.refinador.refinar(transcricao_bruta)
             self.consulta_atual.transcricao_consulta = texto_refinado
-            sugestao = self.inference_engine.gerar_hipoteses_com_ia(texto_refinado)
-            self.consulta_atual.sugestao_ia = sugestao
+            
+            # --- MUDANÇA PRINCIPAL AQUI ---
+            # Chamamos o novo método para obter a nota estruturada
+            nota_estruturada = self.inference_engine.gerar_nota_clinica_estruturada(texto_refinado)
+            
+            # A sugestão da IA agora é o dicionário completo da nota
+            self.consulta_atual.sugestao_ia = nota_estruturada
         else:
             self.console.print("[bold red]Erro: Nenhuma consulta foi iniciada.[/bold red]")
+
+# ... (o resto do arquivo, como finalizar_consulta, pode permanecer o mesmo por enquanto)
 
     def finalizar_consulta(self, decisao_medico_final: str, resumo_prontuario: str):
         """Finaliza a consulta e regista o aprendizado no Firestore."""
