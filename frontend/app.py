@@ -111,29 +111,40 @@ def shaulamed_app():
                 key='recorder'
             )
 
+            # DENTRO da função pagina_consulta()
+
             if audio_info and audio_info['bytes'] and not st.session_state.audio_processado:
                 st.session_state.audio_processado = True
                 audio_bytes = audio_info['bytes']
-                with st.spinner("A transcrever e a estruturar a consulta..."):
+                with st.spinner("A transcrever, estruturar e analisar a consulta..."):
                     try:
+                        # Etapa 1: Enviar áudio para transcrição
                         files = {'ficheiro_audio': ("audio.wav", audio_bytes, "audio/wav")}
                         response_transcricao = requests.post(f"{API_URL}/audio/transcrever", files=files, timeout=90)
 
                         if response_transcricao.status_code == 200:
                             texto_transcrito = response_transcricao.json().get("texto_transcrito", "")
                             if texto_transcrito:
+                                # Etapa 2: Enviar transcrição para processamento completo (estruturação + análise avançada)
                                 dados_proc = {"consulta_atual": st.session_state.consulta_atual, "fala": {"texto": texto_transcrito}}
-                                response_proc = requests.post(f"{API_URL}/consulta/processar/{uid}", json=dados_proc, timeout=120)
+                                response_proc = requests.post(f"{API_URL}/consulta/processar/{uid}", json=dados_proc, timeout=180) # Aumentado o timeout para a análise complexa
+                                
                                 if response_proc.status_code == 200:
+                                    # Etapa 3: Atualizar o estado da sessão COM SUCESSO
                                     st.session_state.consulta_atual = response_proc.json()
+                                    
+                                    # CORREÇÃO AQUI: O rerun() foi movido para dentro do bloco de sucesso
+                                    st.rerun() 
                                 else:
-                                    st.error(f"Erro ao processar: {response_proc.text}")
+                                    st.error(f"Erro ao processar a consulta: {response_proc.text}")
                             else:
                                 st.warning("Nenhuma fala detetada no áudio.")
                         else:
                             st.error(f"Erro na transcrição: {response_transcricao.text}")
                     except requests.exceptions.RequestException as e:
-                        st.error(f"Erro de conexão: {e}")
+                        st.error(f"Erro de conexão com a API: {e}")
+                
+                # O st.rerun() foi REMOVIDO daqui para não ser executado prematuramente.
                 st.rerun()
 
             st.markdown("---")
