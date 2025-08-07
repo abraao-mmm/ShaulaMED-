@@ -12,6 +12,10 @@ const firebaseConfig = {
     appId: "1:1089322609573:web:8cd64115a76c03fbb5d64c"
 };
 
+// --- INICIALIZAÇÃO DO FIREBASE ---
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
 // --- GERENCIAMENTO DE ESTADO ---
 let currentUser = null;
 
@@ -47,7 +51,7 @@ async function handleLogin(event) {
     }
 
     try {
-        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
         currentUser = userCredential.user;
         
         const response_ativar = await fetch(`${API_BASE_URL}/sessao/ativar`, {
@@ -58,6 +62,7 @@ async function handleLogin(event) {
         
         if (!response_ativar.ok) throw new Error("Falha ao ativar a sessão no backend.");
         
+        // A transição de tela será gerenciada pelo onAuthStateChanged
     } catch (error) {
         console.error("Erro no login:", error);
         alert(`Erro no login: ${error.message}`);
@@ -86,33 +91,24 @@ const showHiddenPass = (passInputId, eyeIconId) => {
 
 // --- INICIALIZAÇÃO DA PÁGINA ---
 document.addEventListener('DOMContentLoaded', () => {
-    try {
-        // Inicializa o Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-
-        // Anexa os eventos
-        const loginForm = document.getElementById('login-form');
-        if (loginForm) {
-            loginForm.addEventListener('submit', handleLogin);
-        }
-        showHiddenPass('password-input', 'login-eye');
-
-        // Configura o observador de autenticação
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                currentUser = user;
-                showAppScreen();
-            } else {
-                currentUser = null;
-                showLoginScreen();
-            }
-        });
-
-    } catch (error) {
-        // Se a inicialização do Firebase falhar, mostra uma mensagem de erro
-        console.error("Erro Crítico ao Inicializar o Firebase:", error);
-        if(loadingSpinner) loadingSpinner.style.display = 'none';
-        if(loadingText) loadingText.textContent = 'Erro ao conectar. Verifique sua conexão e atualize a página.';
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
     }
+
+    showHiddenPass('password-input', 'login-eye');
+
+    // --- MUDANÇA PRINCIPAL AQUI ---
+    // Força o logout toda vez que a página é carregada para facilitar os testes.
+    auth.signOut(); 
+
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            currentUser = user;
+            showAppScreen();
+        } else {
+            currentUser = null;
+            showLoginScreen();
+        }
+    });
 });
