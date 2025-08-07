@@ -33,10 +33,12 @@ app = FastAPI(
 console = Console()
 
 # ===== CONFIGURAÇÃO DO CORS =====
+# IMPORTANTE: Adicione o URL do seu frontend do Render aqui!
 origins = [
-    "http://localhost:5173",  # Permite o seu projeto React (Vite)
+    "http://localhost:5173",      # Para desenvolvimento local
     "http://127.0.0.1:5500",
     "http://localhost:5500",
+    "https://shaulamed-frontend.onrender.com",  # EXEMPLO - SUBSTITUA PELO SEU URL REAL
 ]
 
 app.add_middleware(
@@ -226,26 +228,9 @@ def salvar_reflexao_medico(consulta_id: str, resposta: DialogoResposta, uid: str
         console.print(f"❌ [bold red]Erro ao salvar reflexão do médico: {e}[/bold red]")
         raise HTTPException(status_code=500, detail=f"Erro interno ao salvar a reflexão: {e}")
 
-# --- LÓGICA PARA SERVIR O FRONTEND ESTÁTICO ---
-
-# Monta o diretório 'frontend' para servir arquivos estáticos como CSS e JS.
-# O caminho "../frontend" assume a estrutura de pastas: /backend e /frontend.
-# Se a sua estrutura for diferente, ajuste este caminho.
-app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), '..', 'frontend')), name="static")
-
+# --- LÓGICA PARA SERVIR O FRONTEND ESTÁTICO (Opcional se o frontend estiver noutro serviço) ---
 
 @app.get("/status", tags=["Status"])
 def get_status():
     """Endpoint de status para o app.js testar a conexão."""
     return {"status": "ShaulaMed API está online e funcional."}
-
-@app.get("/{full_path:path}", response_class=FileResponse)
-async def serve_frontend(full_path: str):
-    """
-    Serve o index.html para a rota raiz e qualquer outra rota não correspondida pela API.
-    Isso é útil para frameworks de frontend que usam roteamento do lado do cliente.
-    """
-    path = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'index.html')
-    if os.path.exists(path):
-        return FileResponse(path)
-    raise HTTPException(status_code=404, detail="Frontend não encontrado.")

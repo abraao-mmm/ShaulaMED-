@@ -1,9 +1,12 @@
+/* 1. Importamos a nova fonte do Google Fonts */
+@import url("https://fonts.googleapis.com/css?family=Nixie+One");
+
 .start-screen-container {
     width: 100%;
     height: 100vh;
     position: relative;
     overflow: hidden;
-    background-color: var(--background-dark);
+    background-color: #0c0d14; /* Um fundo um pouco mais escuro para o neon destacar */
 }
 
 .particle-background {
@@ -23,72 +26,7 @@
     justify-content: center;
     align-items: center;
     height: 100%;
-    text-align: center;
-    color: var(--white);
-}
-
-/* ===== A SOLUÇÃO FINAL DE ALINHAMENTO ===== */
-
-/* 1. O contentor do título vira a nossa "tela de desenho" com uma largura fixa.
-      O seu pai (.start-screen-content) já o centraliza na página. */
-.animated-title {
-  position: relative; /* Essencial para o posicionamento absoluto dos filhos */
-  display: flex; /* Mantemos flex para o caso de precisarmos no futuro */
-  justify-content: center;
-  align-items: center;
-  width: 600px; /* A nossa "tela" com largura fixa. Aumentei um pouco. */
-  height: 80px; /* Uma altura definida para evitar saltos */
-  font-size: 3.5rem;
-  margin-bottom: 0.5rem;
-}
-
-/* 2. Posicionamos "Shaula" de forma absoluta. */
-.static-text {
-  position: absolute;
-  right: 50%; /* O lado DIREITO do texto vai até o meio da "tela" de 600px. */
-  transform: translateX(-0.25rem); /* Empurramos um pouco para a esquerda para criar um gap. */
-  font-weight: bold;
-}
-
-/* 3. Posicionamos o bloco roxo também de forma absoluta. */
-.rotating-text-block {
-  position: absolute;
-  left: 50%; /* O lado ESQUERDO do bloco vai até o meio da "tela" de 600px. */
-  transform: translateX(0.25rem); /* Empurramos um pouco para a direita para criar um gap. */
-  display: flex;
-}
-
-/* ===== FIM DA SOLUÇÃO ===== */
-
-/* ... (todo o CSS anterior permanece o mesmo até chegar a .rotating-text-container) ... */
-
-.start-screen-container {
     width: 100%;
-    height: 100vh;
-    position: relative;
-    overflow: hidden;
-    background-color: var(--background-dark);
-}
-
-.particle-background {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-}
-
-.start-screen-content {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    text-align: center;
-    color: var(--white);
 }
 
 .centered-content-wrapper {
@@ -99,40 +37,45 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 100%;
 }
 
 .animated-title {
+  position: relative;
+  height: 80px; 
   display: flex;
   align-items: center;
+  font-size: 5rem; /* Aumentamos um pouco a fonte */
+  margin-bottom: 1.5rem; /* Mais espaço para o subtítulo */
+  width: 600px;
   justify-content: center;
-  gap: 0.5rem;
-  font-size: 3.5rem;
-  margin-bottom: 0.5rem;
-  white-space: nowrap;
+  font-family: 'Nixie One', sans-serif; /* 2. Aplicamos a nova fonte */
+  transform: rotate(-2deg); /* 3. Adicionamos a leve inclinação do letreiro */
 }
 
+/* 4. Estilo Neon para o texto "Shaula" */
 .static-text {
+  position: absolute;
+  right: 43%;
+  margin-right: 0.5rem;
   font-weight: bold;
+  color: #ebffff;
+  text-shadow: 2px 2px 1px rgba(0,0,0,0.3), 0 0 15px #fff, 0 0 10px #38eeff, 0 0 50px #38eeff;
 }
 
 .rotating-text-block {
-  display: flex;
+  position: absolute;
+  left: 57%;
+  margin-left: 0.5rem;
 }
 
-/* ===== A SOLUÇÃO FINAL ESTÁ AQUI ===== */
+/* 5. Estilo Neon ROXO e PISCANTE para o texto dinâmico */
 .rotating-text-container {
-  background-color: var(--purple-primary);
-  color: var(--white);
+  color: #ccf;
   font-weight: 700;
-  padding: 0.25rem 1rem;
-  border-radius: 0.5rem;
   text-align: center;
   white-space: nowrap;
-  
-  /* Adiciona uma transição CSS para a propriedade 'width'.
-     Duração de 0.4s com uma curva de aceleração suave. */
-  transition: width 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+  text-shadow: 2px 2px 1px rgba(0,0,0,0.5), 0 0 20px #fff, 0 0 10px #7d26cd, 0 0 50px #7d26cd;
+  animation: blink 0.2s infinite alternate; /* 6. Aplicamos a animação de piscar */
 }
 
 .rotating-text-wrapper {
@@ -144,9 +87,13 @@
   font-size: 1.2rem;
   opacity: 0.8;
   margin-bottom: 2rem;
+  font-family: 'Nixie One', sans-serif;
+  color: #ebffff;
+  text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
 }
 
 .start-button {
+  /* ... Estilos do botão podem ser mantidos ou ajustados ... */
   position: absolute;
   bottom: 15%;
   left: 50%;
@@ -165,4 +112,20 @@
 .start-button:hover {
   transform: translateX(-50%) translateY(-3px);
   box-shadow: 0 0 30px var(--purple-primary);
+}
+
+/* 7. Adicionamos a animação @keyframes no final do ficheiro */
+@keyframes blink {
+  70% {
+    opacity: 0.6;
+    text-shadow: 2px 2px 1px rgba(0,0,0,0.5), 0 0 10px #fff, 0 0 5px #7d26cd, 0 0 25px #7d26cd;
+  }
+}
+
+/* Adicione este código ao seu StartScreen.css */
+.start-button-wrapper {
+  position: absolute;
+  bottom: 15%;
+  left: 50%;
+  transform: translateX(-50%);
 }

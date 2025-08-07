@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css?family=Audiowide');
+
+.animated-subtitle-container {
+	max-width: 70%;
+	display: block;
+	height: auto;
+	margin: 0 auto;
+	text-align: center;
+	color: whitesmoke;
+	line-height: 150%;
+	font-variant: small-caps;
+	font-family: 'Audiowide', sans-serif;
+	font-size: 1.2rem;
+	display: flex;
+	flex-flow: row wrap;
+	justify-content: center;
+    margin-top: 1.5rem;
+
+    /* ===== BRILHO FIXO ADICIONADO AQUI ===== */
+    /* Este text-shadow aplica um brilho roxo constante a todas as letras */
+    text-shadow: 0 0 10px var(--purple-glow), 0 0 20px rgba(132, 0, 255, 0.3);
+}
+
+.textSec {
+	margin: 0 0.5rem; 
+}
+
+.textSec .text {
+    transition: all .1s ease;
+    -webkit-filter: brightness(120%);
+    filter: brightness(120%);
+    margin: 0.5px;
+}

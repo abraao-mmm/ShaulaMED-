@@ -1,8 +1,9 @@
 import React from 'react';
-// A 'motion' já não é necessária aqui, mas podemos deixar para futuras animações
-import { motion } from 'framer-motion'; 
+import { motion } from 'framer-motion';
 import Particles from './Particles';
 import RotatingText from './RotatingText';
+import AnimatedSubtitle from './AnimatedSubtitle';
+import StarButton from './StarButton'; // 1. Importar o novo botão
 import './StartScreen.css';
 
 const StartScreen = ({ onStart }) => {
@@ -26,13 +27,13 @@ const StartScreen = ({ onStart }) => {
         <div className="centered-content-wrapper">
           <h1 className="animated-title">
             <span className="static-text">Shaula</span>
-
-            {/* AQUI A MUDANÇA: Voltamos para um 'div' normal e removemos as props 'layout' e 'transition' */}
-            <div className="rotating-text-block">
+            <motion.div
+              className="rotating-text-block"
+              layout
+              transition={{ type: "spring", damping: 20, stiffness: 200 }}
+            >
               <RotatingText
                 texts={['Med', 'Copilot']}
-                // As props de animação das letras continuam as mesmas
-                transition={{ type: "spring", damping: 30, stiffness: 400 }}
                 initial={{ y: "100%" }}
                 animate={{ y: 0 }}
                 exit={{ y: "-120%" }}
@@ -42,17 +43,21 @@ const StartScreen = ({ onStart }) => {
                 mainClassName="rotating-text-container"
                 splitLevelClassName="rotating-text-wrapper"
               />
-            </div>
+            </motion.div>
           </h1>
-          <p>Seu copiloto clínico com IA reflexiva.</p>
+          <AnimatedSubtitle text="Amplificando seu raciocínio clínico." />
         </div>
 
-        <button className="start-button" onClick={onStart}>
-          Iniciar Nova Consulta
-        </button>
+        {/* 2. Substituir o <button> antigo pelo novo componente <StarButton> */}
+        <div className="start-button-wrapper">
+            <StarButton onClick={onStart}>
+                Iniciar Nova Consulta
+            </StarButton>
+        </div>
+
       </div>
     </div>
   );
 };
 
-export default StartScreen;
+export default StarButton;

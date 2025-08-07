@@ -70,13 +70,10 @@ const RotatingText = forwardRef((props, ref) => {
     [staggerFrom, staggerDuration]
   );
 
-  const handleIndexChange = useCallback(
-    (newIndex) => {
-      setCurrentTextIndex(newIndex);
-      if (onNext) onNext(newIndex);
-    },
-    [onNext]
-  );
+  const handleIndexChange = useCallback((newIndex) => {
+    setCurrentTextIndex(newIndex);
+    if (onNext) onNext(newIndex);
+  }, [onNext]);
 
   const next = useCallback(() => {
     const nextIndex =
@@ -102,7 +99,7 @@ const RotatingText = forwardRef((props, ref) => {
     <motion.span
       className={cn("text-rotate", mainClassName)}
       {...rest}
-      // As props 'layout' e 'transition' foram removidas daqui para evitar conflito
+      // As props 'layout' e 'transition' foram removidas daqui para evitar o conflito
     >
       <span className="text-rotate-sr-only">{texts[currentTextIndex]}</span>
       <AnimatePresence mode={animatePresenceMode} initial={animatePresenceInitial}>
