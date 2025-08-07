@@ -1,10 +1,9 @@
-# app.py (Versão com Exibição de Nota Clínica Estruturada)
+# app.py (Versão Completa com Geração de Resumo Clínico)
 
 import streamlit as st
 import requests
-import json
-import random
 import pandas as pd
+import random
 from login import pagina_login
 from streamlit_mic_recorder import mic_recorder
 
@@ -26,8 +25,8 @@ if 'etapa' not in st.session_state:
     st.session_state.etapa = 1
 if 'consulta_atual' not in st.session_state:
     st.session_state.consulta_atual = None
-if 'ultima_reflexao' not in st.session_state:
-    st.session_state.ultima_reflexao = None
+if 'resultado_final' not in st.session_state:
+    st.session_state.resultado_final = None
 if "audio_processado" not in st.session_state:
     st.session_state.audio_processado = False
 
@@ -66,11 +65,22 @@ def shaulamed_app():
         st.markdown("---")
 
     def pagina_inicial():
-        if st.session_state.ultima_reflexao:
-            st.success(f"**Reflexão da Shaula:** \"_{st.session_state.ultima_reflexao}_\"")
-            st.session_state.ultima_reflexao = None
+        # Exibe o resumo da última consulta, se existir no estado da sessão
+        if 'resultado_final' in st.session_state and st.session_state.resultado_final:
+            resumo = st.session_state.resultado_final.get("texto_gerado_prontuario", "Nenhum resumo foi gerado.")
+            reflexao = st.session_state.resultado_final.get("reflexao", "")
+            
+            st.subheader("Resumo da Última Consulta")
+            st.text_area("Texto para Prontuário:", value=resumo, height=250, key="resumo_final")
+            st.success("Resumo gerado com sucesso!")
+            if reflexao:
+                st.info(f"**Reflexão da Shaula:** \"_{reflexao}_\"")
+            st.markdown("---")
+            
+            # Limpa o resultado da sessão para não ser exibido novamente
+            del st.session_state.resultado_final
         else:
-            st.info(f"**Shaula:** \"_{random.choice(FRASES_BOAS_VINDAS)}_\"")
+             st.info(f"**Shaula:** \"_{random.choice(FRASES_BOAS_VINDAS)}_\"")
 
         desenhar_jornada(1)
         if st.button("▶️ Iniciar Nova Consulta", use_container_width=True):
@@ -126,16 +136,13 @@ def shaulamed_app():
 
             st.markdown("---")
             st.markdown("##### Prontuário")
-            st.text_area("Notas e Decisão Clínica:", height=150, key="prontuario_texto", placeholder="Insira aqui a sua decisão final, prescrição e notas para o prontuário...")
+            st.text_area("Sua Decisão Clínica e Notas Adicionais:", height=150, key="prontuario_texto", placeholder="Insira aqui a sua conduta final, prescrição e notas para o prontuário...")
 
         with col2:
             st.markdown("##### Análise Estruturada da Shaula")
-            
-            # A 'sugestao_ia' agora contém a nota clínica completa e estruturada
             nota_clinica = st.session_state.consulta_atual.get('sugestao_ia', {})
 
             if nota_clinica and not nota_clinica.get("erro"):
-                # Mapeia as chaves do JSON para títulos amigáveis
                 titulos = {
                     "queixa_principal": "Queixa Principal",
                     "historia_doenca_atual": "História da Doença Atual (HDA)",
@@ -143,15 +150,14 @@ def shaulamed_app():
                     "medicamentos_em_uso": "Medicamentos em Uso",
                     "exame_fisico_verbalizado": "Exame Físico",
                     "hipoteses_diagnosticas": "Hipóteses Diagnósticas",
-                    "conduta_sugerida": "Conduta",
+                    "conduta_sugerida": "Conduta Sugerida pela IA",
                     "orientacoes_gerais": "Orientações",
                     "retorno_encaminhamento": "Retorno / Encaminhamentos"
                 }
 
-                # Itera sobre o dicionário e exibe cada seção da nota clínica
                 for chave, titulo in titulos.items():
                     conteudo = nota_clinica.get(chave)
-                    if conteudo: # Só exibe a seção se houver conteúdo
+                    if conteudo:
                         st.markdown(f"**{titulo}**")
                         if isinstance(conteudo, list):
                             for item in conteudo:
@@ -166,7 +172,7 @@ def shaulamed_app():
         if st.button("⏹️ Finalizar Consulta", use_container_width=True, type="primary"):
             decisao_final = st.session_state.get("prontuario_texto", "")
             if not decisao_final.strip():
-                st.warning("Por favor, insira a sua decisão final no campo de prontuário antes de finalizar.")
+                st.warning("Por favor, insira a sua decisão clínica final no campo de prontuário antes de finalizar.")
             else:
                 st.session_state.etapa = 3
                 st.rerun()
@@ -176,20 +182,38 @@ def shaulamed_app():
         decisao_final = st.session_state.get("prontuario_texto", "Nenhuma nota inserida.")
         st.info("A consulta será finalizada com a seguinte decisão clínica:")
         st.markdown(f"> _{decisao_final}_")
-
-        if st.button("Confirmar e Salvar", use_container_width=True):
-            with st.spinner("A finalizar e a gerar reflexão..."):
-                dados = {"consulta_atual": st.session_state.consulta_atual, "decisao": {"decisao": decisao_final, "resumo": decisao_final}}
+        
+        st.markdown("---")
+        
+        st.markdown("##### Gerar Resumo para Prontuário")
+        formato_selecionado = st.selectbox(
+            "Escolha o formato do resumo:",
+            ("SOAP", "Livre (texto corrido)", "PEACE", "CAMPOS")
+        )
+        
+        if st.button(f"Confirmar e Gerar Resumo {formato_selecionado}", use_container_width=True):
+            with st.spinner(f"A finalizar, aprender e gerar o resumo no formato {formato_selecionado}..."):
+                dados = {
+                    "consulta_atual": st.session_state.consulta_atual,
+                    "decisao": {"decisao": decisao_final},
+                    "formato_resumo": formato_selecionado
+                }
                 try:
-                    response = requests.post(f"{API_URL}/consulta/finalizar/{uid}", json=dados, timeout=40)
+                    # Este endpoint no backend (API) deve ser adaptado para receber 'formato_resumo'
+                    # e retornar um objeto JSON contendo 'texto_gerado_prontuario' e 'reflexao'.
+                    response = requests.post(f"{API_URL}/consulta/finalizar/{uid}", json=dados, timeout=120)
+                    
                     if response.status_code == 200:
-                        st.session_state.ultima_reflexao = response.json().get("reflexao")
-                    st.session_state.etapa = 1
-                    st.session_state.consulta_atual = None
-                    st.rerun()
+                        st.session_state.resultado_final = response.json()
+                        st.session_state.etapa = 1
+                        st.session_state.consulta_atual = None
+                        st.rerun()
+                    else:
+                        st.error(f"Erro ao finalizar ({response.status_code}): {response.text}")
                 except requests.exceptions.RequestException as e:
                     st.error(f"Erro de conexão ao finalizar: {e}")
 
+    # --- ROTEADOR DA BARRA LATERAL E DAS PÁGINAS ---
     with st.sidebar:
         st.title("🩺 ShaulaMed")
         email_utilizador = st.session_state.utilizador_logado.get('email', 'N/A')
@@ -209,7 +233,6 @@ def shaulamed_app():
             
         st.markdown("---")
         if st.button("Sair", use_container_width=True):
-            # Limpa toda a sessão para garantir um logout completo
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
             st.rerun()
@@ -259,7 +282,7 @@ def shaulamed_app():
                 if not tabela_df.empty:
                     st.dataframe(tabela_df.set_index("Caso"), use_container_width=True)
 
-# --- ROTEADOR PRINCIPAL ---
+# --- ROTEADOR PRINCIPAL DA APLICAÇÃO ---
 if st.session_state.utilizador_logado:
     shaulamed_app()
 else:

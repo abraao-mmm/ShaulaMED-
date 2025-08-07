@@ -9,6 +9,8 @@ from analise_clinica import MotorDeAnaliseClinica
 from refinador_de_prompt import RefinadorDePrompt
 from gerenciador_medicos import GerenciadorDeMedicos
 from rich.console import Console
+from gerador_resumo import GeradorDeResumo
+
 from typing import Callable, Optional
 
 class ShaulaMedAgent:
@@ -28,6 +30,9 @@ class ShaulaMedAgent:
         self.refinador = RefinadorDePrompt(obter_resposta_llm_func)
         
         self.consulta_atual: Optional[EncontroClinico] = None
+        self.gerador_de_resumo = GeradorDeResumo(obter_resposta_llm_func) # 2. Instanciar o novo módulo
+        
+
 
     def iniciar_nova_consulta(self):
         """Prepara o agente para uma nova consulta."""
@@ -54,25 +59,31 @@ class ShaulaMedAgent:
         else:
             self.console.print("[bold red]Erro: Nenhuma consulta foi iniciada.[/bold red]")
 
-# ... (o resto do arquivo, como finalizar_consulta, pode permanecer o mesmo por enquanto)
-
-    def finalizar_consulta(self, decisao_medico_final: str, resumo_prontuario: str):
-        """Finaliza a consulta e regista o aprendizado no Firestore."""
+    def finalizar_consulta(self, decisao_medico_final: str, formato_resumo: str = "SOAP"):
+        """
+        Finaliza a consulta, gera o resumo estruturado para o prontuário e
+        regista o aprendizado no Firestore.
+        """
         if self.consulta_atual:
-            self.console.print("--- Finalizando consulta e aprendendo ---")
+            self.console.print(f"--- Finalizando consulta e gerando resumo ({formato_resumo}) ---")
             self.consulta_atual.decisao_medico_final = decisao_medico_final
-            self.consulta_atual.texto_gerado_prontuario = resumo_prontuario
+            
+            # --- NOVA LÓGICA AQUI ---
+            # Usa o gerador de resumo para criar o texto para o prontuário
+            dados_para_resumo = self.consulta_atual.sugestao_ia
+            resumo_gerado = self.gerador_de_resumo.gerar_resumo_para_prontuario(dados_para_resumo, formato_resumo)
+            self.consulta_atual.texto_gerado_prontuario = resumo_gerado
+            # --- FIM DA NOVA LÓGICA ---
+
             hipoteses = self.consulta_atual.sugestao_ia.get("hipoteses_diagnosticas", [])
             if hipoteses:
                 self.medico.aprender_com_conduta(hipoteses[0], decisao_medico_final)
-                # Salva o perfil do médico atualizado no Firestore
                 self.gerenciador.salvar_medico(self.medico)
 
             self.memoria.registrar_encontro(self.consulta_atual)
-            self.consulta_atual = None
+            self.consulta_atual = None # Limpa a consulta atual
         else:
             self.console.print("[bold red]Erro: Nenhuma consulta ativa para finalizar.[/bold red]")
-
     # Em shaulamed_agent.py
 
     def gerar_reflexao_pos_consulta(self, encontro: EncontroClinico, obter_resposta_llm_func: Callable) -> str:
