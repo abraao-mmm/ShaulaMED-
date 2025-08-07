@@ -10,6 +10,9 @@ from dotenv import load_dotenv
 from typing import Dict, Optional
 from datetime import datetime, timedelta
 
+# ===== IMPORTAÇÃO NECESSÁRIA PARA O CORS ===== (NOVO)
+from fastapi.middleware.cors import CORSMiddleware
+
 # Importações dos módulos do projeto
 from medico import Medico
 from encontro_clinico import EncontroClinico
@@ -28,6 +31,26 @@ app = FastAPI(
     version="6.0 - HTML Frontend"
 )
 console = Console()
+
+# ===== CONFIGURAÇÃO DO CORS ===== (NOVO)
+# Adicione este bloco exatamente aqui, após a inicialização do 'app'.
+
+origins = [
+    "http://127.0.0.1:5500",  # Permite o seu ambiente de desenvolvimento local
+    "http://localhost:5500",   # Outra variação do ambiente local
+    # Se você for hospedar o frontend em outro lugar, adicione o link aqui.
+    # Ex: "https://seu-frontend.onrender.com" 
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # Lista de origens que podem fazer pedidos
+    allow_credentials=True,
+    allow_methods=["*"],  # Permite todos os métodos (GET, POST, etc.)
+    allow_headers=["*"],  # Permite todos os cabeçalhos
+)
+# ===== FIM DA CONFIGURAÇÃO DO CORS =====
+
 
 # --- CARREGAMENTO DE VARIÁVEIS DE AMBIENTE ---
 load_dotenv() 
