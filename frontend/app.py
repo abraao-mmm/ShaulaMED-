@@ -1,4 +1,4 @@
-# app.py (Versão Completa com Geração de Resumo Clínico)
+# app.py (Versão Completa com Geração de Resumo Clínico e Correções de Estabilidade)
 
 import streamlit as st
 import requests
@@ -27,6 +27,8 @@ if 'consulta_atual' not in st.session_state:
     st.session_state.consulta_atual = None
 if 'resultado_final' not in st.session_state:
     st.session_state.resultado_final = None
+if 'decisao_a_finalizar' not in st.session_state:
+    st.session_state.decisao_a_finalizar = None
 if "audio_processado" not in st.session_state:
     st.session_state.audio_processado = False
 
@@ -71,7 +73,7 @@ def shaulamed_app():
             reflexao = st.session_state.resultado_final.get("reflexao", "")
             
             st.subheader("Resumo da Última Consulta")
-            st.text_area("Texto para Prontuário:", value=resumo, height=250, key="resumo_final")
+            st.text_area("Texto para Prontuário:", value=resumo, height=250, key="resumo_final_display")
             st.success("Resumo gerado com sucesso!")
             if reflexao:
                 st.info(f"**Reflexão da Shaula:** \"_{reflexao}_\"")
@@ -83,7 +85,7 @@ def shaulamed_app():
              st.info(f"**Shaula:** \"_{random.choice(FRASES_BOAS_VINDAS)}_\"")
 
         desenhar_jornada(1)
-        if st.button("▶️ Iniciar Nova Consulta", use_container_width=True):
+        if st.button("▶️ Iniciar Nova Consulta", use_container_width=True, key="iniciar_consulta_btn"):
             with st.spinner("A iniciar sessão de consulta..."):
                 try:
                     response = requests.post(f"{API_URL}/consulta/iniciar/{uid}", timeout=40)
@@ -134,18 +136,7 @@ def shaulamed_app():
                         st.error(f"Erro de conexão: {e}")
                 st.rerun()
 
-            # DENTRO da função pagina_consulta()
-
-        st.markdown("---")
-        if st.button("⏹️ Finalizar Consulta", use_container_width=True, type="primary"):
-            decisao_final = st.session_state.get("prontuario_texto", "")
-            if not decisao_final.strip():
-                st.warning("Por favor, insira a sua decisão clínica final no campo de prontuário antes de finalizar.")
-            else:
-                # CORREÇÃO AQUI: Salvamos a decisão em uma variável de sessão dedicada
-                st.session_state.decisao_a_finalizar = decisao_final
-                st.session_state.etapa = 3
-                st.rerun()
+            st.markdown("---")
             st.markdown("##### Prontuário")
             st.text_area("Sua Decisão Clínica e Notas Adicionais:", height=150, key="prontuario_texto", placeholder="Insira aqui a sua conduta final, prescrição e notas para o prontuário...")
 
@@ -180,20 +171,17 @@ def shaulamed_app():
                 st.info("Aguardando a escuta da consulta para gerar a nota clínica...")
 
         st.markdown("---")
-        if st.button("⏹️ Finalizar Consulta", use_container_width=True, type="primary"):
+        if st.button("⏹️ Finalizar Consulta", use_container_width=True, type="primary", key="finalizar_consulta_btn"):
             decisao_final = st.session_state.get("prontuario_texto", "")
             if not decisao_final.strip():
                 st.warning("Por favor, insira a sua decisão clínica final no campo de prontuário antes de finalizar.")
             else:
+                st.session_state.decisao_a_finalizar = decisao_final
                 st.session_state.etapa = 3
                 st.rerun()
 
-# Substitua a função inteira por esta versão corrigida
-
     def pagina_finalizacao():
         desenhar_jornada(3)
-        
-        # CORREÇÃO AQUI: Lemos da variável de sessão dedicada e estável
         decisao_final = st.session_state.get("decisao_a_finalizar", "Nenhuma nota inserida.")
         
         st.info("A consulta será finalizada com a seguinte decisão clínica:")
@@ -207,9 +195,8 @@ def shaulamed_app():
             ("SOAP", "Livre (texto corrido)", "PEACE", "CAMPOS")
         )
         
-        if st.button(f"Confirmar e Gerar Resumo {formato_selecionado}", use_container_width=True):
+        if st.button(f"Confirmar e Gerar Resumo {formato_selecionado}", use_container_width=True, key="confirmar_resumo_btn"):
             with st.spinner(f"A finalizar, aprender e gerar o resumo no formato {formato_selecionado}..."):
-                # O payload agora usa a variável 'decisao_final' que foi lida corretamente
                 dados = {
                     "consulta_atual": st.session_state.consulta_atual,
                     "decisao": {"decisao": decisao_final},
@@ -222,7 +209,6 @@ def shaulamed_app():
                         st.session_state.resultado_final = response.json()
                         st.session_state.etapa = 1
                         st.session_state.consulta_atual = None
-                        # Limpa a variável após o uso
                         if "decisao_a_finalizar" in st.session_state:
                             del st.session_state.decisao_a_finalizar
                         st.rerun()
@@ -231,26 +217,25 @@ def shaulamed_app():
 
                 except requests.exceptions.RequestException as e:
                     st.error(f"Erro de conexão ao finalizar: {e}")
+
     # --- ROTEADOR DA BARRA LATERAL E DAS PÁGINAS ---
     with st.sidebar:
         st.title("🩺 ShaulaMed")
         email_utilizador = st.session_state.utilizador_logado.get('email', 'N/A')
         st.caption(f"Médico: {email_utilizador}")
 
-        page_type = "primary" if st.session_state.pagina == "Consulta" else "secondary"
-        if st.button("Consulta", use_container_width=True, type=page_type):
+        if st.button("Consulta", use_container_width=True, type=("primary" if st.session_state.pagina == "Consulta" else "secondary"), key="sidebar_consulta"):
             st.session_state.pagina = "Consulta"
             st.rerun()
             
-        page_type = "primary" if st.session_state.pagina == "Relatorio" else "secondary"
-        if st.button("Painel Semanal", use_container_width=True, type=page_type):
+        if st.button("Painel Semanal", use_container_width=True, type=("primary" if st.session_state.pagina == "Relatorio" else "secondary"), key="sidebar_relatorio"):
             st.session_state.pagina = "Relatorio"
             if 'relatorio_semanal_completo' in st.session_state:
                 del st.session_state.relatorio_semanal_completo
             st.rerun()
             
         st.markdown("---")
-        if st.button("Sair", use_container_width=True):
+        if st.button("Sair", use_container_width=True, key="sidebar_sair"):
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
             st.rerun()
@@ -267,7 +252,7 @@ def shaulamed_app():
     elif st.session_state.pagina == "Relatorio":
         st.title("Painel Semanal")
         st.caption("Uma análise reflexiva da sua prática na última semana, gerada pela Shaula.")
-        if st.button("Gerar Relatório da Semana", use_container_width=True):
+        if st.button("Gerar Relatório da Semana", use_container_width=True, key="gerar_relatorio_btn"):
             with st.spinner("A analisar as consultas da última semana... Este processo pode ser demorado."):
                 try:
                     response = requests.get(f"{API_URL}/medico/{uid}/relatorio_semanal", timeout=120)
@@ -301,7 +286,7 @@ def shaulamed_app():
                     st.dataframe(tabela_df.set_index("Caso"), use_container_width=True)
 
 # --- ROTEADOR PRINCIPAL DA APLICAÇÃO ---
-if st.session_state.utilizador_logado:
+if 'utilizador_logado' in st.session_state and st.session_state.utilizador_logado:
     shaulamed_app()
 else:
     pagina_login()
