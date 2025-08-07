@@ -1,11 +1,13 @@
 import React from 'react';
-import Particles from './Particles'; // Importamos o novo componente
+// A 'motion' já não é necessária aqui, mas podemos deixar para futuras animações
+import { motion } from 'framer-motion'; 
+import Particles from './Particles';
+import RotatingText from './RotatingText';
 import './StartScreen.css';
 
 const StartScreen = ({ onStart }) => {
   return (
     <div className="start-screen-container">
-      {/* O componente de partículas agora serve como fundo */}
       <div className="particle-background">
          <Particles
             particleColors={['#ffffff', '#ffffff']}
@@ -18,11 +20,33 @@ const StartScreen = ({ onStart }) => {
             disableRotation={false}
         />
       </div>
-
-      {/* O conteúdo fica numa camada por cima */}
+      
       <div className="start-screen-content">
-        <h1>ShaulaMed Copilot</h1>
-        <p>Seu copiloto clínico com IA reflexiva.</p>
+        
+        <div className="centered-content-wrapper">
+          <h1 className="animated-title">
+            <span className="static-text">Shaula</span>
+
+            {/* AQUI A MUDANÇA: Voltamos para um 'div' normal e removemos as props 'layout' e 'transition' */}
+            <div className="rotating-text-block">
+              <RotatingText
+                texts={['Med', 'Copilot']}
+                // As props de animação das letras continuam as mesmas
+                transition={{ type: "spring", damping: 30, stiffness: 400 }}
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "-120%" }}
+                staggerDuration={0.03}
+                staggerFrom="last"
+                rotationInterval={2500}
+                mainClassName="rotating-text-container"
+                splitLevelClassName="rotating-text-wrapper"
+              />
+            </div>
+          </h1>
+          <p>Seu copiloto clínico com IA reflexiva.</p>
+        </div>
+
         <button className="start-button" onClick={onStart}>
           Iniciar Nova Consulta
         </button>

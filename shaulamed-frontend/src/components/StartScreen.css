@@ -1,9 +1,9 @@
 .start-screen-container {
     width: 100%;
     height: 100vh;
-    position: relative; /* Essencial para o empilhamento de camadas */
-    overflow: hidden; /* Evita barras de scroll indesejadas */
-    background-color: #060010; /* Cor de fundo caso o canvas demore a carregar */
+    position: relative;
+    overflow: hidden;
+    background-color: var(--background-dark);
 }
 
 .particle-background {
@@ -12,24 +12,132 @@
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 1; /* Camada de fundo */
+    z-index: 1;
 }
 
 .start-screen-content {
-    position: relative; /* Necessário para o z-index funcionar */
-    z-index: 2; /* Camada da frente */
+    position: relative;
+    z-index: 2;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 100%; /* Ocupa toda a altura do container */
+    height: 100%;
     text-align: center;
     color: var(--white);
 }
 
-.start-screen-content h1 {
-  font-size: 3rem;
+/* ===== A SOLUÇÃO FINAL DE ALINHAMENTO ===== */
+
+/* 1. O contentor do título vira a nossa "tela de desenho" com uma largura fixa.
+      O seu pai (.start-screen-content) já o centraliza na página. */
+.animated-title {
+  position: relative; /* Essencial para o posicionamento absoluto dos filhos */
+  display: flex; /* Mantemos flex para o caso de precisarmos no futuro */
+  justify-content: center;
+  align-items: center;
+  width: 600px; /* A nossa "tela" com largura fixa. Aumentei um pouco. */
+  height: 80px; /* Uma altura definida para evitar saltos */
+  font-size: 3.5rem;
   margin-bottom: 0.5rem;
+}
+
+/* 2. Posicionamos "Shaula" de forma absoluta. */
+.static-text {
+  position: absolute;
+  right: 50%; /* O lado DIREITO do texto vai até o meio da "tela" de 600px. */
+  transform: translateX(-0.25rem); /* Empurramos um pouco para a esquerda para criar um gap. */
+  font-weight: bold;
+}
+
+/* 3. Posicionamos o bloco roxo também de forma absoluta. */
+.rotating-text-block {
+  position: absolute;
+  left: 50%; /* O lado ESQUERDO do bloco vai até o meio da "tela" de 600px. */
+  transform: translateX(0.25rem); /* Empurramos um pouco para a direita para criar um gap. */
+  display: flex;
+}
+
+/* ===== FIM DA SOLUÇÃO ===== */
+
+/* ... (todo o CSS anterior permanece o mesmo até chegar a .rotating-text-container) ... */
+
+.start-screen-container {
+    width: 100%;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+    background-color: var(--background-dark);
+}
+
+.particle-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.start-screen-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    text-align: center;
+    color: var(--white);
+}
+
+.centered-content-wrapper {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.animated-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 3.5rem;
+  margin-bottom: 0.5rem;
+  white-space: nowrap;
+}
+
+.static-text {
+  font-weight: bold;
+}
+
+.rotating-text-block {
+  display: flex;
+}
+
+/* ===== A SOLUÇÃO FINAL ESTÁ AQUI ===== */
+.rotating-text-container {
+  background-color: var(--purple-primary);
+  color: var(--white);
+  font-weight: 700;
+  padding: 0.25rem 1rem;
+  border-radius: 0.5rem;
+  text-align: center;
+  white-space: nowrap;
+  
+  /* Adiciona uma transição CSS para a propriedade 'width'.
+     Duração de 0.4s com uma curva de aceleração suave. */
+  transition: width 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.rotating-text-wrapper {
+  overflow: hidden;
+  padding-bottom: 0.25rem;
 }
 
 .start-screen-content p {
@@ -39,6 +147,10 @@
 }
 
 .start-button {
+  position: absolute;
+  bottom: 15%;
+  left: 50%;
+  transform: translateX(-50%);
   padding: 1rem 2rem;
   font-size: 1rem;
   color: var(--white);
@@ -51,6 +163,6 @@
 }
 
 .start-button:hover {
-  transform: translateY(-3px);
+  transform: translateX(-50%) translateY(-3px);
   box-shadow: 0 0 30px var(--purple-primary);
 }
