@@ -1,20 +1,38 @@
-.start-screen {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  text-align: center;
-  color: var(--white);
-  background-color: var(--background-dark);
+.start-screen-container {
+    width: 100%;
+    height: 100vh;
+    position: relative; /* Essencial para o empilhamento de camadas */
+    overflow: hidden; /* Evita barras de scroll indesejadas */
+    background-color: #060010; /* Cor de fundo caso o canvas demore a carregar */
 }
 
-.start-screen h1 {
+.particle-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; /* Camada de fundo */
+}
+
+.start-screen-content {
+    position: relative; /* Necessário para o z-index funcionar */
+    z-index: 2; /* Camada da frente */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%; /* Ocupa toda a altura do container */
+    text-align: center;
+    color: var(--white);
+}
+
+.start-screen-content h1 {
   font-size: 3rem;
   margin-bottom: 0.5rem;
 }
 
-.start-screen p {
+.start-screen-content p {
   font-size: 1.2rem;
   opacity: 0.8;
   margin-bottom: 2rem;

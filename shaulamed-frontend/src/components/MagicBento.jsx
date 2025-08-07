@@ -61,6 +61,7 @@ const ParticleCard = ({
   enableTilt = true,
   clickEffect = false,
   enableMagnetism = false,
+  ...props
 }) => {
   const cardRef = useRef(null);
   const particlesRef = useRef([]);
@@ -298,6 +299,7 @@ const ParticleCard = ({
       ref={cardRef}
       className={`${className} particle-container`}
       style={{ ...style, position: "relative", overflow: "hidden" }}
+      {...props}
     >
       {children}
     </div>
@@ -484,24 +486,22 @@ const MagicBento = ({
   particleCount = DEFAULT_PARTICLE_COUNT,
   enableTilt = false,
   glowColor = DEFAULT_GLOW_COLOR,
-  clickEffect = false,
-  enableMagnetism = false,
-  cardContents = {} // Nova prop para receber o conteúdo dinâmico
+  clickEffect = true,
+  enableMagnetism = true,
+  cardContents = {}
 }) => {
   const gridRef = useRef(null);
   const isMobile = useMobileDetection();
   const shouldDisableAnimations = disableAnimations || isMobile;
   
-  // Mapeamos os dados de layout, e no interior renderizamos o conteúdo dinâmico
   const shaulaCardData = [
-    { label: "Insights", title: "Gravador e Transcrição", description: "" },
-    { label: "Overview", title: "Queixa Principal", description: "" },
-    { label: "Collaboration", title: "Ações e Prontuário", description: "" },
-    { label: "Efficiency", title: "Análise Clínica", description: "" },
-    { label: "Connectivity", title: "Exames Sugeridos", description: "" },
-    { label: "Protection", title: "Tratamentos Sugeridos", description: "" },
-  ]
-
+    { area: "Insights", title: "Gravador e Transcrição" },
+    { area: "Overview", title: "Queixa Principal" },
+    { area: "Collaboration", title: "Ações e Prontuário" },
+    { area: "Efficiency", title: "Análise Clínica" },
+    { area: "Connectivity", title: "Exames Sugeridos" },
+    { area: "Protection", title: "Tratamentos Sugeridos" },
+  ];
 
   return (
     <>
@@ -518,16 +518,13 @@ const MagicBento = ({
       <BentoCardGrid gridRef={gridRef}>
         {shaulaCardData.map((card, index) => {
           const baseClassName = `card ${textAutoHide ? "card--text-autohide" : ""} ${enableBorderGlow ? "card--border-glow" : ""}`;
-          
-          // O conteúdo de "Teamwork" do template original agora é o nosso "Collaboration"
-          // Corrigimos o mapeamento para usar a label correta
-          const contentKey = card.label;
-          const dynamicContent = cardContents[contentKey];
+          const dynamicContent = cardContents[card.area];
 
           return (
             <ParticleCard
               key={index}
               className={baseClassName}
+              data-area={card.area}
               style={{ backgroundColor: "#060010", "--glow-color": glowColor }}
               disableAnimations={shouldDisableAnimations}
               particleCount={particleCount}
@@ -540,7 +537,6 @@ const MagicBento = ({
                 <div className="card__label">{card.title}</div>
               </div>
               <div className="card__content">
-                {/* AQUI A MÁGICA ACONTECE: RENDERIZA O CONTEÚDO DINÂMICO */}
                 {dynamicContent}
               </div>
             </ParticleCard>
