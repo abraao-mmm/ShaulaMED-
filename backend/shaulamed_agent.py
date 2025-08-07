@@ -10,6 +10,8 @@ from refinador_de_prompt import RefinadorDePrompt
 from gerenciador_medicos import GerenciadorDeMedicos
 from rich.console import Console
 from gerador_resumo import GeradorDeResumo
+from analisador_clinico_avancado import AnalisadorClinicoAvancado 
+
 
 from typing import Callable, Optional
 
@@ -31,6 +33,8 @@ class ShaulaMedAgent:
         
         self.consulta_atual: Optional[EncontroClinico] = None
         self.gerador_de_resumo = GeradorDeResumo(obter_resposta_llm_func) # 2. Instanciar o novo módulo
+        self.analisador_avancado = AnalisadorClinicoAvancado(obter_resposta_llm_func)
+
         
 
 
@@ -44,18 +48,26 @@ class ShaulaMedAgent:
 # Dentro da classe ShaulaMedAgent
 
     def processar_interacao(self, transcricao_bruta: str):
-        """Recebe a transcrição, a refina e gera a nota clínica estruturada."""
+        """
+        Recebe a transcrição, a refina, estrutura a nota e, em seguida,
+        executa a análise clínica avançada sobre ela.
+        """
         if self.consulta_atual:
             self.console.print(f"Processando transcrição: '{transcricao_bruta[:70]}...'")
             texto_refinado = self.refinador.refinar(transcricao_bruta)
             self.consulta_atual.transcricao_consulta = texto_refinado
             
-            # --- MUDANÇA PRINCIPAL AQUI ---
-            # Chamamos o novo método para obter a nota estruturada
+            # Etapa 1: Estruturar a nota clínica
             nota_estruturada = self.inference_engine.gerar_nota_clinica_estruturada(texto_refinado)
             
-            # A sugestão da IA agora é o dicionário completo da nota
-            self.consulta_atual.sugestao_ia = nota_estruturada
+            # Etapa 2: Executar a análise avançada sobre a nota estruturada
+            analise_avancada = self.analisador_avancado.executar_analise_avancada(nota_estruturada)
+
+            # Combina os dois resultados em um único objeto para o frontend
+            self.consulta_atual.sugestao_ia = {
+                "nota_clinica_estruturada": nota_estruturada,
+                "analise_clinica_avancada": analise_avancada
+            }
         else:
             self.console.print("[bold red]Erro: Nenhuma consulta foi iniciada.[/bold red]")
 

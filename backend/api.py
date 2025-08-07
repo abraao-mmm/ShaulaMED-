@@ -1,4 +1,4 @@
-# api.py (Versão com fluxo de finalização e retorno de resumo corrigidos)
+# api.py (Versão Completa e Estável)
 
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
@@ -22,12 +22,11 @@ from rich.console import Console
 app = FastAPI(
     title="ShaulaMed API",
     description="API Stateless para o Copiloto Clínico ShaulaMed.",
-    version="4.5 - Geração de Resumo"
+    version="5.0 - Apoio à Decisão Clínica"
 )
 console = Console()
 
 # --- CARREGAMENTO DE VARIÁVEIS DE AMBIENTE ---
-# O ideal é que a chave da API esteja nas variáveis de ambiente do servidor
 load_dotenv() 
 
 # --- INICIALIZAÇÃO DE SERVIÇOS ---
@@ -38,7 +37,6 @@ try:
     gerenciador = GerenciadorDeMedicos()
 except Exception as e:
     console.print(f"[bold red]ERRO CRÍTICO na inicialização da API: {e}[/bold red]")
-    # Em um ambiente de produção, a aplicação deveria parar se não conseguir inicializar
     raise e
 
 # --- FUNÇÃO DE CONEXÃO COM A LLM ---
@@ -47,13 +45,12 @@ def obter_resposta_llm_api(prompt: str, modo: str = "API") -> dict:
     try:
         if not openai.api_key:
             raise ValueError("A chave de API da OpenAI não está configurada.")
-        mensagens = [{"role": "user", "content": prompt}]
         
-        # Define o formato da resposta com base no conteúdo do prompt
+        mensagens = [{"role": "user", "content": prompt}]
         response_format = {"type": "json_object"} if "json" in prompt.lower() else {"type": "text"}
         
         response = openai.chat.completions.create(
-            model="gpt-4o", # Recomenda-se usar o modelo mais recente e capaz
+            model="gpt-4o",
             messages=mensagens,
             temperature=0.7,
             response_format=response_format
@@ -142,7 +139,7 @@ def iniciar_consulta(uid: str):
 
 @app.post("/consulta/processar/{uid}", tags=["Consulta"])
 def processar_fala(uid: str, payload: ProcessarPayload):
-    """Processa a fala transcrita e gera a nota clínica estruturada."""
+    """Processa a fala transcrita, gera a nota estruturada e a análise avançada."""
     medico = gerenciador.carregar_ou_criar_perfil({"localId": uid, "email": ""})
     if not medico:
         raise HTTPException(status_code=404, detail="Médico não encontrado.")
@@ -153,7 +150,7 @@ def processar_fala(uid: str, payload: ProcessarPayload):
 
 @app.post("/consulta/finalizar/{uid}", tags=["Consulta"])
 def finalizar_consulta(uid: str, payload: FinalizarPayload):
-    """Finaliza a consulta, gera o resumo e a reflexão, e retorna ambos."""
+    """Finaliza a consulta, gera o resumo para prontuário e a reflexão, e retorna ambos."""
     medico = gerenciador.carregar_ou_criar_perfil({"localId": uid, "email": ""})
     if not medico:
         raise HTTPException(status_code=404, detail="Médico não encontrado.")
@@ -161,14 +158,12 @@ def finalizar_consulta(uid: str, payload: FinalizarPayload):
     agente = ShaulaMedAgent(medico=medico, gerenciador=gerenciador, console_log=console, obter_resposta_llm_func=obter_resposta_llm_api)
     agente.consulta_atual = EncontroClinico.de_dict(payload.consulta_atual)
     
-    # O método do agente agora retorna um dicionário com os textos gerados
     resultado_finalizacao = agente.finalizar_consulta(
         decisao_medico_final=payload.decisao.decisao,
         obter_resposta_llm_func=obter_resposta_llm_api,
         formato_resumo=payload.formato_resumo
     )
     
-    # Adiciona o status de sucesso e retorna o resultado completo para o frontend
     return {"status": "sucesso", **resultado_finalizacao}
 
 @app.get("/medico/{uid}/relatorio_semanal", tags=["Relatórios"])
