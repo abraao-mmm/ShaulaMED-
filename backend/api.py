@@ -33,21 +33,18 @@ app = FastAPI(
 console = Console()
 
 # ===== CONFIGURAÇÃO DO CORS =====
-# Esta é a parte mais importante para resolver o erro.
-# Ela permite que o seu frontend em localhost comunique com a API.
-
 origins = [
     "http://localhost:5173",  # Permite o seu projeto React (Vite)
-    "http://127.0.0.1:5500",  # Permitia o seu projeto antigo (pode manter)
-    "http://localhost:5500",   # Outra variação local
+    "http://127.0.0.1:5500",
+    "http://localhost:5500",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Apenas estas origens podem fazer pedidos
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],  # Permite todos os métodos (GET, POST, etc.)
-    allow_headers=["*"],  # Permite todos os cabeçalhos
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 # ===== FIM DA CONFIGURAÇÃO DO CORS =====
 
