@@ -144,9 +144,7 @@ def shaulamed_app():
                     except requests.exceptions.RequestException as e:
                         st.error(f"Erro de conexão com a API: {e}")
                 
-                # O st.rerun() foi REMOVIDO daqui para não ser executado prematuramente.
-                st.rerun()
-
+  
             st.markdown("---")
             st.markdown("##### Prontuário")
             st.text_area("Sua Decisão Clínica e Notas Adicionais:", height=150, key="prontuario_texto", placeholder="Insira aqui a sua conduta final, prescrição e notas para o prontuário...")
