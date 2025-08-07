@@ -1,4 +1,4 @@
-# api.py (Versão com Diálogo Reflexivo e Tom Profissional)
+# api.py (Versão com fluxo de finalização e retorno de resumo corrigidos)
 
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
@@ -22,18 +22,23 @@ from rich.console import Console
 app = FastAPI(
     title="ShaulaMed API",
     description="API Stateless para o Copiloto Clínico ShaulaMed.",
-    version="4.2 - Diálogo Reflexivo"
+    version="4.5 - Geração de Resumo"
 )
 console = Console()
+
+# --- CARREGAMENTO DE VARIÁVEIS DE AMBIENTE ---
+# O ideal é que a chave da API esteja nas variáveis de ambiente do servidor
+load_dotenv() 
 
 # --- INICIALIZAÇÃO DE SERVIÇOS ---
 try:
     openai.api_key = os.getenv("OPENAI_API_KEY")
     if not openai.api_key:
-        console.print("[bold red]AVISO: OPENAI_API_KEY não encontrada.[/bold red]")
+        console.print("[bold red]AVISO: OPENAI_API_KEY não encontrada nas variáveis de ambiente.[/bold red]")
     gerenciador = GerenciadorDeMedicos()
 except Exception as e:
     console.print(f"[bold red]ERRO CRÍTICO na inicialização da API: {e}[/bold red]")
+    # Em um ambiente de produção, a aplicação deveria parar se não conseguir inicializar
     raise e
 
 # --- FUNÇÃO DE CONEXÃO COM A LLM ---
@@ -43,11 +48,15 @@ def obter_resposta_llm_api(prompt: str, modo: str = "API") -> dict:
         if not openai.api_key:
             raise ValueError("A chave de API da OpenAI não está configurada.")
         mensagens = [{"role": "user", "content": prompt}]
+        
+        # Define o formato da resposta com base no conteúdo do prompt
+        response_format = {"type": "json_object"} if "json" in prompt.lower() else {"type": "text"}
+        
         response = openai.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-4o", # Recomenda-se usar o modelo mais recente e capaz
             messages=mensagens,
             temperature=0.7,
-            response_format={"type": "json_object"} if "json" in prompt.lower() else {"type": "text"}
+            response_format=response_format
         )
         conteudo = response.choices[0].message.content.strip()
         return {"tipo": "texto", "conteudo": conteudo}
@@ -77,6 +86,7 @@ class ProcessarPayload(BaseModel):
 class FinalizarPayload(BaseModel):
     consulta_atual: dict
     decisao: DecisaoFinal
+    formato_resumo: str
 
 class DialogoResposta(BaseModel):
     texto_resposta: str
@@ -85,10 +95,12 @@ class DialogoResposta(BaseModel):
 
 @app.get("/", tags=["Status"])
 def read_root():
+    """Verifica se a API está online."""
     return {"status": "ShaulaMed API está online e funcional."}
 
 @app.post("/sessao/ativar", tags=["Sessão"])
 def ativar_sessao(user: UserSession):
+    """Ativa uma sessão para um utilizador autenticado."""
     perfil_medico = gerenciador.carregar_ou_criar_perfil({"localId": user.uid, "email": user.email})
     if perfil_medico:
         return {"status": "sucesso", "mensagem": f"Sessão para Dr(a). {perfil_medico.apelido} validada."}
@@ -96,6 +108,7 @@ def ativar_sessao(user: UserSession):
 
 @app.post("/medico/criar_perfil", tags=["Médico"])
 def criar_perfil_medico(perfil: PerfilMedico):
+    """Cria um novo perfil de médico no Firestore."""
     try:
         medico_doc_ref = gerenciador.medicos_ref.document(perfil.uid)
         dados_para_salvar = perfil.model_dump()
@@ -111,6 +124,7 @@ def criar_perfil_medico(perfil: PerfilMedico):
 
 @app.post("/audio/transcrever", tags=["Áudio"])
 async def endpoint_transcrever_audio(ficheiro_audio: UploadFile = File(...)):
+    """Recebe um ficheiro de áudio e retorna a sua transcrição."""
     try:
         audio_bytes = await ficheiro_audio.read()
         texto = transcrever_audio_bytes(audio_bytes)
@@ -122,11 +136,13 @@ async def endpoint_transcrever_audio(ficheiro_audio: UploadFile = File(...)):
 
 @app.post("/consulta/iniciar/{uid}", tags=["Consulta"])
 def iniciar_consulta(uid: str):
+    """Inicia uma nova consulta vazia para um médico."""
     nova_consulta = EncontroClinico(medico_id=uid, transcricao_consulta="")
     return nova_consulta.para_dict()
 
 @app.post("/consulta/processar/{uid}", tags=["Consulta"])
 def processar_fala(uid: str, payload: ProcessarPayload):
+    """Processa a fala transcrita e gera a nota clínica estruturada."""
     medico = gerenciador.carregar_ou_criar_perfil({"localId": uid, "email": ""})
     if not medico:
         raise HTTPException(status_code=404, detail="Médico não encontrado.")
@@ -137,17 +153,27 @@ def processar_fala(uid: str, payload: ProcessarPayload):
 
 @app.post("/consulta/finalizar/{uid}", tags=["Consulta"])
 def finalizar_consulta(uid: str, payload: FinalizarPayload):
+    """Finaliza a consulta, gera o resumo e a reflexão, e retorna ambos."""
     medico = gerenciador.carregar_ou_criar_perfil({"localId": uid, "email": ""})
     if not medico:
         raise HTTPException(status_code=404, detail="Médico não encontrado.")
+    
     agente = ShaulaMedAgent(medico=medico, gerenciador=gerenciador, console_log=console, obter_resposta_llm_func=obter_resposta_llm_api)
     agente.consulta_atual = EncontroClinico.de_dict(payload.consulta_atual)
-    reflexao = agente.gerar_reflexao_pos_consulta(agente.consulta_atual, obter_resposta_llm_api)
-    agente.finalizar_consulta(payload.decisao.decisao, payload.decisao.resumo)
-    return {"status": "sucesso", "reflexao": reflexao}
+    
+    # O método do agente agora retorna um dicionário com os textos gerados
+    resultado_finalizacao = agente.finalizar_consulta(
+        decisao_medico_final=payload.decisao.decisao,
+        obter_resposta_llm_func=obter_resposta_llm_api,
+        formato_resumo=payload.formato_resumo
+    )
+    
+    # Adiciona o status de sucesso e retorna o resultado completo para o frontend
+    return {"status": "sucesso", **resultado_finalizacao}
 
 @app.get("/medico/{uid}/relatorio_semanal", tags=["Relatórios"])
 def get_relatorio_semanal(uid: str):
+    """Gera e retorna o relatório semanal de performance para um médico."""
     try:
         medico = gerenciador.carregar_ou_criar_perfil({"localId": uid, "email": ""})
         if not medico:
@@ -177,6 +203,7 @@ def get_relatorio_semanal(uid: str):
 
 @app.post("/consulta/{consulta_id}/salvar_reflexao_medico", tags=["Relatórios"])
 def salvar_reflexao_medico(consulta_id: str, resposta: DialogoResposta, uid: str):
+    """Salva a reflexão escrita pelo médico sobre um caso específico no Firestore."""
     console.print(f"[{uid}] Salvando resposta do diálogo para a consulta {consulta_id}...")
     try:
         consulta_ref = gerenciador.medicos_ref.document(uid).collection('consultas').document(consulta_id)

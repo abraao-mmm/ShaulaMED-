@@ -59,22 +59,27 @@ class ShaulaMedAgent:
         else:
             self.console.print("[bold red]Erro: Nenhuma consulta foi iniciada.[/bold red]")
 
-    def finalizar_consulta(self, decisao_medico_final: str, formato_resumo: str = "SOAP"):
+    # No arquivo shaulamed_agent.py
+
+    # Substitua a função 'finalizar_consulta' inteira por esta
+    def finalizar_consulta(self, decisao_medico_final: str, obter_resposta_llm_func: Callable, formato_resumo: str = "SOAP") -> dict:
         """
-        Finaliza a consulta, gera o resumo estruturado para o prontuário e
-        regista o aprendizado no Firestore.
+        Finaliza a consulta, gera o resumo e a reflexão, e retorna ambos
+        num dicionário.
         """
         if self.consulta_atual:
             self.console.print(f"--- Finalizando consulta e gerando resumo ({formato_resumo}) ---")
             self.consulta_atual.decisao_medico_final = decisao_medico_final
             
-            # --- NOVA LÓGICA AQUI ---
-            # Usa o gerador de resumo para criar o texto para o prontuário
+            # Gera o resumo para o prontuário
             dados_para_resumo = self.consulta_atual.sugestao_ia
             resumo_gerado = self.gerador_de_resumo.gerar_resumo_para_prontuario(dados_para_resumo, formato_resumo)
             self.consulta_atual.texto_gerado_prontuario = resumo_gerado
-            # --- FIM DA NOVA LÓGICA ---
-
+            
+            # Gera a reflexão curta sobre a consulta
+            reflexao = self.gerar_reflexao_pos_consulta(self.consulta_atual, obter_resposta_llm_func)
+            
+            # Aprende e salva no banco de dados
             hipoteses = self.consulta_atual.sugestao_ia.get("hipoteses_diagnosticas", [])
             if hipoteses:
                 self.medico.aprender_com_conduta(hipoteses[0], decisao_medico_final)
@@ -82,8 +87,18 @@ class ShaulaMedAgent:
 
             self.memoria.registrar_encontro(self.consulta_atual)
             self.consulta_atual = None # Limpa a consulta atual
+
+            # RETORNA UM DICIONÁRIO COM AMBOS OS RESULTADOS
+            return {
+                "texto_gerado_prontuario": resumo_gerado,
+                "reflexao": reflexao
+            }
         else:
             self.console.print("[bold red]Erro: Nenhuma consulta ativa para finalizar.[/bold red]")
+            return {
+                "texto_gerado_prontuario": "Erro: Nenhuma consulta para finalizar.",
+                "reflexao": "Ocorreu um erro."
+            }
     # Em shaulamed_agent.py
 
     def gerar_reflexao_pos_consulta(self, encontro: EncontroClinico, obter_resposta_llm_func: Callable) -> str:
