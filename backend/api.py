@@ -1,6 +1,8 @@
-# api.py (Versão Completa e Estável)
+# api.py (Versão final para servir o frontend HTML/CSS/JS)
 
 from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi.staticfiles import StaticFiles
+from starlette.responses import FileResponse
 from pydantic import BaseModel
 import os
 import openai
@@ -16,15 +18,14 @@ from gerenciador_medicos import GerenciadorDeMedicos
 from transcritor import transcrever_audio_bytes
 from analise_clinica import MotorDeAnaliseClinica
 from memoria_clinica import MemoriaClinica
-from rich.console import Console
 from gerador_documentos import GeradorDeDocumentos
-
+from rich.console import Console
 
 # --- INICIALIZAÇÃO DA API E OBJETOS GLOBAIS ---
 app = FastAPI(
     title="ShaulaMed API",
     description="API Stateless para o Copiloto Clínico ShaulaMed.",
-    version="5.0 - Apoio à Decisão Clínica"
+    version="6.0 - HTML Frontend"
 )
 console = Console()
 
@@ -35,7 +36,7 @@ load_dotenv()
 try:
     openai.api_key = os.getenv("OPENAI_API_KEY")
     if not openai.api_key:
-        console.print("[bold red]AVISO: OPENAI_API_KEY não encontrada nas variáveis de ambiente.[/bold red]")
+        console.print("[bold red]AVISO: OPENAI_API_KEY não encontrada.[/bold red]")
     gerenciador = GerenciadorDeMedicos()
 except Exception as e:
     console.print(f"[bold red]ERRO CRÍTICO na inicialização da API: {e}[/bold red]")
@@ -94,17 +95,10 @@ class DocumentoPayload(BaseModel):
     tipo_documento: str
     dados_consulta: dict
 
-
-# --- ENDPOINTS DA API ---
-
-@app.get("/", tags=["Status"])
-def read_root():
-    """Verifica se a API está online."""
-    return {"status": "ShaulaMed API está online e funcional."}
+# --- ENDPOINTS DA API DE NEGÓCIO ---
 
 @app.post("/sessao/ativar", tags=["Sessão"])
 def ativar_sessao(user: UserSession):
-    """Ativa uma sessão para um utilizador autenticado."""
     perfil_medico = gerenciador.carregar_ou_criar_perfil({"localId": user.uid, "email": user.email})
     if perfil_medico:
         return {"status": "sucesso", "mensagem": f"Sessão para Dr(a). {perfil_medico.apelido} validada."}
@@ -112,7 +106,6 @@ def ativar_sessao(user: UserSession):
 
 @app.post("/medico/criar_perfil", tags=["Médico"])
 def criar_perfil_medico(perfil: PerfilMedico):
-    """Cria um novo perfil de médico no Firestore."""
     try:
         medico_doc_ref = gerenciador.medicos_ref.document(perfil.uid)
         dados_para_salvar = perfil.model_dump()
@@ -128,7 +121,6 @@ def criar_perfil_medico(perfil: PerfilMedico):
 
 @app.post("/audio/transcrever", tags=["Áudio"])
 async def endpoint_transcrever_audio(ficheiro_audio: UploadFile = File(...)):
-    """Recebe um ficheiro de áudio e retorna a sua transcrição."""
     try:
         audio_bytes = await ficheiro_audio.read()
         texto = transcrever_audio_bytes(audio_bytes)
@@ -140,13 +132,11 @@ async def endpoint_transcrever_audio(ficheiro_audio: UploadFile = File(...)):
 
 @app.post("/consulta/iniciar/{uid}", tags=["Consulta"])
 def iniciar_consulta(uid: str):
-    """Inicia uma nova consulta vazia para um médico."""
     nova_consulta = EncontroClinico(medico_id=uid, transcricao_consulta="")
     return nova_consulta.para_dict()
 
 @app.post("/consulta/processar/{uid}", tags=["Consulta"])
 def processar_fala(uid: str, payload: ProcessarPayload):
-    """Processa a fala transcrita, gera a nota estruturada e a análise avançada."""
     medico = gerenciador.carregar_ou_criar_perfil({"localId": uid, "email": ""})
     if not medico:
         raise HTTPException(status_code=404, detail="Médico não encontrado.")
@@ -157,94 +147,85 @@ def processar_fala(uid: str, payload: ProcessarPayload):
 
 @app.post("/consulta/finalizar/{uid}", tags=["Consulta"])
 def finalizar_consulta(uid: str, payload: FinalizarPayload):
-    """Finaliza a consulta, gera o resumo para prontuário e a reflexão, e retorna ambos."""
     medico = gerenciador.carregar_ou_criar_perfil({"localId": uid, "email": ""})
     if not medico:
         raise HTTPException(status_code=404, detail="Médico não encontrado.")
-    
     agente = ShaulaMedAgent(medico=medico, gerenciador=gerenciador, console_log=console, obter_resposta_llm_func=obter_resposta_llm_api)
     agente.consulta_atual = EncontroClinico.de_dict(payload.consulta_atual)
-    
     resultado_finalizacao = agente.finalizar_consulta(
         decisao_medico_final=payload.decisao.decisao,
         obter_resposta_llm_func=obter_resposta_llm_api,
         formato_resumo=payload.formato_resumo
     )
-    
     return {"status": "sucesso", **resultado_finalizacao}
+
+@app.post("/consulta/gerar_documento/{uid}", tags=["Documentos"])
+def gerar_documento_clinico(uid: str, payload: DocumentoPayload):
+    medico = gerenciador.carregar_ou_criar_perfil({"localId": uid, "email": ""})
+    if not medico:
+        raise HTTPException(status_code=404, detail="Médico não encontrado.")
+    dados_medico = {"nome_completo": medico.nome_completo, "crm": medico.crm, "especialidade": medico.especialidade}
+    gerador = GeradorDeDocumentos(obter_resposta_llm_api)
+    documento_texto = gerador.gerar_documento(
+        tipo_documento=payload.tipo_documento,
+        dados_consulta=payload.dados_consulta,
+        dados_medico=dados_medico
+    )
+    if "Não foi possível" in documento_texto:
+        raise HTTPException(status_code=500, detail=documento_texto)
+    return {"documento_gerado": documento_texto}
 
 @app.get("/medico/{uid}/relatorio_semanal", tags=["Relatórios"])
 def get_relatorio_semanal(uid: str):
-    """Gera e retorna o relatório semanal de performance para um médico."""
     try:
         medico = gerenciador.carregar_ou_criar_perfil({"localId": uid, "email": ""})
         if not medico:
             raise HTTPException(status_code=404, detail="Médico não encontrado.")
-        
         memoria = MemoriaClinica(medico_id=uid)
-        
         uma_semana_atras = datetime.now() - timedelta(days=7)
-        consultas_da_semana = [
-            enc for enc in memoria.encontros_em_memoria 
-            if enc.timestamp >= uma_semana_atras
-        ]
-        
+        consultas_da_semana = [enc for enc in memoria.encontros_em_memoria if enc.timestamp >= uma_semana_atras]
         motor_analise = MotorDeAnaliseClinica()
-        
         relatorio_completo = motor_analise.gerar_relatorio_semanal_completo(
             encontros=consultas_da_semana,
             nome_medico=medico.apelido,
             obter_resposta_llm_func=obter_resposta_llm_api
         )
-        
         return relatorio_completo
-        
     except Exception as e:
         console.print(f"❌ [bold red]Erro ao gerar relatório semanal: {e}[/bold red]")
         raise HTTPException(status_code=500, detail=f"Erro interno ao gerar o relatório: {e}")
 
 @app.post("/consulta/{consulta_id}/salvar_reflexao_medico", tags=["Relatórios"])
 def salvar_reflexao_medico(consulta_id: str, resposta: DialogoResposta, uid: str):
-    """Salva a reflexão escrita pelo médico sobre um caso específico no Firestore."""
     console.print(f"[{uid}] Salvando resposta do diálogo para a consulta {consulta_id}...")
     try:
         consulta_ref = gerenciador.medicos_ref.document(uid).collection('consultas').document(consulta_id)
-        consulta_ref.update({
-            "reflexao_medico": resposta.texto_resposta
-        })
+        consulta_ref.update({"reflexao_medico": resposta.texto_resposta})
         return {"status": "sucesso", "mensagem": "Reflexão salva com sucesso."}
     except Exception as e:
         console.print(f"❌ [bold red]Erro ao salvar reflexão do médico: {e}[/bold red]")
         raise HTTPException(status_code=500, detail=f"Erro interno ao salvar a reflexão: {e}")
-    
-# 3. Adicionar o novo endpoint
-@app.post("/consulta/gerar_documento/{uid}", tags=["Documentos"])
-def gerar_documento_clinico(uid: str, payload: DocumentoPayload):
-    """
-    Gera um documento clínico (receita, atestado, etc.) com base nos dados da consulta.
-    """
-    # Carrega o perfil do médico para obter nome, CRM, etc.
-    medico = gerenciador.carregar_ou_criar_perfil({"localId": uid, "email": ""})
-    if not medico:
-        raise HTTPException(status_code=404, detail="Médico não encontrado.")
-    
-    dados_medico = {
-        "nome_completo": medico.nome_completo,
-        "crm": medico.crm,
-        "especialidade": medico.especialidade
-    }
 
-    # Instancia o gerador de documentos
-    gerador = GeradorDeDocumentos(obter_resposta_llm_api)
-    
-    # Gera o documento
-    documento_texto = gerador.gerar_documento(
-        tipo_documento=payload.tipo_documento,
-        dados_consulta=payload.dados_consulta,
-        dados_medico=dados_medico
-    )
-    
-    if "Não foi possível" in documento_texto:
-        raise HTTPException(status_code=500, detail=documento_texto)
+# --- LÓGICA PARA SERVIR O FRONTEND ESTÁTICO ---
 
-    return {"documento_gerado": documento_texto}    
+# Monta o diretório 'frontend' para servir arquivos estáticos como CSS e JS.
+# O caminho "../frontend" assume a estrutura de pastas: /backend e /frontend.
+# Se a sua estrutura for diferente, ajuste este caminho.
+app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), '..', 'frontend')), name="static")
+
+
+@app.get("/status", tags=["Status"])
+def get_status():
+    """Endpoint de status para o app.js testar a conexão."""
+    return {"status": "ShaulaMed API está online e funcional."}
+
+@app.get("/{full_path:path}", response_class=FileResponse)
+async def serve_frontend(full_path: str):
+    """
+    Serve o index.html para a rota raiz e qualquer outra rota não correspondida pela API.
+    Isso é útil para frameworks de frontend que usam roteamento do lado do cliente.
+    """
+    path = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'index.html')
+    if os.path.exists(path):
+        return FileResponse(path)
+    raise HTTPException(status_code=404, detail="Frontend não encontrado.")
