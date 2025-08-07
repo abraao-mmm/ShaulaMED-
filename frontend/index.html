@@ -3,49 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShaulaMed - Acesso</title>
-    <link rel="stylesheet" href="style_login.css">
+    <title>ShaulaMed - Autenticação</title>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="main">
-        <div class="navbar">
-            <div class="icon">
-                <h2 class="logo">ShaulaMed</h2>
-            </div>
-        </div> 
-        <div class="content">
-            <h1>Copiloto Clínico<br><span>Inteligente &</span> <br>Reflexivo</h1>
-            <p class="par">Otimize seu tempo, aprimore sua prática e redescubra o foco no paciente.<br> ShaulaMed escuta, analisa e aprende com você, transformando cada consulta<br> em uma oportunidade de crescimento.</p>
-
-            <div id="login-form-container">
-                <form class="form" id="login-form">
-                    <h2>Acessar Plataforma</h2>
-                    <input type="email" id="login-email" placeholder="Digite seu Email" required>
-                    <input type="password" id="login-password" placeholder="Digite sua Senha" required>
-                    <button type="submit" class="btnn">Entrar</button>
-                    <p class="link">Não tem uma conta?<br>
-                    <a href="#" id="show-signup">Registe-se aqui</a></p>
-                </form>
-            </div>
-
-            <div id="signup-form-container" style="display: none;">
-                <form class="form signup-form" id="signup-form">
-                    <h2>Criar Conta de Médico</h2>
-                    <input type="text" id="signup-nome" placeholder="Nome Completo" required>
-                    <input type="email" id="signup-email" placeholder="Email" required>
-                    <input type="password" id="signup-password" placeholder="Crie uma Senha" required>
-                    <input type="text" id="signup-crm" placeholder="CRM (Ex: 12345-AM)" required>
-                    <input type="text" id="signup-especialidade" placeholder="Especialidade" required>
-                    <button type="submit" class="btnn">Criar Conta</button>
-                    <p class="link">Já tem uma conta?<br>
-                    <a href="#" id="show-login">Faça o login aqui</a></p>
-                </form>
-            </div>
-        </div>
+    <div class="night">
+        <div class="shooting_star" style="top: 40%; left: 10%;"></div>
+        <div class="shooting_star" style="top: 70%; left: 90%; animation-delay: 0.5s;"></div>
+        <div class="shooting_star" style="top: 20%; left: 30%; animation-delay: 1.5s;"></div>
+        <div class="shooting_star" style="top: 80%; left: 50%; animation-delay: 2s;"></div>
+        <div class="shooting_star"></div>
+        <div class="shooting_star" style="top: 30%; left: 70%; animation-delay: 2.5s;"></div>
+        <div class="shooting_star" style="top: 60%; left: 20%; animation-delay: 3.5s;"></div>
+        <div class="shooting_star" style="top: 10%; left: 60%; animation-delay: 4s;"></div>
+        <div class="shooting_star" style="top: 90%; left: 35%; animation-delay: 4.5s;"></div>
+        <div class="shooting_star" style="top: 50%; left: 80%; animation-delay: 5s;"></div>
     </div>
 
+    <div id="loading-container" class="loading-container">
+        <div class="spinner" id="loading-spinner"></div>
+        <p id="loading-text">A carregar ShaulaMed...</p>
+    </div>
+
+    <div id="login-container" class="login" style="display: none;">
+        <form id="login-form" class="login__form">
+            <h1 class="login__title">ShaulaMed</h1>
+            <div class="login__content">
+                <div class="login__box">
+                    <i class="ri-user-3-line login__icon"></i>
+                    <div class="login__box-input">
+                        <input type="email" required class="login__input" id="login-email-input" placeholder=" ">
+                        <label for="login-email-input" class="login__label">Email</label>
+                    </div>
+                </div>
+                <div class="login__box">
+                    <i class="ri-lock-2-line login__icon"></i>
+                    <div class="login__box-input">
+                        <input type="password" required class="login__input" id="login-password-input" placeholder=" ">
+                        <label for="login-password-input" class="login__label">Senha</label>
+                        <i class="ri-eye-off-line login__eye" id="login-eye"></i>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="login__button">Entrar</button>
+            <p class="login__register">
+                Não tem uma conta? <a href="#" id="show-signup-link">Registe-se</a>
+            </p>
+        </form>
+    </div>
+
+    <div id="signup-container" class="login" style="display: none;">
+        <form id="signup-form" class="login__form">
+            <h1 class="login__title">Criar Conta</h1>
+            <div class="login__content">
+                 <div class="login__box">
+                    <i class="ri-user-smile-line login__icon"></i>
+                    <div class="login__box-input">
+                        <input type="text" required class="login__input" id="signup-nome-input" placeholder=" ">
+                        <label for="signup-nome-input" class="login__label">Nome Completo</label>
+                    </div>
+                </div>
+                <div class="login__box">
+                    <i class="ri-mail-line login__icon"></i>
+                    <div class="login__box-input">
+                        <input type="email" required class="login__input" id="signup-email-input" placeholder=" ">
+                        <label for="signup-email-input" class="login__label">Email</label>
+                    </div>
+                </div>
+                 <div class="login__box">
+                    <i class="ri-file-user-line login__icon"></i>
+                    <div class="login__box-input">
+                        <input type="text" required class="login__input" id="signup-crm-input" placeholder=" ">
+                        <label for="signup-crm-input" class="login__label">CRM (ex: 12345-AM)</label>
+                    </div>
+                </div>
+                <div class="login__box">
+                    <i class="ri-briefcase-4-line login__icon"></i>
+                    <div class="login__box-input">
+                        <input type="text" required class="login__input" id="signup-especialidade-input" placeholder=" ">
+                        <label for="signup-especialidade-input" class="login__label">Especialidade</label>
+                    </div>
+                </div>
+                <div class="login__box">
+                    <i class="ri-lock-2-line login__icon"></i>
+                    <div class="login__box-input">
+                        <input type="password" required class="login__input" id="signup-password-input" placeholder=" ">
+                        <label for="signup-password-input" class="login__label">Senha</label>
+                        <i class="ri-eye-off-line login__eye" id="signup-eye"></i>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="login__button">Criar Conta</button>
+            <p class="login__register">
+                Já tem uma conta? <a href="#" id="show-login-link">Voltar ao Login</a>
+            </p>
+        </form>
+    </div>
+
+
+    <div class="main-container" style="display: none;">
+        <h1>ShaulaMed Copilot</h1>
+        </div>
+    
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <script src="app_login.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
