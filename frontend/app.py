@@ -134,7 +134,18 @@ def shaulamed_app():
                         st.error(f"Erro de conexão: {e}")
                 st.rerun()
 
-            st.markdown("---")
+            # DENTRO da função pagina_consulta()
+
+        st.markdown("---")
+        if st.button("⏹️ Finalizar Consulta", use_container_width=True, type="primary"):
+            decisao_final = st.session_state.get("prontuario_texto", "")
+            if not decisao_final.strip():
+                st.warning("Por favor, insira a sua decisão clínica final no campo de prontuário antes de finalizar.")
+            else:
+                # CORREÇÃO AQUI: Salvamos a decisão em uma variável de sessão dedicada
+                st.session_state.decisao_a_finalizar = decisao_final
+                st.session_state.etapa = 3
+                st.rerun()
             st.markdown("##### Prontuário")
             st.text_area("Sua Decisão Clínica e Notas Adicionais:", height=150, key="prontuario_texto", placeholder="Insira aqui a sua conduta final, prescrição e notas para o prontuário...")
 
