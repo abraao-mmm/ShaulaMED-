@@ -1,4 +1,4 @@
-# app.py (Versão Completa com Geração de Resumo Clínico e Correções de Estabilidade)
+# app.py (Versão Completa com Correção de Processamento e Exibição)
 
 import streamlit as st
 import requests
@@ -67,7 +67,6 @@ def shaulamed_app():
         st.markdown("---")
 
     def pagina_inicial():
-        # Exibe o resumo da última consulta, se existir no estado da sessão
         if 'resultado_final' in st.session_state and st.session_state.resultado_final:
             resumo = st.session_state.resultado_final.get("texto_gerado_prontuario", "Nenhum resumo foi gerado.")
             reflexao = st.session_state.resultado_final.get("reflexao", "")
@@ -79,7 +78,6 @@ def shaulamed_app():
                 st.info(f"**Reflexão da Shaula:** \"_{reflexao}_\"")
             st.markdown("---")
             
-            # Limpa o resultado da sessão para não ser exibido novamente
             del st.session_state.resultado_final
         else:
              st.info(f"**Shaula:** \"_{random.choice(FRASES_BOAS_VINDAS)}_\"")
@@ -111,73 +109,76 @@ def shaulamed_app():
                 key='recorder'
             )
 
-            # DENTRO da função pagina_consulta()
-
             if audio_info and audio_info['bytes'] and not st.session_state.audio_processado:
                 st.session_state.audio_processado = True
                 audio_bytes = audio_info['bytes']
                 with st.spinner("A transcrever, estruturar e analisar a consulta..."):
                     try:
-                        # Etapa 1: Enviar áudio para transcrição
                         files = {'ficheiro_audio': ("audio.wav", audio_bytes, "audio/wav")}
                         response_transcricao = requests.post(f"{API_URL}/audio/transcrever", files=files, timeout=90)
 
                         if response_transcricao.status_code == 200:
                             texto_transcrito = response_transcricao.json().get("texto_transcrito", "")
                             if texto_transcrito:
-                                # Etapa 2: Enviar transcrição para processamento completo (estruturação + análise avançada)
                                 dados_proc = {"consulta_atual": st.session_state.consulta_atual, "fala": {"texto": texto_transcrito}}
-                                response_proc = requests.post(f"{API_URL}/consulta/processar/{uid}", json=dados_proc, timeout=180) # Aumentado o timeout para a análise complexa
+                                response_proc = requests.post(f"{API_URL}/consulta/processar/{uid}", json=dados_proc, timeout=180)
                                 
                                 if response_proc.status_code == 200:
-                                    # Etapa 3: Atualizar o estado da sessão COM SUCESSO
                                     st.session_state.consulta_atual = response_proc.json()
-                                    
-                                    # CORREÇÃO AQUI: O rerun() foi movido para dentro do bloco de sucesso
-                                    st.rerun() 
+                                    st.rerun()
                                 else:
                                     st.error(f"Erro ao processar a consulta: {response_proc.text}")
+                                    st.session_state.audio_processado = False # Permite tentar de novo
                             else:
                                 st.warning("Nenhuma fala detetada no áudio.")
+                                st.session_state.audio_processado = False # Permite tentar de novo
                         else:
                             st.error(f"Erro na transcrição: {response_transcricao.text}")
+                            st.session_state.audio_processado = False # Permite tentar de novo
                     except requests.exceptions.RequestException as e:
                         st.error(f"Erro de conexão com a API: {e}")
-                
-  
+                        st.session_state.audio_processado = False # Permite tentar de novo
+
             st.markdown("---")
             st.markdown("##### Prontuário")
             st.text_area("Sua Decisão Clínica e Notas Adicionais:", height=150, key="prontuario_texto", placeholder="Insira aqui a sua conduta final, prescrição e notas para o prontuário...")
 
         with col2:
             st.markdown("##### Análise Estruturada da Shaula")
-            nota_clinica = st.session_state.consulta_atual.get('sugestao_ia', {})
+            sugestao_ia = st.session_state.consulta_atual.get('sugestao_ia', {})
+            nota_clinica = sugestao_ia.get('nota_clinica_estruturada', {})
+            analise_avancada = sugestao_ia.get('analise_clinica_avancada', {})
 
             if nota_clinica and not nota_clinica.get("erro"):
                 titulos = {
-                    "queixa_principal": "Queixa Principal",
-                    "historia_doenca_atual": "História da Doença Atual (HDA)",
-                    "antecedentes_pessoais_familiares": "Antecedentes",
-                    "medicamentos_em_uso": "Medicamentos em Uso",
-                    "exame_fisico_verbalizado": "Exame Físico",
-                    "hipoteses_diagnosticas": "Hipóteses Diagnósticas",
-                    "conduta_sugerida": "Conduta Sugerida pela IA",
-                    "orientacoes_gerais": "Orientações",
+                    "queixa_principal": "Queixa Principal", "historia_doenca_atual": "História da Doença Atual (HDA)",
+                    "antecedentes_pessoais_familiares": "Antecedentes", "medicamentos_em_uso": "Medicamentos em Uso",
+                    "exame_fisico_verbalizado": "Exame Físico", "hipoteses_diagnosticas": "Hipóteses Diagnósticas",
+                    "conduta_sugerida": "Conduta Sugerida pela IA", "orientacoes_gerais": "Orientações",
                     "retorno_encaminhamento": "Retorno / Encaminhamentos"
                 }
-
                 for chave, titulo in titulos.items():
                     conteudo = nota_clinica.get(chave)
                     if conteudo:
-                        st.markdown(f"**{titulo}**")
-                        if isinstance(conteudo, list):
-                            for item in conteudo:
-                                st.markdown(f"- {item}")
-                        else:
-                            st.write(conteudo)
-                        st.markdown("---")
-            else:
-                st.info("Aguardando a escuta da consulta para gerar a nota clínica...")
+                        st.markdown(f"**{titulo}**"); st.write(conteudo if not isinstance(conteudo, list) else "\n".join(f"- {item}" for item in conteudo)); st.markdown("---")
+            
+            elif not sugestao_ia:
+                 st.info("Aguardando a escuta da consulta para gerar a nota clínica...")
+            
+            if analise_avancada and not analise_avancada.get("erro"):
+                st.markdown("##### 🔬 Insights e Alertas da IA")
+                if analise_avancada.get("exames_complementares_sugeridos"):
+                    with st.expander("Sugestões de Exames Complementares"):
+                        for item in analise_avancada["exames_complementares_sugeridos"]: st.markdown(f"- **{item['exame']}:** _{item['justificativa']}_")
+                if analise_avancada.get("alertas_de_conduta"):
+                    with st.expander("⚠️ Alertas de Conduta"):
+                        for item in analise_avancada["alertas_de_conduta"]: st.warning(f"**{item['alerta']}:** {item['explicacao_risco']}")
+                if analise_avancada.get("sugestoes_de_tratamento"):
+                    with st.expander("💊 Sugestões de Tratamento"):
+                        for item in analise_avancada["sugestoes_de_tratamento"]: st.markdown(f"**{item['medicamento_sugerido']} ({item['posologia_recomendada']})**"); st.caption(f"Justificativa: {item['justificativa_clinica']}")
+                if analise_avancada.get("validacao_medicamentos_mencionados"):
+                    with st.expander("✅ Validação de Medicamentos"):
+                         for item in analise_avancada["validacao_medicamentos_mencionados"]: st.info(f"**{item['medicamento_mencionado']}:** {item['status_validacao']} - _{item['observacao']}_")
 
         st.markdown("---")
         if st.button("⏹️ Finalizar Consulta", use_container_width=True, type="primary", key="finalizar_consulta_btn"):
@@ -192,119 +193,63 @@ def shaulamed_app():
     def pagina_finalizacao():
         desenhar_jornada(3)
         decisao_final = st.session_state.get("decisao_a_finalizar", "Nenhuma nota inserida.")
-        
-        st.info("A consulta será finalizada com a seguinte decisão clínica:")
-        st.markdown(f"> _{decisao_final}_")
-        
+        st.info("A consulta será finalizada com a seguinte decisão clínica:"); st.markdown(f"> _{decisao_final}_")
         st.markdown("---")
-        
         st.markdown("##### Gerar Resumo para Prontuário")
-        formato_selecionado = st.selectbox(
-            "Escolha o formato do resumo:",
-            ("SOAP", "Livre (texto corrido)", "PEACE", "CAMPOS")
-        )
-        
-        # DENTRO da função pagina_finalizacao()
-
+        formato_selecionado = st.selectbox("Escolha o formato do resumo:", ("SOAP", "Livre (texto corrido)", "PEACE", "CAMPOS"))
         if st.button(f"Confirmar e Gerar Resumo {formato_selecionado}", use_container_width=True, key="confirmar_resumo_btn"):
-            with st.spinner(f"A finalizar, aprender e gerar o resumo no formato {formato_selecionado}..."):
-                
-                # --- CORREÇÃO APLICADA AQUI ---
-                # Agora o objeto 'decisao' inclui o campo 'resumo', como esperado pelo backend.
-                dados = {
-                    "consulta_atual": st.session_state.consulta_atual,
-                    "decisao": {
-                        "decisao": decisao_final,
-                        "resumo": decisao_final 
-                    },
-                    "formato_resumo": formato_selecionado
-                }
-                # --- FIM DA CORREÇÃO ---
-
+            with st.spinner(f"A finalizar e gerar o resumo no formato {formato_selecionado}..."):
+                dados = {"consulta_atual": st.session_state.consulta_atual, "decisao": {"decisao": decisao_final, "resumo": decisao_final}, "formato_resumo": formato_selecionado}
                 try:
                     response = requests.post(f"{API_URL}/consulta/finalizar/{uid}", json=dados, timeout=120)
-                    
                     if response.status_code == 200:
                         st.session_state.resultado_final = response.json()
                         st.session_state.etapa = 1
                         st.session_state.consulta_atual = None
-                        if "decisao_a_finalizar" in st.session_state:
-                            del st.session_state.decisao_a_finalizar
+                        if "decisao_a_finalizar" in st.session_state: del st.session_state.decisao_a_finalizar
                         st.rerun()
                     else:
                         st.error(f"Erro ao finalizar ({response.status_code}): {response.text}")
-
                 except requests.exceptions.RequestException as e:
                     st.error(f"Erro de conexão ao finalizar: {e}")
 
-    # --- ROTEADOR DA BARRA LATERAL E DAS PÁGINAS ---
     with st.sidebar:
-        st.title("🩺 ShaulaMed")
-        email_utilizador = st.session_state.utilizador_logado.get('email', 'N/A')
-        st.caption(f"Médico: {email_utilizador}")
-
+        st.title("🩺 ShaulaMed"); st.caption(f"Médico: {st.session_state.utilizador_logado.get('email', 'N/A')}")
         if st.button("Consulta", use_container_width=True, type=("primary" if st.session_state.pagina == "Consulta" else "secondary"), key="sidebar_consulta"):
-            st.session_state.pagina = "Consulta"
-            st.rerun()
-            
+            st.session_state.pagina = "Consulta"; st.rerun()
         if st.button("Painel Semanal", use_container_width=True, type=("primary" if st.session_state.pagina == "Relatorio" else "secondary"), key="sidebar_relatorio"):
             st.session_state.pagina = "Relatorio"
-            if 'relatorio_semanal_completo' in st.session_state:
-                del st.session_state.relatorio_semanal_completo
+            if 'relatorio_semanal_completo' in st.session_state: del st.session_state.relatorio_semanal_completo
             st.rerun()
-            
         st.markdown("---")
         if st.button("Sair", use_container_width=True, key="sidebar_sair"):
-            for key in list(st.session_state.keys()):
-                del st.session_state[key]
+            for key in list(st.session_state.keys()): del st.session_state[key]
             st.rerun()
 
     if st.session_state.pagina == "Consulta":
         st.title("ShaulaMed Copilot")
-        if st.session_state.etapa == 1:
-            pagina_inicial()
-        elif st.session_state.etapa == 2:
-            pagina_consulta()
-        elif st.session_state.etapa == 3:
-            pagina_finalizacao()
-            
+        if st.session_state.etapa == 1: pagina_inicial()
+        elif st.session_state.etapa == 2: pagina_consulta()
+        elif st.session_state.etapa == 3: pagina_finalizacao()
     elif st.session_state.pagina == "Relatorio":
         st.title("Painel Semanal")
         st.caption("Uma análise reflexiva da sua prática na última semana, gerada pela Shaula.")
         if st.button("Gerar Relatório da Semana", use_container_width=True, key="gerar_relatorio_btn"):
-            with st.spinner("A analisar as consultas da última semana... Este processo pode ser demorado."):
+            with st.spinner("A analisar as consultas da última semana..."):
                 try:
                     response = requests.get(f"{API_URL}/medico/{uid}/relatorio_semanal", timeout=120)
-                    if response.status_code == 200:
-                        st.session_state.relatorio_semanal_completo = response.json()
-                    else:
-                        st.error(f"Erro ao gerar o relatório ({response.status_code}): {response.text}")
-                except requests.exceptions.RequestException as e:
-                    st.error(f"Erro de conexão: {e}")
-
+                    if response.status_code == 200: st.session_state.relatorio_semanal_completo = response.json()
+                    else: st.error(f"Erro ao gerar o relatório ({response.status_code}): {response.text}")
+                except requests.exceptions.RequestException as e: st.error(f"Erro de conexão: {e}")
         if 'relatorio_semanal_completo' in st.session_state and st.session_state.relatorio_semanal_completo:
             relatorio_data = st.session_state.relatorio_semanal_completo
-            texto_coach = relatorio_data.get("texto_coach")
-            if texto_coach:
-                texto_formatado_html = texto_coach.replace("\n", "<br>")
-                st.markdown(f'<div class="report-box">{texto_formatado_html}</div>', unsafe_allow_html=True)
-                
-            dados_estruturados = relatorio_data.get("dados_estruturados")
-            if dados_estruturados:
-                st.markdown("---")
-                st.subheader("Estatísticas da Semana")
-                stats = dados_estruturados.get("stats_semanais", {})
-                if stats:
-                    stats_df = pd.DataFrame(list(stats.items()), columns=['Métrica', 'Valor'])
-                    st.bar_chart(stats_df.set_index('Métrica'))
-                    
-                st.markdown("---")
-                st.subheader("Detalhe das Consultas")
-                tabela_df = pd.DataFrame(dados_estruturados.get("tabela_concordancia", []))
-                if not tabela_df.empty:
-                    st.dataframe(tabela_df.set_index("Caso"), use_container_width=True)
+            if relatorio_data.get("texto_coach"): st.markdown(f'<div class="report-box">{relatorio_data.get("texto_coach").replace("n", "<br>")}</div>', unsafe_allow_html=True)
+            if relatorio_data.get("dados_estruturados"):
+                st.markdown("---"); st.subheader("Estatísticas da Semana")
+                if relatorio_data["dados_estruturados"].get("stats_semanais"): st.bar_chart(pd.DataFrame(list(relatorio_data["dados_estruturados"]["stats_semanais"].items()), columns=['Métrica', 'Valor']).set_index('Métrica'))
+                st.markdown("---"); st.subheader("Detalhe das Consultas")
+                if not pd.DataFrame(relatorio_data["dados_estruturados"].get("tabela_concordancia", [])).empty: st.dataframe(pd.DataFrame(relatorio_data["dados_estruturados"]["tabela_concordancia"]).set_index("Caso"), use_container_width=True)
 
-# --- ROTEADOR PRINCIPAL DA APLICAÇÃO ---
 if 'utilizador_logado' in st.session_state and st.session_state.utilizador_logado:
     shaulamed_app()
 else:
