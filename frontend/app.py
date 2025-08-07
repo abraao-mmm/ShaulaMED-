@@ -188,9 +188,14 @@ def shaulamed_app():
                 st.session_state.etapa = 3
                 st.rerun()
 
+# Substitua a função inteira por esta versão corrigida
+
     def pagina_finalizacao():
         desenhar_jornada(3)
-        decisao_final = st.session_state.get("prontuario_texto", "Nenhuma nota inserida.")
+        
+        # CORREÇÃO AQUI: Lemos da variável de sessão dedicada e estável
+        decisao_final = st.session_state.get("decisao_a_finalizar", "Nenhuma nota inserida.")
+        
         st.info("A consulta será finalizada com a seguinte decisão clínica:")
         st.markdown(f"> _{decisao_final}_")
         
@@ -204,26 +209,28 @@ def shaulamed_app():
         
         if st.button(f"Confirmar e Gerar Resumo {formato_selecionado}", use_container_width=True):
             with st.spinner(f"A finalizar, aprender e gerar o resumo no formato {formato_selecionado}..."):
+                # O payload agora usa a variável 'decisao_final' que foi lida corretamente
                 dados = {
                     "consulta_atual": st.session_state.consulta_atual,
                     "decisao": {"decisao": decisao_final},
                     "formato_resumo": formato_selecionado
                 }
                 try:
-                    # Este endpoint no backend (API) deve ser adaptado para receber 'formato_resumo'
-                    # e retornar um objeto JSON contendo 'texto_gerado_prontuario' e 'reflexao'.
                     response = requests.post(f"{API_URL}/consulta/finalizar/{uid}", json=dados, timeout=120)
                     
                     if response.status_code == 200:
                         st.session_state.resultado_final = response.json()
                         st.session_state.etapa = 1
                         st.session_state.consulta_atual = None
+                        # Limpa a variável após o uso
+                        if "decisao_a_finalizar" in st.session_state:
+                            del st.session_state.decisao_a_finalizar
                         st.rerun()
                     else:
                         st.error(f"Erro ao finalizar ({response.status_code}): {response.text}")
+
                 except requests.exceptions.RequestException as e:
                     st.error(f"Erro de conexão ao finalizar: {e}")
-
     # --- ROTEADOR DA BARRA LATERAL E DAS PÁGINAS ---
     with st.sidebar:
         st.title("🩺 ShaulaMed")
