@@ -34,11 +34,11 @@ console = Console()
 
 # ===== CONFIGURAÇÃO DO CORS =====
 # IMPORTANTE: Adicione o URL do seu frontend do Render aqui!
+# ...
+# ===== CONFIGURAÇÃO DO CORS (ATUALIZADA) =====
 origins = [
-    "http://localhost:5173",      # Para desenvolvimento local
-    "http://127.0.0.1:5500",
-    "http://localhost:5500",
-    "https://shaulamed-frontend.onrender.com",  # EXEMPLO - SUBSTITUA PELO SEU URL REAL
+    "http://localhost:5173",                 # Para desenvolvimento local
+    "https://shaulamed-frontend.onrender.com",  # <-- GARANTA QUE O SEU URL PÚBLICO ESTÁ AQUI
 ]
 
 app.add_middleware(
@@ -48,6 +48,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# ...
 # ===== FIM DA CONFIGURAÇÃO DO CORS =====
 
 

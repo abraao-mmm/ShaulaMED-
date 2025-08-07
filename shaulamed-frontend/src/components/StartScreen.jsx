@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import Particles from './Particles';
 import RotatingText from './RotatingText';
 import AnimatedSubtitle from './AnimatedSubtitle';
-import StarButton from './StarButton'; // 1. Importar o novo botão
+import StarButton from './StarButton';
 import './StartScreen.css';
 
 const StartScreen = ({ onStart }) => {
@@ -48,7 +48,6 @@ const StartScreen = ({ onStart }) => {
           <AnimatedSubtitle text="Amplificando seu raciocínio clínico." />
         </div>
 
-        {/* 2. Substituir o <button> antigo pelo novo componente <StarButton> */}
         <div className="start-button-wrapper">
             <StarButton onClick={onStart}>
                 Iniciar Nova Consulta
@@ -60,4 +59,5 @@ const StartScreen = ({ onStart }) => {
   );
 };
 
-export default StarButton;
+// A CORREÇÃO ESTÁ AQUI:
+export default StartScreen;
