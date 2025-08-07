@@ -1,5 +1,0 @@
-streamlit
-requests
-pyrebase4
-streamlit-mic-recorder
-pandas

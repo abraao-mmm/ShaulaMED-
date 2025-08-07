@@ -62,3 +62,132 @@ h1 {
 .efficiency    { grid-column: span 4; grid-row: span 2; }
 .connectivity  { grid-column: span 2; grid-row: span 1; }
 .protection    { grid-column: span 2; grid-row: span 1; }
+
+/* Estilos para a tela de login */
+#login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #0c0d14; /* Cor de fundo da página de login */
+}
+
+.login-box {
+    position: relative;
+    width: 400px;
+    padding: 40px;
+    background: #060010;
+    border-radius: 10px;
+    box-shadow: 0 15px 35px rgba(0,0,0,.5);
+}
+
+.led-border {
+    position: relative;
+    border-radius: 10px;
+    padding: 2px; /* Espaço para o efeito de brilho */
+    background: linear-gradient(45deg, #03a9f4, #f441a5, #ffeb3b, #03a9f4);
+    background-size: 800%;
+    animation: animateGlow 20s linear infinite;
+    z-index: 1;
+    overflow: hidden; /* Para conter o conteúdo dentro da borda */
+}
+
+@keyframes animateGlow {
+    0%{
+        background-position: 0 0;
+    }
+    100%{
+        background-position: 400% 0;
+    }
+}
+
+.login-box form {
+    position: relative;
+    z-index: 2;
+}
+
+.login-box h2 {
+    margin: 0 0 30px;
+    padding: 0;
+    color: #fff;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.input-box {
+    position: relative;
+}
+
+.input-box input {
+    width: 100%;
+    padding: 10px 0;
+    font-size: 16px;
+    color: #fff;
+    margin-bottom: 30px;
+    border: none;
+    border-bottom: 1px solid #fff;
+    outline: none;
+    background: transparent;
+}
+
+.input-box label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 10px 0;
+    font-size: 16px;
+    color: #fff;
+    pointer-events: none;
+    transition: .5s;
+}
+
+.input-box input:focus ~ label,
+.input-box input:valid ~ label {
+    top: -20px;
+    left: 0;
+    color: #03a9f4;
+    font-size: 12px;
+}
+
+.btn {
+    background: #03a9f4;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+    text-transform: uppercase;
+    margin-top: 10px;
+}
+
+.btn:hover {
+    background: #17b9ff;
+}
+
+.forgot {
+    margin-top: 20px;
+}
+
+.forgot a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.signup-link {
+    color: #fff;
+    font-size: 14px;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.signup-link a {
+    color: #03a9f4;
+    text-decoration: none;
+}
+
+/* Esconde o container principal até o login */
+.main-container {
+    display: none;
+}

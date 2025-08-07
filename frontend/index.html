@@ -7,13 +7,27 @@
 </head>
 <body>
     <div id="login-container">
-        <h1>ShaulaMed</h1>
-        <p>O seu copiloto clínico com IA reflexiva.</p>
-        <div class="form-container">
-            <input type="email" id="email-input" placeholder="Email">
-            <input type="password" id="password-input" placeholder="Senha">
-            <button id="login-button">Entrar</button>
-            <small>Ainda não tem conta? Contacte o suporte para se registar.</small>
+        <div class="login-box">
+            <div class="led-border">
+                <form id="login-form">
+                    <h2>LOGIN</h2>
+                    <div class="input-box">
+                        <input type="email" id="email-input" required>
+                        <label>Email</label>
+                    </div>
+                    <div class="input-box">
+                        <input type="password" id="password-input" required>
+                        <label>Password</label>
+                    </div>
+                    <div class="forgot">
+                        <a href="#">Forgot Password</a>
+                    </div>
+                    <button type="submit" class="btn">Sign in</button>
+                    <div class="signup-link">
+                        Not a member? <a href="#">Sign up</a>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
