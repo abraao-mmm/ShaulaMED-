@@ -1,4 +1,4 @@
-# app.py (Versão Completa com Correção de Processamento e Exibição)
+# app.py (Versão Completa com Geração de Documentos)
 
 import streamlit as st
 import requests
@@ -31,6 +31,8 @@ if 'decisao_a_finalizar' not in st.session_state:
     st.session_state.decisao_a_finalizar = None
 if "audio_processado" not in st.session_state:
     st.session_state.audio_processado = False
+if 'ultimo_documento' not in st.session_state:
+    st.session_state.ultimo_documento = None
 
 # --- FUNÇÃO DA APLICAÇÃO PRINCIPAL ---
 def shaulamed_app():
@@ -125,19 +127,20 @@ def shaulamed_app():
                                 
                                 if response_proc.status_code == 200:
                                     st.session_state.consulta_atual = response_proc.json()
+                                    st.session_state.ultimo_documento = None
                                     st.rerun()
                                 else:
                                     st.error(f"Erro ao processar a consulta: {response_proc.text}")
-                                    st.session_state.audio_processado = False # Permite tentar de novo
+                                    st.session_state.audio_processado = False
                             else:
                                 st.warning("Nenhuma fala detetada no áudio.")
-                                st.session_state.audio_processado = False # Permite tentar de novo
+                                st.session_state.audio_processado = False
                         else:
                             st.error(f"Erro na transcrição: {response_transcricao.text}")
-                            st.session_state.audio_processado = False # Permite tentar de novo
+                            st.session_state.audio_processado = False
                     except requests.exceptions.RequestException as e:
                         st.error(f"Erro de conexão com a API: {e}")
-                        st.session_state.audio_processado = False # Permite tentar de novo
+                        st.session_state.audio_processado = False
 
             st.markdown("---")
             st.markdown("##### Prontuário")
@@ -179,6 +182,27 @@ def shaulamed_app():
                 if analise_avancada.get("validacao_medicamentos_mencionados"):
                     with st.expander("✅ Validação de Medicamentos"):
                          for item in analise_avancada["validacao_medicamentos_mencionados"]: st.info(f"**{item['medicamento_mencionado']}:** {item['status_validacao']} - _{item['observacao']}_")
+
+            # Seção para Geração de Documentos
+            st.markdown("##### 📄 Gerar Documentos")
+            tipos_documentos = {"Receita": "receita", "Pedido de Exame": "pedido_exame", "Atestado": "atestado", "Encaminhamento": "encaminhamento", "Relatório": "relatorio_convenio"}
+            cols_docs = st.columns(len(tipos_documentos))
+            for i, (nome_botao, tipo_doc) in enumerate(tipos_documentos.items()):
+                if cols_docs[i].button(nome_botao, key=f"btn_{tipo_doc}", use_container_width=True):
+                    with st.spinner(f"A gerar {nome_botao}..."):
+                        try:
+                            payload = {"tipo_documento": tipo_doc, "dados_consulta": st.session_state.consulta_atual.get('sugestao_ia', {})}
+                            response = requests.post(f"{API_URL}/consulta/gerar_documento/{uid}", json=payload, timeout=60)
+                            if response.status_code == 200:
+                                st.session_state.ultimo_documento = response.json().get("documento_gerado")
+                            else:
+                                st.error(f"Erro ao gerar documento: {response.text}")
+                        except Exception as e:
+                            st.error(f"Erro de conexão ao gerar documento: {e}")
+            
+            if st.session_state.get('ultimo_documento'):
+                with st.expander("Visualizar Último Documento Gerado", expanded=True):
+                    st.text_area("Texto do Documento:", value=st.session_state.ultimo_documento, height=300, key="doc_gerado_display")
 
         st.markdown("---")
         if st.button("⏹️ Finalizar Consulta", use_container_width=True, type="primary", key="finalizar_consulta_btn"):

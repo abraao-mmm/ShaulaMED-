@@ -17,6 +17,8 @@ from transcritor import transcrever_audio_bytes
 from analise_clinica import MotorDeAnaliseClinica
 from memoria_clinica import MemoriaClinica
 from rich.console import Console
+from gerador_documentos import GeradorDeDocumentos
+
 
 # --- INICIALIZAÇÃO DA API E OBJETOS GLOBAIS ---
 app = FastAPI(
@@ -87,6 +89,11 @@ class FinalizarPayload(BaseModel):
 
 class DialogoResposta(BaseModel):
     texto_resposta: str
+
+class DocumentoPayload(BaseModel):
+    tipo_documento: str
+    dados_consulta: dict
+
 
 # --- ENDPOINTS DA API ---
 
@@ -209,3 +216,35 @@ def salvar_reflexao_medico(consulta_id: str, resposta: DialogoResposta, uid: str
     except Exception as e:
         console.print(f"❌ [bold red]Erro ao salvar reflexão do médico: {e}[/bold red]")
         raise HTTPException(status_code=500, detail=f"Erro interno ao salvar a reflexão: {e}")
+    
+# 3. Adicionar o novo endpoint
+@app.post("/consulta/gerar_documento/{uid}", tags=["Documentos"])
+def gerar_documento_clinico(uid: str, payload: DocumentoPayload):
+    """
+    Gera um documento clínico (receita, atestado, etc.) com base nos dados da consulta.
+    """
+    # Carrega o perfil do médico para obter nome, CRM, etc.
+    medico = gerenciador.carregar_ou_criar_perfil({"localId": uid, "email": ""})
+    if not medico:
+        raise HTTPException(status_code=404, detail="Médico não encontrado.")
+    
+    dados_medico = {
+        "nome_completo": medico.nome_completo,
+        "crm": medico.crm,
+        "especialidade": medico.especialidade
+    }
+
+    # Instancia o gerador de documentos
+    gerador = GeradorDeDocumentos(obter_resposta_llm_api)
+    
+    # Gera o documento
+    documento_texto = gerador.gerar_documento(
+        tipo_documento=payload.tipo_documento,
+        dados_consulta=payload.dados_consulta,
+        dados_medico=dados_medico
+    )
+    
+    if "Não foi possível" in documento_texto:
+        raise HTTPException(status_code=500, detail=documento_texto)
+
+    return {"documento_gerado": documento_texto}    
