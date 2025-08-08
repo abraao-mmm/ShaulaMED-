@@ -16,7 +16,7 @@
   padding: 1rem;
   width: 100%;
   max-width: 90vw;
-  height: calc(100vh - 120px); /* Altura da tela menos espaço para o botão finalizar e padding */
+  height: calc(100vh - 120px);
   margin: auto;
   font-size: clamp(1rem, 0.9rem + 0.5vw, 1.5rem);
 }
@@ -34,10 +34,6 @@
   font-weight: 300;
   overflow: hidden;
   transition: all 0.3s ease;
-  --glow-x: 50%;
-  --glow-y: 50%;
-  --glow-intensity: 0;
-  --glow-radius: 200px;
 }
 
 .card:hover {
@@ -60,7 +56,7 @@
 .card__content {
   flex-direction: column;
   flex-grow: 1;
-  height: 100%;
+  min-height: 0; 
 }
 
 .card__label {
@@ -69,32 +65,20 @@
   margin-bottom: 0.5rem;
 }
 
-.card__title {
-  font-weight: 400;
-  font-size: 16px;
-  margin: 0 0 0.25em;
+/* ===== A ALTERAÇÃO ESTÁ AQUI ===== */
+.scrollable-content {
+  overflow-y: hidden; /* MUDANÇA: de 'auto' para 'hidden' */
+  height: 100%;
 }
 
-.card__description {
-  font-size: 12px;
-  line-height: 1.2;
-  opacity: 0.9;
+.placeholder-text {
+  color: rgba(255, 255, 255, 0.4);
+  font-style: italic;
+  font-size: 13px;
+  text-align: center;
+  margin: auto;
 }
 
-@media (max-width: 1023px) {
-  .card-grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-    grid-template-areas: none !important;
-    height: auto;
-    width: 90%;
-    margin: 0 auto;
-    padding: 0.5em;
-  }
-  .card {
-     min-height: 200px;
-  }
-}
 
 @media (min-width: 1024px) {
   .card-grid {
@@ -105,7 +89,6 @@
       "efficiency efficiency teamwork teamwork"
       "efficiency efficiency connectivity protection";
   }
-
   .card[data-area="Insights"] { grid-area: insights; }
   .card[data-area="Overview"] { grid-area: overview; }
   .card[data-area="Collaboration"] { grid-area: teamwork; }
@@ -114,28 +97,5 @@
   .card[data-area="Protection"] { grid-area: protection; }
 }
 
-.card--border-glow::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  padding: 2px;
-  background: radial-gradient(var(--glow-radius) circle at var(--glow-x) var(--glow-y),
-      rgba(132, 0, 255, calc(var(--glow-intensity) * 0.8)) 0%,
-      rgba(132, 0, 255, calc(var(--glow-intensity) * 0.4)) 30%,
-      transparent 60%);
-  border-radius: inherit;
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite: subtract;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-  z-index: 1;
-}
-.card--border-glow:hover::after { opacity: 1; }
-.card--border-glow:hover { box-shadow: 0 4px 20px rgba(46, 24, 78, 0.4), 0 0 30px var(--purple-glow); }
-.particle-container { position: relative; overflow: hidden; }
-.particle::before { content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px; background: rgba(132, 0, 255, 0.2); border-radius: 50%; z-index: -1; }
-.particle-container:hover { box-shadow: 0 4px 20px rgba(46, 24, 78, 0.2), 0 0 30px var(--purple-glow); }
-.global-spotlight { mix-blend-mode: screen; will-change: transform, opacity; z-index: 200 !important; pointer-events: none; }
-.bento-section { position: relative; user-select: none; }
+/* ===== E REMOVEMOS COMPLETAMENTE O CÓDIGO DA BARRA DE SCROLL ===== */
+/* O código ::-webkit-scrollbar foi apagado */
