@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import anime from 'animejs/lib/anime.es.js';
+// ALTERAÇÃO CRÍTICA AQUI: Mudamos a forma de importar o 'animejs'
+import anime from 'animejs';
 import './HeartbeatLoader.css';
 
 const HeartbeatLoader = () => {
