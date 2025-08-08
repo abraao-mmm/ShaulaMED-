@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-// ALTERAÇÃO CRÍTICA AQUI: Mudamos a forma de importar o 'animejs'
-import anime from 'animejs';
+// Esta importação está correta e é a mais segura.
+import * as anime from 'animejs';
 import './HeartbeatLoader.css';
 
 const HeartbeatLoader = () => {
@@ -10,6 +10,8 @@ const HeartbeatLoader = () => {
         const path = pathRef.current;
         if (!path) return;
 
+        // ===== A CORREÇÃO FINAL ESTÁ AQUI =====
+        // Acessamos a função 'timeline' diretamente do objeto 'anime', sem o '.default'.
         const heartbeatAnimation = anime.timeline({
             loop: true,
             direction: 'alternate',
@@ -26,7 +28,9 @@ const HeartbeatLoader = () => {
 
         // Cleanup function to pause animation when component unmounts
         return () => {
-            heartbeatAnimation.pause();
+            if (heartbeatAnimation) {
+                heartbeatAnimation.pause();
+            }
         };
     }, []);
 
