@@ -1,13 +1,9 @@
 :root {
-  --hue: 27;
-  --sat: 69%;
   --white: hsl(0, 0%, 100%);
   --purple-primary: rgba(132, 0, 255, 1);
   --purple-glow: rgba(132, 0, 255, 0.2);
-  --purple-border: rgba(132, 0, 255, 0.8);
   --border-color: #392e4e;
   --background-dark: #060010;
-  color-scheme: light dark;
 }
 
 .card-grid {
@@ -18,84 +14,132 @@
   max-width: 90vw;
   height: calc(100vh - 120px);
   margin: auto;
-  font-size: clamp(1rem, 0.9rem + 0.5vw, 1.5rem);
 }
 
+/* REGRA 1: O Card principal deve esconder o que transborda */
 .card {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  gap: 1rem;
   position: relative;
   padding: 1.5em;
   border-radius: 20px;
   border: 1px solid var(--border-color);
   background: var(--background-dark);
-  font-weight: 300;
+  overflow: hidden; /* ESSENCIAL: Esconde a barra de scroll feia */
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+
+.particle {
+    position: absolute;
+    pointer-events: none;
+}
+
+/* REGRA 2: A classe 'scrollable-content' é quem deve ter a barra de scroll */
+.scrollable-content {
+  overflow-y: auto; /* Adiciona a barra de scroll SÓ quando necessário */
+  height: 100%; /* Ocupa o espaço vertical disponível */
+  padding-right: 5px; /* Evita que o texto cole na barra */
+}
+
+/* REGRA 3: Estilizamos a barra de scroll da nossa classe */
+.scrollable-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollable-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.scrollable-content::-webkit-scrollbar-thumb {
+  background-color: var(--purple-primary);
+  border-radius: 10px;
+  border: 2px solid var(--background-dark);
+}
+
+.scrollable-content::-webkit-scrollbar-thumb:hover {
+  background-color: var(--purple-border);
+}
+
+/* Layout do Bento Grid para telas grandes */
+@media (min-width: 1024px) {
+  .card-grid {
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: minmax(200px, auto);
+  }:root {
+  --white: hsl(0, 0%, 100%);
+  --purple-primary: rgba(132, 0, 255, 1);
+  --purple-glow: rgba(132, 0, 255, 0.2);
+  --border-color: #392e4e;
+  --background-dark: #060010;
+}
+
+.card-grid {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  width: 100%;
+  max-width: 90vw;
+  height: calc(100vh - 120px);
+  margin: auto;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding: 1.5em;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background: var(--background-dark);
   overflow: hidden;
   transition: all 0.3s ease;
 }
 
 .card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px var(--purple-glow);
 }
 
-.card__header,
-.card__content {
-  display: flex;
-  position: relative;
-  color: var(--white);
-  z-index: 2;
+.particle {
+    position: absolute;
+    pointer-events: none;
 }
 
-.card__header {
-  gap: 0.75em;
-}
-
-.card__content {
-  flex-direction: column;
-  flex-grow: 1;
-  min-height: 0; 
-}
-
-.card__label {
-  font-size: 18px;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-}
-
-/* ===== A ALTERAÇÃO ESTÁ AQUI ===== */
-.scrollable-content {
-  overflow-y: hidden; /* MUDANÇA: de 'auto' para 'hidden' */
-  height: 100%;
-}
-
-.placeholder-text {
-  color: rgba(255, 255, 255, 0.4);
-  font-style: italic;
-  font-size: 13px;
-  text-align: center;
-  margin: auto;
-}
-
-
+/* Layout do Bento Grid para telas grandes (idêntico ao original) */
 @media (min-width: 1024px) {
   .card-grid {
     grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-    grid-template-areas:
-      "insights overview teamwork teamwork"
-      "efficiency efficiency teamwork teamwork"
-      "efficiency efficiency connectivity protection";
+    grid-auto-rows: minmax(200px, 1fr);
   }
-  .card[data-area="Insights"] { grid-area: insights; }
-  .card[data-area="Overview"] { grid-area: overview; }
-  .card[data-area="Collaboration"] { grid-area: teamwork; }
-  .card[data-area="Efficiency"] { grid-area: efficiency; }
-  .card[data-area="Connectivity"] { grid-area: connectivity; }
-  .card[data-area="Protection"] { grid-area: protection; }
+  .card:nth-child(3) { /* Collaboration */
+    grid-column: 3 / span 2;
+    grid-row: 1 / span 2;
+  }
+  .card:nth-child(4) { /* Efficiency */
+    grid-column: 1 / span 2;
+    grid-row: 2 / span 2;
+  }
+  .card:nth-child(6) { /* Protection */
+    grid-column: 4;
+    grid-row: 3;
+  }
 }
-
-/* ===== E REMOVEMOS COMPLETAMENTE O CÓDIGO DA BARRA DE SCROLL ===== */
-/* O código ::-webkit-scrollbar foi apagado */
+  .card:nth-child(3) { /* Collaboration */
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+  .card:nth-child(4) { /* Efficiency */
+    grid-column: 1 / span 2;
+    grid-row: 2 / span 2;
+  }
+  .card:nth-child(6) { /* Protection */
+    grid-column: 4;
+    grid-row: 3;
+  }
+}   

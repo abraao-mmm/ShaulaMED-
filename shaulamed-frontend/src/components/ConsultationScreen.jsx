@@ -1,20 +1,24 @@
-import React, { useState, useRef, useEffect } from 'react';
-import MagicBento from './MagicBento';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import StarButton from './StarButton';
-import HeartbeatLoader from './HeartbeatLoader'; // Importa o novo loader
+import HeartbeatLoader from './HeartbeatLoader';
+import MagicBento from './MagicBento';
+import AnimatedInfoList from './AnimatedInfoList';
 
 // Estilos
-const cardContentStyle = { width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '10px', color: 'white', fontSize: '14px' };
-const textAreaStyle = { flexGrow: 1, width: '100%', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'white', padding: '10px', fontFamily: 'inherit', fontSize: '14px', resize: 'none' };
-const buttonStyle = { padding: '8px 12px', fontSize: '12px', color: 'var(--white)', backgroundColor: 'var(--purple-primary)', border: 'none', borderRadius: '6px', cursor: 'pointer', opacity: 1, transition: 'opacity 0.2s ease' };
 const listStyle = { margin: 0, paddingLeft: '20px', fontSize: '13px', textAlign: 'left', width: '100%' };
 const listItemStyle = { marginBottom: '8px' };
-const strongStyle = { color: 'var(--purple-primary)' };
+const strongStyle = { color: 'var(--purple-primary)', textTransform: 'uppercase', fontSize: '12px', display: 'block', marginBottom: '4px' };
 const scrollableTextStyle = { whiteSpace: 'pre-wrap', padding: '5px', fontSize: '13px' };
+const textAreaStyle = { flexGrow: 1, width: '100%', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'white', padding: '10px', fontFamily: 'inherit', fontSize: '14px', resize: 'none' };
+const buttonStyle = { padding: '8px 12px', fontSize: '12px', color: 'var(--white)', backgroundColor: 'var(--purple-primary)', border: 'none', borderRadius: '6px', cursor: 'pointer', opacity: 1, transition: 'opacity 0.2s ease' };
+const cardLabelStyle = { fontSize: '18px', fontWeight: '500', marginBottom: '1rem', color: 'var(--white)' };
+const cardContentStyle = { width: '100%', height: '100%', display: 'flex', flexDirection: 'column' };
+const scrollableContentStyle = { overflowY: 'auto', height: '100%' };
 
 const API_BASE_URL = "https://shaulamed-api-1x9x.onrender.com";
 
 const ConsultationScreen = ({ userId, onFinish }) => {
+    // ... (lógica de estados e funções permanece a mesma) ...
     const [consulta, setConsulta] = useState(null);
     const [isRecording, setIsRecording] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -102,7 +106,7 @@ const ConsultationScreen = ({ userId, onFinish }) => {
                 tipo_documento: docType,
                 dados_consulta: consulta.sugestao_ia.nota_clinica_estruturada
             };
-            const response = await fetch(`${API_BASE_URL}/consulta/gerar_documento/${userId}`, {
+            const response = await fetch(`${API_BASE_URL}/consulta/gerar/documento/${userId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -117,101 +121,78 @@ const ConsultationScreen = ({ userId, onFinish }) => {
         }
     };
 
+
     const cardContents = {
         Insights: (
-            <div style={{...cardContentStyle, justifyContent: 'center'}}>
-                {isLoading ? (
-                    <HeartbeatLoader />
-                ) : !transcriptionComplete ? (
-                    <StarButton onClick={handleRecordClick}>
-                        {isRecording ? "Parar Gravação" : "Iniciar Gravação"}
-                    </StarButton>
-                ) : (
-                    <div className="scrollable-content">
-                        <p style={scrollableTextStyle}>{transcribedText}</p>
+            <div style={cardContentStyle}>
+                <div style={cardLabelStyle}>Gravador e Transcrição</div>
+                {!transcriptionComplete ? (
+                    <div style={{flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+                        {isLoading ? <HeartbeatLoader /> : <StarButton onClick={handleRecordClick}>{isRecording ? "Parar Gravação" : "Iniciar Gravação"}</StarButton>}
                     </div>
+                ) : (
+                    <div style={scrollableContentStyle}><p style={scrollableTextStyle}>{transcribedText}</p></div>
                 )}
             </div>
         ),
         Overview: (
-            <div className="scrollable-content">
-                <p style={scrollableTextStyle}>{structuredNote.queixa_principal || 'Aguardando queixa principal...'}</p>
+            <div style={cardContentStyle}>
+                <div style={cardLabelStyle}>Queixa Principal</div>
+                <div style={scrollableContentStyle}><p style={scrollableTextStyle}>{structuredNote.queixa_principal || '...'}</p></div>
             </div>
         ),
         Efficiency: (
-            <div className="scrollable-content" style={{ ...cardContentStyle, justifyContent: 'flex-start', alignItems: 'flex-start', gap: '1rem' }}>
-                <div><strong style={strongStyle}>História da Doença Atual:</strong><p style={{fontSize: '13px'}}>{structuredNote.historia_doenca_atual || '...'}</p></div>
-                <div><strong style={strongStyle}>Antecedentes:</strong><p style={{fontSize: '13px'}}>{structuredNote.antecedentes_pessoais_familiares || '...'}</p></div>
-                <div><strong style={strongStyle}>Hipóteses Diagnósticas:</strong><ul style={listStyle}>{(structuredNote.hipoteses_diagnosticas || []).map((h, i) => <li key={i}>{h}</li>)}</ul></div>
+            <div style={cardContentStyle}>
+                <div style={cardLabelStyle}>Análise Clínica</div>
+                <div style={scrollableContentStyle}>
+                    <strong style={strongStyle}>História da Doença Atual:</strong>
+                    <p style={{fontSize: '13px', marginBottom: '1rem'}}>{structuredNote.historia_doenca_atual || '...'}</p>
+                    <strong style={strongStyle}>Antecedentes:</strong>
+                    <p style={{fontSize: '13px', marginBottom: '1rem'}}>{structuredNote.antecedentes_pessoais_familiares || '...'}</p>
+                    <strong style={strongStyle}>Hipóteses Diagnósticas:</strong>
+                    <ul style={listStyle}>{(structuredNote.hipoteses_diagnosticas || []).map((h, i) => <li key={i}>{h}</li>)}</ul>
+                </div>
             </div>
         ),
         Connectivity: (
-            <div className="scrollable-content">
-                {(advancedAnalysis.exames_complementares_sugeridos && advancedAnalysis.exames_complementares_sugeridos.length > 0) ? (
+            <div style={cardContentStyle}>
+                <div style={cardLabelStyle}>Exames Sugeridos</div>
+                <div style={scrollableContentStyle}>
                     <ul style={listStyle}>
-                        {advancedAnalysis.exames_complementares_sugeridos.map((ex, i) => (
-                            <li key={i} style={listItemStyle}><strong style={strongStyle}>{ex.exame}:</strong> {ex.justificativa}</li>
-                        ))}
+                        {(advancedAnalysis.exames_complementares_sugeridos || []).map((ex, i) => (<li key={i} style={listItemStyle}>{ex.exame}: {ex.justificativa}</li>))}
                     </ul>
-                ) : (
-                    <p className="placeholder-text">Aguardando sugestões...</p>
-                )}
+                </div>
             </div>
         ),
         Protection: (
-            <div className="scrollable-content">
-                 {(advancedAnalysis.sugestoes_de_tratamento && advancedAnalysis.sugestoes_de_tratamento.length > 0) ? (
+            <div style={cardContentStyle}>
+                <div style={cardLabelStyle}>Tratamentos Sugeridos</div>
+                <div style={scrollableContentStyle}>
                     <ul style={listStyle}>
-                        {advancedAnalysis.sugestoes_de_tratamento.map((t, i) => (
-                            <li key={i} style={listItemStyle}><strong style={strongStyle}>{t.medicamento_sugerido} ({t.posologia_recomendada}):</strong> {t.justificativa_clinica}</li>
-                        ))}
+                        {(advancedAnalysis.sugestoes_de_tratamento || []).map((t, i) => (<li key={i} style={listItemStyle}>{t.medicamento_sugerido} ({t.posologia_recomendada}): {t.justificativa_clinica}</li>))}
                     </ul>
-                ) : (
-                    <p className="placeholder-text">Aguardando sugestões...</p>
-                )}
+                </div>
             </div>
         ),
         Collaboration: (
-            <div style={{...cardContentStyle, justifyContent: 'flex-start'}}>
+            <div style={cardContentStyle}>
+                <div style={cardLabelStyle}>Ações e Prontuário</div>
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
                     <button style={buttonStyle} onClick={() => handleGenerateDocument('receita')}>Gerar Receita</button>
                     <button style={buttonStyle} onClick={() => handleGenerateDocument('atestado')}>Gerar Atestado</button>
                     <button style={buttonStyle} onClick={() => handleGenerateDocument('pedido_exame')}>Pedir Exames</button>
                 </div>
-                <textarea 
-                    style={textAreaStyle} 
-                    placeholder="Escreva aqui a sua decisão final para o prontuário..."
-                    value={finalNotes}
-                    onChange={(e) => setFinalNotes(e.target.value)}
-                >
-                </textarea>
+                <textarea style={textAreaStyle} placeholder="Decisão final para o prontuário..." value={finalNotes} onChange={(e) => setFinalNotes(e.target.value)}></textarea>
             </div>
         ),
     };
 
+
     return (
-        <div>
-            <MagicBento
-              cardContents={cardContents}
-              textAutoHide={false}
-              enableStars={true}
-              enableSpotlight={true}
-              enableBorderGlow={true}
-              enableTilt={true}
-              enableMagnetism={true}
-              clickEffect={true}
-              spotlightRadius={300}
-              particleCount={12}
-              glowColor="132, 0, 255"
-            />
-            <div style={{ textAlign: 'center', padding: '1rem 0', backgroundColor: '#060010' }}>
-                <StarButton
-                  onClick={() => {
-                      if (window.confirm("Tem a certeza que deseja finalizar a consulta?")) {
-                          onFinish();
-                      }
-                  }}
-                >
+        <div style={{backgroundColor: 'var(--background-dark)', color: 'var(--white)'}}>
+            <MagicBento cardContents={cardContents} />
+            <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+                <StarButton onClick={() => { if (window.confirm("Tem certeza?")) { onFinish(); } }}>
                   Finalizar Sessão e Salvar
                 </StarButton>
             </div>
