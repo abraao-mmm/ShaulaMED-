@@ -92,7 +92,7 @@ class ShaulaMedAgent:
             reflexao = self.gerar_reflexao_pos_consulta(self.consulta_atual, obter_resposta_llm_func)
             
             # Aprende e salva no banco de dados
-            hipoteses = self.consulta_atual.sugestao_ia.get("hipoteses_diagnosticas", [])
+            hipoteses = self.consulta_atual.sugestao_ia.get("nota_clinica_estruturada", {}).get("hipoteses_diagnosticas", [])
             if hipoteses:
                 self.medico.aprender_com_conduta(hipoteses[0], decisao_medico_final)
                 self.gerenciador.salvar_medico(self.medico)

@@ -5,8 +5,8 @@ import MagicBento from './MagicBento';
 import AnimatedInfoList from './AnimatedInfoList';
 
 // Estilos
-const listStyle = { margin: 0, paddingLeft: '20px', fontSize: '13px', textAlign: 'left', width: '100%' };
-const listItemStyle = { marginBottom: '8px' };
+const listStyle = { margin: 0, paddingLeft: '20px', fontSize: '12px', textAlign: 'left', width: '100%' };
+const listItemStyle = { marginBottom: '15px' };
 const strongStyle = { color: 'var(--purple-primary)', textTransform: 'uppercase', fontSize: '12px', display: 'block', marginBottom: '4px' };
 const scrollableTextStyle = { whiteSpace: 'pre-wrap', padding: '5px', fontSize: '13px' };
 const textAreaStyle = { flexGrow: 1, width: '100%', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'white', padding: '10px', fontFamily: 'inherit', fontSize: '14px', resize: 'none' };
@@ -18,7 +18,6 @@ const scrollableContentStyle = { overflowY: 'auto', height: '100%' };
 const API_BASE_URL = "https://shaulamed-api-1x9x.onrender.com";
 
 const ConsultationScreen = ({ userId, onFinish }) => {
-    // ... (lógica de estados e funções permanece a mesma) ...
     const [consulta, setConsulta] = useState(null);
     const [isRecording, setIsRecording] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -106,7 +105,8 @@ const ConsultationScreen = ({ userId, onFinish }) => {
                 tipo_documento: docType,
                 dados_consulta: consulta.sugestao_ia.nota_clinica_estruturada
             };
-            const response = await fetch(`${API_BASE_URL}/consulta/gerar/documento/${userId}`, {
+            // CORREÇÃO APLICADA AQUI: URL ajustada
+            const response = await fetch(`${API_BASE_URL}/consulta/gerar_documento/${userId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -121,6 +121,54 @@ const ConsultationScreen = ({ userId, onFinish }) => {
         }
     };
 
+    // NOVA FUNÇÃO ADICIONADA AQUI:
+    const handleFinalizeAndSave = async () => {
+        if (!finalNotes) {
+            alert("Para finalizar, por favor, descreva sua decisão final no campo de prontuário.");
+            return;
+        }
+
+        if (!window.confirm("Tem certeza que deseja finalizar e salvar a consulta?")) {
+            return;
+        }
+
+        console.log("Finalizando e salvando a consulta...");
+        setIsLoading(true); // Reutiliza o estado de loading
+
+        try {
+            const payload = {
+                consulta_atual: consulta,
+                decisao: {
+                    decisao: finalNotes,
+                    resumo: "" // O backend não precisa disso para a finalização
+                },
+                formato_resumo: "SOAP" // Define o formato do resumo a ser gerado
+            };
+
+            const response = await fetch(`${API_BASE_URL}/consulta/finalizar/${userId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || "Falha ao finalizar no servidor.");
+            }
+
+            const result = await response.json();
+            console.log("Consulta finalizada:", result);
+            alert("Consulta salva com sucesso!");
+
+            onFinish(); // Chama a função original para trocar de tela APÓS o sucesso
+
+        } catch (error) {
+            console.error("Erro ao finalizar a consulta:", error);
+            alert(`Ocorreu um erro ao salvar: ${error.message}`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const cardContents = {
         Insights: (
@@ -192,7 +240,8 @@ const ConsultationScreen = ({ userId, onFinish }) => {
         <div style={{backgroundColor: 'var(--background-dark)', color: 'var(--white)'}}>
             <MagicBento cardContents={cardContents} />
             <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-                <StarButton onClick={() => { if (window.confirm("Tem certeza?")) { onFinish(); } }}>
+                {/* CORREÇÃO APLICADA AQUI: o OnClick foi atualizado */}
+                <StarButton onClick={handleFinalizeAndSave}>
                   Finalizar Sessão e Salvar
                 </StarButton>
             </div>
