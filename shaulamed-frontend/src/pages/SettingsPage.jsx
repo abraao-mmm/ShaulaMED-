@@ -1,7 +1,9 @@
 // src/pages/SettingsPage.jsx
 import React from 'react';
 import './SettingsPage.css';
-import AccountPage from '../components/settings/AccountPage'; // Importa a nova página unificada
+// A linha abaixo é a que causa o erro se o arquivo não estiver no lugar certo.
+// Ela sobe um nível ('..') de /pages para /src, entra em /components, e depois em /settings.
+import AccountPage from '../components/settings/AccountPage';
 
 const SettingsPage = () => {
   return (
