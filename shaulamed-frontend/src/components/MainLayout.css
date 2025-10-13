@@ -1,0 +1,14 @@
+/* src/MainLayout.css */
+
+.main-layout {
+  display: flex;
+}
+
+.content-area {
+  flex-grow: 1;
+  margin-left: 250px; /* Mesmo valor da largura da sidebar */
+  padding: 2rem;
+  width: calc(100% - 250px);
+  min-height: 100vh;
+  box-sizing: border-box;
+}

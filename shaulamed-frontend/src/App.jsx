@@ -1,42 +1,62 @@
-import React, { useState, useEffect } from 'react';
-import StartScreen from './components/StartScreen';
+// src/App.jsx
+
+import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+
+import MainLayout from './MainLayout';
+import HomePage from './pages/HomePage';
+import ReportsPage from './pages/ReportsPage';
+import ProfilePage from './pages/ProfilePage';
+import SettingsPage from './pages/SettingsPage';
 import ConsultationScreen from './components/ConsultationScreen';
 
 function App() {
-  const [currentView, setCurrentView] = useState('start');
   const [userId, setUserId] = useState('TEST_UID_THALLES');
-  // 1. Criamos um novo estado para guardar o insight da última consulta.
   const [lastInsight, setLastInsight] = useState(null);
 
-  const handleStartConsultation = () => {
-    console.log("Iniciando a consulta...");
-    // Limpa o insight anterior ao iniciar uma nova consulta
-    setLastInsight(null); 
-    setCurrentView('consultation');
+  // Usaremos um componente wrapper para acessar os hooks do roteador
+  const AppContent = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    // O insight é passado via state da navegação
+    const insightFromNavigation = location.state?.insight;
+
+    const handleStartConsultation = () => {
+      navigate('/consulta');
+    };
+
+    const handleFinishConsultation = (insight) => {
+      // Navega de volta para a Home, passando o insight
+      navigate('/', { state: { insight } });
+    };
+
+    return (
+      <Routes>
+        <Route element={<MainLayout />}>
+          <Route 
+            path="/" 
+            element={<HomePage onStart={handleStartConsultation} insight={insightFromNavigation} />} 
+          />
+          <Route path="/relatorios" element={<ReportsPage />} />
+          <Route path="/perfil" element={<ProfilePage />} />
+          <Route path="/configuracoes" element={<SettingsPage />} />
+        </Route>
+
+        {/* A tela de consulta fica fora do layout principal */}
+        <Route 
+          path="/consulta" 
+          element={<ConsultationScreen userId={userId} onFinish={handleFinishConsultation} />} 
+        />
+      </Routes>
+    );
   };
 
-  // 2. A função agora aceita um parâmetro 'insight'.
-  const handleFinishConsultation = (insight) => {
-    console.log("Finalizando a consulta e recebendo insight:", insight);
-    // Guarda o insight recebido no estado.
-    setLastInsight(insight); 
-    setCurrentView('start');
-  };
-
-  useEffect(() => {
-      setCurrentView('start');
-  }, []);
-
-  if (currentView === 'start') {
-    // 3. Passamos o insight como uma prop para a StartScreen.
-    return <StartScreen onStart={handleStartConsultation} insight={lastInsight} />;
-  }
-  
-  if (currentView === 'consultation') {
-    return <ConsultationScreen userId={userId} onFinish={handleFinishConsultation} />;
-  }
-
-  return null;
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
+  );
 }
 
 export default App;

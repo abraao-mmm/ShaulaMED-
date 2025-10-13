@@ -2,10 +2,10 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import Particles from './Particles';
-import RotatingText from './RotatingText';
-import AnimatedSubtitle from './AnimatedSubtitle';
-import StarButton from './StarButton';
+import Particles from '../components/Particles';
+import RotatingText from '../components/RotatingText';
+import AnimatedSubtitle from '../components/AnimatedSubtitle';
+import StarButton from '../components/StarButton';
 import './StartScreen.css';
 
 const InsightCard = ({ children }) => {
