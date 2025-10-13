@@ -9,10 +9,10 @@
 }
 
 .widget {
-  background: #ffffff;
+  background: #111119;
   border-radius: 12px;
   padding: 2rem;
-  border: 1px solid rgb(255, 255, 255);
+  border: 1px solid rgba(147, 112, 219, 0.2);
 }
 
 .widget h3 {
@@ -21,10 +21,31 @@
     font-weight: 500;
 }
 
+/* --- Estilos da Seção de Assinatura --- */
+
+.section-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    margin-top: -1.5rem;
+    margin-bottom: 2rem;
+}
+
 .plan-name {
     font-size: 1.5rem;
     color: #d8b4fe;
     font-weight: bold;
+}
+
+.pro-features {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0;
+  text-align: left;
+}
+
+.pro-features li {
+  margin-bottom: 0.5rem;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .upgrade-button {
@@ -43,25 +64,6 @@
 
 .upgrade-button:hover {
     background-color: #7e22ce;
-}
-
-.widget-footer {
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.5);
-    text-align: center;
-    margin-top: 1.5rem;
-}
-
-.pro-features {
-  list-style: none;
-  padding: 0;
-  margin: 1.5rem 0;
-  text-align: left;
-}
-
-.pro-features li {
-  margin-bottom: 0.5rem;
-  color: rgba(255, 255, 255, 0.9);
 }
 
 .manage-button {
@@ -84,15 +86,14 @@
   color: white;
 }
 
-/* Adicione ao final de src/components/settings/Section.css */
-.section-subtitle {
-    color: rgba(255, 255, 255, 0.7);
+.widget-footer {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
     text-align: center;
-    margin-top: -1.5rem;
-    margin-bottom: 2rem;
+    margin-top: 1.5rem;
 }
 
-/* Adicione ao final de src/components/settings/Section.css */
+/* --- Estilos da Seção de Conta & Segurança --- */
 
 .settings-form {
   display: flex;
