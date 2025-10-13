@@ -1,0 +1,126 @@
+/* src/components/CoachInsightWidget.css */
+
+.coach-widget {
+  background: #111119;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid rgba(147, 112, 219, 0.2);
+}
+
+.chat {
+  display: flex;
+  margin-bottom: 1.5rem;
+}
+
+.chat-left {
+  justify-content: flex-start;
+}
+
+.chat-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #9333ea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+.chat-avatar .initials {
+  color: white;
+  font-weight: bold;
+  font-size: 1.2rem;
+  font-family: 'Nixie One', sans-serif;
+}
+
+.chat-body {
+  max-width: 80%;
+}
+
+.chat-bubble {
+  position: relative;
+  background-color: #1e1e2d;
+  padding: 1rem;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.chat-left .chat-bubble {
+  border-top-left-radius: 0;
+}
+
+/* A "cauda" da bolha de chat */
+.chat-left .chat-bubble::before {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: -10px;
+  top: 0;
+  border-style: solid;
+  border-width: 0 10px 10px 0;
+  border-color: transparent #1e1e2d transparent transparent;
+}
+
+.chat-content p {
+  margin: 0;
+  white-space: pre-wrap; /* Preserva quebras de linha do texto da IA */
+  line-height: 1.6;
+}
+
+.chat-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chat-form textarea {
+  background-color: #1e1e2d;
+  border: 1px solid rgba(147, 112, 219, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem;
+  color: white;
+  font-family: inherit;
+  min-height: 80px;
+  resize: vertical;
+  transition: border-color 0.3s ease;
+}
+
+.chat-form textarea:focus {
+  outline: none;
+  border-color: #9333ea;
+}
+
+.chat-form button {
+  background-color: #9333ea;
+  color: white;
+  border: none;
+  padding: 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.chat-form button:hover {
+  background-color: #7e22ce;
+}
+
+.chat-form button:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+.success-message {
+    text-align: center;
+    color: #4ade80; /* Verde */
+    margin-top: 1rem;
+}
+
+.error-message {
+    text-align: center;
+    color: #ff6b6b; /* Vermelho */
+    margin-top: 1rem;
+}

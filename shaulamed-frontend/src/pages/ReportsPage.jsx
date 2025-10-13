@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import LightRays from '../components/LightRays';
 import SpotlightCard from '../components/SpotlightCard';
+import CoachInsightWidget from '../components/CoachInsightWidget';
 import './ReportsPage.css';
 
 const API_BASE_URL = "https://shaulamed-api-1x9x.onrender.com";
@@ -67,10 +68,10 @@ const ReportsPage = () => {
           />
         </div>
 
-        {/* Placeholder para os próximos componentes */}
-        <div className="placeholder-section">
-          <p>Em breve: Insight do Coach Clínico e Histórico Detalhado.</p>
-        </div>
+        <CoachInsightWidget 
+  insightText={reportData?.texto_coach}
+  divergenceCase={reportData?.dados_estruturados?.exemplo_divergencia}
+/>
       </div>
     </div>
   );
