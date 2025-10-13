@@ -1,0 +1,21 @@
+/* src/components/AnimatedText.css */
+
+.animated-text-container {
+  display: inline-block;
+  position: relative;
+  height: 2.5rem; /* Altura para evitar que o layout "pule" */
+  font-size: 1.8rem;
+  font-weight: 500;
+  color: #c084fc; /* Roxo claro */
+  text-shadow: 0 0 10px rgba(192, 132, 252, 0.5);
+  font-family: 'Audiowide', sans-serif;
+  margin-bottom: 1rem;
+}
+
+.animated-text-word {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  left: 0;
+  right: 0;
+}
