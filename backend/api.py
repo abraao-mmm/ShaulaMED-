@@ -124,6 +124,13 @@ class PerfilUpdatePayload(BaseModel):
     crm: str
     especialidade: str
 
+class ChangePasswordPayload(BaseModel):
+    current_password: str
+    new_password: str
+
+class DeleteAccountPayload(BaseModel):
+    password: str
+
 # --- ENDPOINTS DA API DE NEGÓCIO ---
 
 @app.post("/sessao/ativar", tags=["Sessão"])
@@ -267,3 +274,44 @@ def update_perfil_medico(uid: str, payload: PerfilUpdatePayload):
     gerenciador.salvar_medico(medico)
 
     return {"status": "sucesso", "mensagem": "Perfil atualizado com sucesso."}
+
+@app.post("/medico/{uid}/change-password", tags=["Segurança"])
+def change_password(uid: str, payload: ChangePasswordPayload):
+    # LÓGICA SIMULADA - A implementação real requer Pyrebase4 ou API REST
+    print(f"Tentativa de alterar senha para o UID: {uid}")
+    # Aqui você chamaria a função do Firebase para verificar a senha atual e alterar para a nova.
+    if payload.current_password == "senha_antiga_simulada":
+        return {"status": "sucesso", "mensagem": "Senha alterada com sucesso."}
+    else:
+        raise HTTPException(status_code=400, detail="A senha atual está incorreta.")
+
+@app.get("/medico/{uid}/export-data", tags=["Segurança"])
+def export_data(uid: str):
+    """Exporta todos os dados do médico e suas consultas em um único JSON."""
+    medico_ref = gerenciador.medicos_ref.document(uid)
+    medico_doc = medico_ref.get()
+
+    if not medico_doc.exists:
+        raise HTTPException(status_code=404, detail="Médico não encontrado.")
+
+    medico_data = medico_doc.to_dict()
+    consultas_data = []
+    consultas_docs = medico_ref.collection('consultas').stream()
+    for doc in consultas_docs:
+        consultas_data.append(doc.to_dict())
+
+    return {"perfil": medico_data, "consultas": consultas_data}
+
+
+@app.post("/medico/{uid}/delete-account", tags=["Segurança"])
+def delete_account(uid: str, payload: DeleteAccountPayload):
+    # LÓGICA SIMULADA
+    print(f"Tentativa de DELETAR conta para o UID: {uid}")
+    # 1. Verifique a senha do usuário via Firebase Auth REST API.
+    # 2. Se a senha estiver correta, delete a coleção de consultas.
+    # 3. Delete o documento do médico no Firestore.
+    # 4. Delete o usuário do Firebase Authentication.
+    if payload.password == "senha_correta_simulada":
+         return {"status": "sucesso", "mensagem": "Conta e todos os dados foram excluídos."}
+    else:
+        raise HTTPException(status_code=403, detail="Senha incorreta.")

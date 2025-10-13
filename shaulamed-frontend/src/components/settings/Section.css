@@ -91,3 +91,97 @@
     margin-top: -1.5rem;
     margin-bottom: 2rem;
 }
+
+/* Adicione ao final de src/components/settings/Section.css */
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group label {
+  display: block;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.form-group input {
+  width: 100%;
+  background-color: #1e1e2d;
+  border: 1px solid rgba(147, 112, 219, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem;
+  color: white;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.action-button {
+  background-color: #9333ea;
+  color: white;
+  border: none;
+  padding: 0.8rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1rem;
+  transition: background-color 0.2s ease;
+}
+
+.action-button:hover {
+    background-color: #7e22ce;
+}
+
+.form-message {
+  text-align: center;
+  margin-top: 1rem;
+}
+.form-message.error { color: #f87171; }
+.form-message.info { color: #60a5fa; }
+
+/* Zona de Ações */
+.danger-zone {
+  border-color: #f87171; /* Vermelho para perigo */
+  margin-top: 2rem;
+}
+
+.danger-zone h3 {
+    color: #f87171;
+}
+
+.action-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.action-item:first-of-type {
+    border-top: none;
+}
+
+.action-item h4 {
+    margin: 0;
+    color: white;
+}
+
+.action-item p {
+    margin: 0.25rem 0 0 0;
+    color: rgba(255, 255, 255, 0.6);
+    max-width: 400px;
+}
+
+.action-button.secondary {
+    background: none;
+    border: 1px solid #d8b4fe;
+    color: #d8b4fe;
+}
+
+.action-button.danger {
+    background: none;
+    border: 1px solid #f87171;
+    color: #f87171;
+}
