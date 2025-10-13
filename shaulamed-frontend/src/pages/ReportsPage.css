@@ -1,0 +1,65 @@
+/* src/pages/ReportsPage.css */
+
+.reports-page {
+  position: relative;
+  width: 100%;
+  min-height: calc(100vh - 4rem); /* Altura da tela menos o padding do layout */
+  overflow: hidden;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+.reports-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.reports-header {
+  text-align: center;
+}
+
+.reports-header h1 {
+  font-family: 'Nixie One', sans-serif;
+  font-size: 3rem;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.reports-header p {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 0;
+}
+
+.kpi-cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.loading-state, .error-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.error-state {
+  color: #ff6b6b;
+}
+
+.placeholder-section {
+    text-align: center;
+    padding: 2rem;
+    border: 1px dashed rgba(147, 112, 219, 0.3);
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.5);
+}

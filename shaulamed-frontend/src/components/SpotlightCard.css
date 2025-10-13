@@ -1,0 +1,53 @@
+/* src/components/SpotlightCard.css */
+
+.spotlight-card {
+  position: relative;
+  background: #111119; /* Fundo do card, um pouco mais claro que o geral */
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid rgba(147, 112, 219, 0.2);
+  overflow: hidden; /* Essencial para o efeito de brilho */
+  transition: transform 0.3s ease;
+}
+
+.spotlight-card:hover {
+    transform: scale(1.02); /* Leve crescimento ao passar o mouse */
+}
+
+/* O pseudo-elemento que cria o efeito de spotlight */
+.spotlight-card::before {
+  content: '';
+  position: absolute;
+  left: var(--mouse-x, -100px);
+  top: var(--mouse-y, -100px);
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(147, 112, 219, 0.3) 0%, transparent 80%);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.spotlight-card:hover::before {
+  opacity: 1;
+}
+
+.card-content {
+  position: relative; /* Garante que o conteúdo fique acima do brilho */
+  z-index: 1;
+  text-align: center;
+}
+
+.card-title {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.card-value {
+  color: #ffffff;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0;
+  font-family: 'Nixie One', sans-serif;
+}
