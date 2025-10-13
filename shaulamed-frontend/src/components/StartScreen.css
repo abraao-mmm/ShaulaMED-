@@ -9,12 +9,12 @@
   width: 100%;
   position: relative;
   overflow: hidden;
-  background-color: #060010;
-  color: #f0f0f0;
+  color: white;
   text-align: center;
+  background-color: #060010;
 }
 
-.particles-background {
+.particles-canvas {
   position: absolute;
   top: 0;
   left: 0;
@@ -41,72 +41,85 @@
   margin-bottom: 2rem;
 }
 
-.main-title {
-  font-family: 'Space Mono', monospace; /* Fonte mais tecnológica */
-}
-
 .start-button-container {
   margin-top: 2rem;
 }
 
-/* --- Estilos do Card de Insight (Efeito Jellyfish/Parallax) --- */
+/* --- Card de Insight --- */
 .animated-card {
-  width: 400px;
-  height: 220px;
-  background: rgba(17, 12, 42, 0.6); /* Fundo translúcido */
-  border: 1px solid rgba(138, 43, 226, 0.3);
-  border-radius: 20px;
-  padding: 2rem;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  position: relative;
-  transform-style: preserve-3d; /* Essencial para o efeito 3D */
-}
-
-.card-content-wrapper {
+  width: 350px;
+  min-height: 200px;
+  background: linear-gradient(135deg, rgba(30, 0, 50, 0.7), rgba(0, 0, 30, 0.7));
+  border: 1px solid rgba(147, 112, 219, 0.4);
+  border-radius: 15px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(147, 112, 219, 0.2);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 0.8rem;
   text-align: center;
-  transform-style: preserve-3d;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #e0b0ff;
+  transition: all 0.1s ease-out;
+  cursor: default;
+  position: relative;
+}
+
+.animated-card::before {
+  content: "";
+  position: absolute;
+  top: -1px; left: -1px; right: -1px; bottom: -1px;
+  background: linear-gradient(45deg, #e0b0ff, #9370DB, #5F0F40);
+  background-size: 200% 200%;
+  border-radius: 16px;
+  z-index: -1;
+  filter: blur(10px);
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
+  animation: glowEffect 4s ease infinite alternate;
+}
+
+.animated-card:hover::before {
+    opacity: 0.8;
+}
+
+@keyframes glowEffect {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
 }
 
 .card-title {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 700;
-  color: #c084fc; /* Roxo claro */
+  margin-bottom: 0.7rem;
+  color: #c084fc;
   text-shadow: 0 0 10px rgba(192, 132, 252, 0.5);
-  transform: translateZ(50px); /* Efeito 3D para o título */
 }
 
 .card-insight {
   font-size: 1rem;
   font-style: italic;
-  line-height: 1.6;
-  color: #e9d5ff;
-  transform: translateZ(30px); /* Efeito 3D para o texto */
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
+  color: #d8b4fe;
 }
 
 .card-tip {
-  font-size: 0.8rem;
-  color: #a78bfa;
+  font-size: 0.85rem;
+  color: #aaa;
   opacity: 0.7;
-  margin-top: 1rem;
-  transform: translateZ(20px); /* Efeito 3D para a dica */
+  margin-top: auto;
+  padding-top: 1rem;
 }
 
-/* Responsividade do Card */
+/* Responsividade */
 @media (max-width: 768px) {
   .animated-card {
     width: 90%;
     height: auto;
-    min-height: 200px;
-    padding: 1.5rem;
+    min-height: 180px;
+    padding: 1.2rem;
   }
 }

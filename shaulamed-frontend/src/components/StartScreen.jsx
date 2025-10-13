@@ -6,79 +6,69 @@ import StarButton from './StarButton';
 import AnimatedSubtitle from './AnimatedSubtitle';
 import AnimatedText from './AnimatedText';
 import AnimatedGradientText from './AnimatedGradientText';
-import Particles from './Particles'; // <-- AQUI ESTÁ A IMPORTAÇÃO CORRETA
+import Particles from './Particles'; // CORREÇÃO APLICADA AQUI
 import './StartScreen.css';
 
-// Seu componente Card interativo, robusto e original.
+// Seu componente de Card interativo original
 const Card = ({ children }) => {
   const cardRef = React.useRef(null);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
+  const [rotation, setRotation] = React.useState('perspective(1000px) rotateX(0deg) rotateY(0deg)');
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = React.useCallback((e) => {
     if (!cardRef.current) return;
     const { left, top, width, height } = cardRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - left;
-    const mouseY = e.clientY - top;
-    const xPct = mouseX / width - 0.5;
-    const yPct = mouseY / height - 0.5;
-    x.set(xPct * 30); // Sensibilidade do efeito parallax
-    y.set(yPct * 30);
-  };
+    const centerX = left + width / 2;
+    const centerY = top + height / 2;
+    const mouseX = e.clientX;
+    const mouseY = e.clientY;
+    const offsetX = (mouseX - centerX) / (width / 2);
+    const offsetY = (mouseY - centerY) / (height / 2);
+    x.set(offsetX * 10);
+    y.set(offsetY * 10);
+    const rotationX = -offsetY * 5;
+    const rotationY = offsetX * 5;
+    setRotation(`perspective(1000px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`);
+  }, [x, y]);
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = React.useCallback(() => {
     x.set(0);
     y.set(0);
-  };
+    setRotation(`perspective(1000px) rotateX(0deg) rotateY(0deg)`);
+  }, [x, y]);
 
   return (
     <motion.div
       ref={cardRef}
       className="animated-card"
+      style={{ x, y, transform: rotation }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      style={{
-        rotateY: useMotionValue(0), // Inicializando para evitar erros
-        rotateX: useMotionValue(0), // Inicializando para evitar erros
-        transformStyle: 'preserve-3d',
-      }}
-      // Animação de entrada para o card
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+      transition={{ type: "spring", stiffness: 100, damping: 10 }}
     >
-      <motion.div
-        style={{
-          x,
-          y,
-          transformStyle: 'preserve-3d',
-        }}
-        className="card-content-wrapper"
-      >
-        {children}
-      </motion.div>
+      {children}
     </motion.div>
   );
 };
 
-
+// Sua tela inicial, agora com a chamada de partículas correta
 const StartScreen = ({ onStart, insight }) => {
   const rotatingWords = ["intuitivo.", "inteligente.", "reflexivo.", "eficiente."];
 
   return (
     <div className="start-screen">
-      {/* Usando seu componente Particles.jsx original */}
-      <div className="particles-background">
-        <Particles
-            particleCount={150}
-            particleSpread={8}
-            speed={0.1}
-            particleBaseSize={80}
-            moveParticlesOnHover={true}
-            alphaParticles={true}
-        />
-      </div>
-
+        {/* CORREÇÃO APLICADA AQUI: Usando o componente Particles diretamente */}
+        <div className="particles-canvas">
+            <Particles
+                particleCount={150}
+                particleSpread={8}
+                speed={0.1}
+                particleBaseSize={80}
+                moveParticlesOnHover={true}
+                alphaParticles={true}
+            />
+        </div>
       <div className="content-wrapper">
         <motion.div
           className="header-content"
@@ -91,12 +81,11 @@ const StartScreen = ({ onStart, insight }) => {
           <AnimatedSubtitle text="Amplificando seu raciocínio clínico." />
         </motion.div>
 
-        {/* O Card para o Insight só aparece se a prop 'insight' existir */}
         {insight && (
           <Card>
             <h3 className="card-title">Curiosidade da Última Consulta</h3>
             <p className="card-insight">"{insight}"</p>
-            <p className="card-tip">Passe o mouse para sentir o efeito!</p>
+            <p className="card-tip">Passe o mouse para mais perspectiva!</p>
           </Card>
         )}
 
