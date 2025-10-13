@@ -6,7 +6,7 @@ import Particles from '../components/Particles';
 import RotatingText from '../components/RotatingText';
 import AnimatedSubtitle from '../components/AnimatedSubtitle';
 import StarButton from '../components/StarButton';
-import './StartScreen.css';
+import './HomePage.css';
 
 const InsightCard = ({ children }) => {
     return (
