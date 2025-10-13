@@ -1,16 +1,16 @@
 // src/MainLayout.jsx
-
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import './MainLayout.css';
 
-const MainLayout = () => {
+// O layout agora recebe e repassa a função onLogout
+const MainLayout = ({ onLogout }) => {
   return (
     <div className="main-layout">
-      <Sidebar />
+      <Sidebar onLogout={onLogout} />
       <main className="content-area">
-        <Outlet /> {/* As páginas serão renderizadas aqui */}
+        <Outlet />
       </main>
     </div>
   );

@@ -1,18 +1,38 @@
 // src/components/settings/AccountPage.jsx
 import React from 'react';
-import './AccountPage.css'; // Renomeamos o CSS também
+import { useAuth } from '../../context/AuthContext'; // Importa o hook para pegar o usuário
+import './AccountPage.css';
 import PricingTiers from './PricingTiers';
 
+const API_BASE_URL = "https://shaulamed-api-1x9x.onrender.com";
+
 const AccountPage = () => {
+    // Pega o usuário logado a partir do nosso contexto de autenticação
+    const { currentUser } = useAuth();
 
     const handleExportData = async () => {
+        if (!currentUser) return;
         alert("Iniciando o download dos seus dados...");
-        // Lógica de exportação que você já tem...
+        try {
+            const response = await fetch(`${API_BASE_URL}/medico/${currentUser.uid}/export-data`);
+            if (!response.ok) throw new Error("Não foi possível exportar os dados.");
+            const data = await response.json();
+            
+            const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
+            const link = document.createElement("a");
+            link.href = jsonString;
+            link.download = `shaulamed_export_${currentUser.uid}.json`;
+            link.click();
+        } catch (error) {
+            alert(`Erro: ${error.message}`);
+        }
     };
-
+    
     const handleDeleteAccount = () => {
-        const confirmation = prompt("Esta ação é irreversível. Para confirmar, digite 'EXCLUIR MINHA CONTA'.");
+        if (!currentUser) return;
+        const confirmation = prompt("Esta ação é irreversível e apagará todos os seus dados. Para confirmar, digite 'EXCLUIR MINHA CONTA'.");
         if (confirmation === "EXCLUIR MINHA CONTA") {
+            // AQUI IRIA A LÓGICA DE CHAMADA À API PARA DELETAR A CONTA
             alert("Funcionalidade de exclusão em desenvolvimento. Sua conta não foi excluída.");
         } else if (confirmation !== null) {
             alert("A confirmação está incorreta. Ação cancelada.");
@@ -28,7 +48,7 @@ const AccountPage = () => {
         <PricingTiers />
       </div>
 
-      {/* --- 2. SEÇÃO PERFIL DO MÉDICO (BUILDER PROFILE) --- */}
+      {/* --- 2. SEÇÃO PERFIL DO MÉDICO --- */}
       <h2 className="section-divider">Perfil do Médico</h2>
       <div className="widget">
         <h3>Personalize seu Perfil</h3>
@@ -36,13 +56,13 @@ const AccountPage = () => {
         <div className="profile-fields">
             <div className="form-group">
                 <label>E-mail</label>
-                <input type="email" value="thalles-teste@shaulamed.com" disabled />
+                {/* Exibe o email do usuário logado dinamicamente */}
+                <input type="email" value={currentUser?.email || 'Carregando...'} disabled />
             </div>
-            {/* Adicionar outros campos de perfil aqui se desejar */}
         </div>
       </div>
-
-      {/* --- 3. SEÇÃO DE AÇÕES DA CONTA (EXCLUIR) --- */}
+      
+      {/* --- 3. SEÇÃO DE AÇÕES DA CONTA --- */}
       <h2 className="section-divider">Conta</h2>
        <div className="widget danger-zone">
         <div className="action-item">
