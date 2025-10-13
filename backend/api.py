@@ -118,6 +118,12 @@ class DocumentoPayload(BaseModel):
     tipo_documento: str
     dados_consulta: dict
 
+class PerfilUpdatePayload(BaseModel):
+    nome_completo: str
+    apelido: str
+    crm: str
+    especialidade: str
+
 # --- ENDPOINTS DA API DE NEGÓCIO ---
 
 @app.post("/sessao/ativar", tags=["Sessão"])
@@ -235,3 +241,29 @@ def salvar_reflexao_medico(consulta_id: str, resposta: DialogoResposta, uid: str
 def get_status():
     """Endpoint de status para o app.js testar a conexão."""
     return {"status": "ShaulaMed API está online e funcional."}
+
+@app.get("/medico/{uid}/perfil", tags=["Médico"])
+def get_perfil_medico(uid: str):
+    """Busca os dados completos do perfil de um médico."""
+    medico = gerenciador.carregar_ou_criar_perfil({"localId": uid, "email": ""})
+    if not medico:
+        raise HTTPException(status_code=404, detail="Médico não encontrado.")
+    return medico.para_dict()
+
+@app.post("/medico/{uid}/perfil", tags=["Médico"])
+def update_perfil_medico(uid: str, payload: PerfilUpdatePayload):
+    """Atualiza as informações profissionais de um médico."""
+    medico = gerenciador.carregar_ou_criar_perfil({"localId": uid, "email": ""})
+    if not medico:
+        raise HTTPException(status_code=404, detail="Médico não encontrado.")
+
+    # Atualiza os campos do objeto medico com os dados recebidos
+    medico.nome_completo = payload.nome_completo
+    medico.apelido = payload.apelido
+    medico.crm = payload.crm
+    medico.especialidade = payload.especialidade
+
+    # Salva o objeto medico atualizado no Firestore
+    gerenciador.salvar_medico(medico)
+
+    return {"status": "sucesso", "mensagem": "Perfil atualizado com sucesso."}
