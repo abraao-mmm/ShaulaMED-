@@ -1,0 +1,53 @@
+/* src/components/settings/Section.css */
+
+.settings-section h2 {
+  font-size: 1.8rem;
+  font-weight: 500;
+  color: white;
+  margin-top: 0;
+  margin-bottom: 2rem;
+}
+
+.widget {
+  background: #111119;
+  border-radius: 12px;
+  padding: 2rem;
+  border: 1px solid rgba(147, 112, 219, 0.2);
+}
+
+.widget h3 {
+    margin-top: 0;
+    color: white;
+    font-weight: 500;
+}
+
+.plan-name {
+    font-size: 1.5rem;
+    color: #d8b4fe;
+    font-weight: bold;
+}
+
+.upgrade-button {
+    width: 100%;
+    background-color: #9333ea;
+    color: white;
+    border: none;
+    padding: 0.8rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+    margin-top: 1rem;
+    transition: background-color 0.2s ease;
+}
+
+.upgrade-button:hover {
+    background-color: #7e22ce;
+}
+
+.widget-footer {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+    margin-top: 1.5rem;
+}

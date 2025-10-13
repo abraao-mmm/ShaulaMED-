@@ -1,0 +1,44 @@
+/* src/pages/SettingsPage.css */
+
+.settings-page {
+  display: grid;
+  grid-template-columns: 240px 1fr; /* Menu fixo de 240px, conteúdo flexível */
+  gap: 2rem;
+  height: calc(100vh - 4rem); /* Altura total menos padding do layout principal */
+}
+
+.settings-nav {
+  border-right: 1px solid rgba(147, 112, 219, 0.2);
+  padding-right: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.settings-nav button {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: left;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.settings-nav button:hover {
+  background-color: rgba(147, 112, 219, 0.1);
+  color: white;
+}
+
+.settings-nav button.active {
+  background-color: rgba(147, 112, 219, 0.2);
+  color: white;
+  font-weight: 600;
+}
+
+.settings-content {
+  padding: 0 1rem;
+}
