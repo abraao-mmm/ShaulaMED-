@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import './SettingsPage.css';
 
-// Vamos importar os componentes de cada seção (que criaremos a seguir)
+// Verifique se o caminho de importação está correto
 import SubscriptionSection from '../components/settings/SubscriptionSection';
 import AccountSecuritySection from '../components/settings/AccountSecuritySection';
 import GeneralSection from '../components/settings/GeneralSection';
@@ -15,7 +15,7 @@ const SettingsPage = () => {
   const renderSection = () => {
     switch (activeSection) {
       case 'assinatura':
-        return <SubscriptionSection profileData={profileData} />;
+        return <SubscriptionSection />;
       case 'seguranca':
         return <AccountSecuritySection />;
       case 'geral':
