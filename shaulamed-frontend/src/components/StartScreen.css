@@ -1,3 +1,5 @@
+/* src/components/StartScreen.css */
+
 .start-screen {
   display: flex;
   flex-direction: column;
@@ -7,11 +9,12 @@
   width: 100%;
   position: relative;
   overflow: hidden;
-  color: var(--text-light);
+  background-color: #060010;
+  color: #f0f0f0;
   text-align: center;
 }
 
-.particles-canvas {
+.particles-background {
   position: absolute;
   top: 0;
   left: 0;
@@ -26,8 +29,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2rem; /* Espaçamento entre os blocos */
-  padding: 1rem; /* Padding geral para telas menores */
+  gap: 2rem;
+  padding: 1rem;
 }
 
 .header-content {
@@ -35,116 +38,75 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 2rem; /* Espaço abaixo do header antes do card ou botão */
+  margin-bottom: 2rem;
 }
 
 .main-title {
-  font-family: 'Space Mono', monospace;
-  font-size: 5rem; /* Removido para ser controlado por AnimatedGradientText */
-  font-weight: 900;
-  color: var(--purple-primary); /* Removido para ser controlado por AnimatedGradientText */
-  text-shadow: 0 0 20px rgba(147, 112, 219, 0.7);
-  margin-bottom: 0.5rem;
-}
-
-.subtitle {
-  font-size: 1.5rem;
-  color: var(--text-secondary);
-  margin-bottom: 3rem;
-  max-width: 800px;
-  line-height: 1.6;
+  font-family: 'Space Mono', monospace; /* Fonte mais tecnológica */
 }
 
 .start-button-container {
-  margin-top: 2rem; /* Espaço acima do botão */
+  margin-top: 2rem;
 }
 
-/* --- Novo Card de Insight --- */
+/* --- Estilos do Card de Insight (Efeito Jellyfish/Parallax) --- */
 .animated-card {
-  width: 350px; /* Largura fixa do card */
-  height: 200px; /* Altura fixa do card */
-  background: linear-gradient(135deg, rgba(30, 0, 50, 0.8), rgba(0, 0, 30, 0.8));
-  border: 1px solid rgba(147, 112, 219, 0.5); /* Borda roxa sutil */
-  border-radius: 15px;
-  padding: 1.5rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(147, 112, 219, 0.3);
+  width: 400px;
+  height: 220px;
+  background: rgba(17, 12, 42, 0.6); /* Fundo translúcido */
+  border: 1px solid rgba(138, 43, 226, 0.3);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  position: relative;
+  transform-style: preserve-3d; /* Essencial para o efeito 3D */
+}
+
+.card-content-wrapper {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  gap: 0.8rem;
   text-align: center;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: #e0b0ff; /* Cor do texto no card */
-  transition: all 0.2s ease-out; /* Transição para suavizar o movimento */
-  margin-bottom: 2rem; /* Espaço abaixo do card */
-  cursor: default; /* Indica que não é clicável */
-  position: relative; /* Para o pseudo-elemento */
+  transform-style: preserve-3d;
 }
-
-/* Pseudo-elemento para o efeito de brilho suave ao redor */
-.animated-card::before {
-  content: "";
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  background: linear-gradient(45deg, #e0b0ff, #9370DB, #5F0F40);
-  background-size: 200% 200%;
-  border-radius: 17px;
-  z-index: -1;
-  filter: blur(10px);
-  opacity: 0.6;
-  transition: opacity 0.3s ease;
-  animation: glowEffect 4s ease infinite alternate; /* Animação sutil de brilho */
-}
-
-@keyframes glowEffect {
-  0% { background-position: 0% 50%; opacity: 0.6; }
-  50% { background-position: 100% 50%; opacity: 0.8; }
-  100% { background-position: 0% 50%; opacity: 0.6; }
-}
-
 
 .card-title {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  margin-bottom: 0.7rem;
-  color: var(--purple-primary);
-  text-shadow: 0 0 10px rgba(147, 112, 219, 0.5);
+  color: #c084fc; /* Roxo claro */
+  text-shadow: 0 0 10px rgba(192, 132, 252, 0.5);
+  transform: translateZ(50px); /* Efeito 3D para o título */
 }
 
 .card-insight {
   font-size: 1rem;
   font-style: italic;
-  line-height: 1.5;
-  margin-bottom: 0.5rem;
-  color: #d8b4fe;
+  line-height: 1.6;
+  color: #e9d5ff;
+  transform: translateZ(30px); /* Efeito 3D para o texto */
 }
 
 .card-tip {
-  font-size: 0.85rem;
-  color: #aaa;
+  font-size: 0.8rem;
+  color: #a78bfa;
   opacity: 0.7;
-  margin-top: 0.5rem;
+  margin-top: 1rem;
+  transform: translateZ(20px); /* Efeito 3D para a dica */
 }
 
 /* Responsividade do Card */
 @media (max-width: 768px) {
   .animated-card {
-    width: 90%; /* Ocupa mais largura em telas menores */
-    height: auto; /* Altura adapta-se ao conteúdo */
-    min-height: 180px;
-    padding: 1rem;
-  }
-  .card-title {
-    font-size: 1.1rem;
-  }
-  .card-insight {
-    font-size: 0.95rem;
-  }
-  .card-tip {
-    font-size: 0.8rem;
+    width: 90%;
+    height: auto;
+    min-height: 200px;
+    padding: 1.5rem;
   }
 }

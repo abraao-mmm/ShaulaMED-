@@ -1,34 +1,73 @@
 // src/components/StartScreen.jsx
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue } from 'framer-motion';
 import StarButton from './StarButton';
 import AnimatedSubtitle from './AnimatedSubtitle';
 import AnimatedText from './AnimatedText';
 import AnimatedGradientText from './AnimatedGradientText';
-import Particles from './Particles'; // <-- CORRECTION 1: Import the correct component
+import Particles from './Particles'; // <-- AQUI ESTÁ A IMPORTAÇÃO CORRETA
 import './StartScreen.css';
 
-// This is a simplified interactive card for the insight
-const InsightCard = ({ children }) => {
+// Seu componente Card interativo, robusto e original.
+const Card = ({ children }) => {
+  const cardRef = React.useRef(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const handleMouseMove = (e) => {
+    if (!cardRef.current) return;
+    const { left, top, width, height } = cardRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - left;
+    const mouseY = e.clientY - top;
+    const xPct = mouseX / width - 0.5;
+    const yPct = mouseY / height - 0.5;
+    x.set(xPct * 30); // Sensibilidade do efeito parallax
+    y.set(yPct * 30);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
   return (
     <motion.div
+      ref={cardRef}
       className="animated-card"
-      initial={{ opacity: 0, y: 50, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: 0.3, duration: 0.8, type: 'spring' }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        rotateY: useMotionValue(0), // Inicializando para evitar erros
+        rotateX: useMotionValue(0), // Inicializando para evitar erros
+        transformStyle: 'preserve-3d',
+      }}
+      // Animação de entrada para o card
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
     >
-      {children}
+      <motion.div
+        style={{
+          x,
+          y,
+          transformStyle: 'preserve-3d',
+        }}
+        className="card-content-wrapper"
+      >
+        {children}
+      </motion.div>
     </motion.div>
   );
 };
+
 
 const StartScreen = ({ onStart, insight }) => {
   const rotatingWords = ["intuitivo.", "inteligente.", "reflexivo.", "eficiente."];
 
   return (
     <div className="start-screen">
-      {/* CORRECTION 2: Use the Particles component you already have */}
+      {/* Usando seu componente Particles.jsx original */}
       <div className="particles-background">
         <Particles
             particleCount={150}
@@ -39,7 +78,7 @@ const StartScreen = ({ onStart, insight }) => {
             alphaParticles={true}
         />
       </div>
-      
+
       <div className="content-wrapper">
         <motion.div
           className="header-content"
@@ -52,17 +91,19 @@ const StartScreen = ({ onStart, insight }) => {
           <AnimatedSubtitle text="Amplificando seu raciocínio clínico." />
         </motion.div>
 
+        {/* O Card para o Insight só aparece se a prop 'insight' existir */}
         {insight && (
-          <InsightCard>
+          <Card>
             <h3 className="card-title">Curiosidade da Última Consulta</h3>
             <p className="card-insight">"{insight}"</p>
-          </InsightCard>
+            <p className="card-tip">Passe o mouse para sentir o efeito!</p>
+          </Card>
         )}
 
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: insight ? 0.5 : 1, duration: 1, ease: "easeOut" }}
+          transition={{ delay: 1, duration: 1, ease: "easeOut" }}
           className="start-button-container"
         >
           <StarButton onClick={onStart}>
