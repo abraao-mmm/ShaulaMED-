@@ -1,24 +1,22 @@
 // src/App.jsx
-
-import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
 
 import MainLayout from './MainLayout';
 import HomePage from './pages/HomePage';
 import ReportsPage from './pages/ReportsPage';
 import ProfilePage from './pages/ProfilePage';
-import SettingsPage from './pages/SettingsPage'; // <-- IMPORTAÇÃO QUE FALTAVA
+import SettingsPage from './pages/SettingsPage';
 import ConsultationScreen from './components/ConsultationScreen';
+import LoginPage from './pages/auth/LoginPage';
+import SignupPage from './pages/auth/SignupPage';
+import ProtectedRoute from './ProtectedRoute';
 
 function App() {
-  const [userId, setUserId] = useState('TEST_UID_THALLES');
-  const [lastInsight, setLastInsight] = useState(null);
-
   const AppContent = () => {
     const navigate = useNavigate();
-    const location = useLocation();
-
-    const insightFromNavigation = location.state?.insight;
+    const { currentUser } = useAuth(); // Pega o usuário do nosso contexto
 
     const handleStartConsultation = () => {
       navigate('/consulta');
@@ -30,24 +28,26 @@ function App() {
 
     return (
       <Routes>
-        <Route element={<MainLayout />}>
-          <Route 
-            path="/" 
-            element={<HomePage onStart={handleStartConsultation} insight={insightFromNavigation} />} 
+        {/* Rotas Públicas */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/cadastro" element={<SignupPage />} />
+
+        {/* Rotas Protegidas */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<MainLayout />}>
+            <Route
+              path="/"
+              element={<HomePage onStart={handleStartConsultation} />}
+            />
+            <Route path="/relatorios" element={<ReportsPage />} />
+            <Route path="/perfil" element={<ProfilePage />} />
+            <Route path="/configuracoes" element={<SettingsPage />} />
+          </Route>
+          <Route
+            path="/consulta"
+            element={<ConsultationScreen userId={currentUser?.uid} onFinish={handleFinishConsultation} />}
           />
-          <Route path="/relatorios" element={<ReportsPage />} />
-          <Route path="/perfil" element={<ProfilePage />} />
-
-          {/* ===== CORREÇÃO APLICADA AQUI ===== */}
-          {/* Esta é a linha que registra a página de Configurações */}
-          <Route path="/configuracoes" element={<SettingsPage />} />
-
         </Route>
-
-        <Route 
-          path="/consulta" 
-          element={<ConsultationScreen userId={userId} onFinish={handleFinishConsultation} />} 
-        />
       </Routes>
     );
   };
