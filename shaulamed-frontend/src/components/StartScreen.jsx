@@ -3,12 +3,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Particles from './Particles';
-import RotatingText from './RotatingText'; // Essencial para a animação do título
+import RotatingText from './RotatingText';
 import AnimatedSubtitle from './AnimatedSubtitle';
 import StarButton from './StarButton';
 import './StartScreen.css';
 
-// O Card de Insight permanece o mesmo
 const InsightCard = ({ children }) => {
     return (
       <motion.div
@@ -41,7 +40,6 @@ const StartScreen = ({ onStart, insight }) => {
       
       <div className="start-screen-content">
         <div className="centered-content-wrapper">
-          {/* ESTA É A ESTRUTURA ORIGINAL DO TÍTULO RESTAURADA */}
           <h1 className="animated-title">
             <span className="static-text">Shaula</span>
             <motion.div
@@ -64,18 +62,19 @@ const StartScreen = ({ onStart, insight }) => {
           </h1>
           <AnimatedSubtitle text="Amplificando seu raciocínio clínico." />
 
-          {/* O Card de Insight continua aqui */}
           {insight && (
             <InsightCard>
                 <h3 className="card-title">Curiosidade da Última Consulta</h3>
                 <p className="card-insight">"{insight}"</p>
             </InsightCard>
           )}
-        </div>
-        <div className="start-button-wrapper">
-            <StarButton onClick={onStart}>
-                Iniciar Nova Consulta
-            </StarButton>
+
+          {/* CORREÇÃO APLICADA AQUI: O botão foi movido para dentro deste container */}
+          <div className="start-button-wrapper">
+              <StarButton onClick={onStart}>
+                  Iniciar Nova Consulta
+              </StarButton>
+          </div>
         </div>
       </div>
     </div>

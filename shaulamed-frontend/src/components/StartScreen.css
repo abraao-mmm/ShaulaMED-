@@ -3,10 +3,12 @@
 
 .start-screen-container {
     width: 100%;
-    height: 100vh;
+    min-height: 100vh; /* Garante que a tela ocupe no mínimo a altura toda */
+    height: 100%;
     position: relative;
     overflow: hidden;
     background-color: #0c0d14;
+    padding: 2rem 0; /* Adiciona um respiro em cima e embaixo */
 }
 
 .particle-background {
@@ -30,17 +32,13 @@
 }
 
 .centered-content-wrapper {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    /* Este container agora centraliza TUDO, incluindo o botão */
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.5rem; /* Espaçamento entre os elementos */
+    gap: 1.5rem; 
 }
 
-/* --- ESTILOS DO TÍTULO ORIGINAL --- */
 .animated-title {
   position: relative;
   height: 80px; 
@@ -51,7 +49,7 @@
   width: 600px;
   justify-content: center;
   font-family: 'Nixie One', sans-serif;
-  transform: rotate(-2deg); /* Leve inclinação */
+  transform: rotate(-2deg);
 }
 
 .static-text {
@@ -60,7 +58,6 @@
   margin-right: 0.5rem;
   font-weight: bold;
   color: #ebffff;
-  /* Efeito neon roxo para "Shaula" */
   text-shadow: 2px 2px 1px rgba(0,0,0,0.3), 0 0 15px #fff, 0 0 10px #7d26cd, 0 0 50px #7d26cd;
 }
 
@@ -75,23 +72,18 @@
   font-weight: 700;
   text-align: center;
   white-space: nowrap;
-  /* Efeito neon branco/azulado para "Med/Copilot" */
   text-shadow: 2px 2px 1px rgba(0,0,0,0.5), 0 0 20px #fff, 0 0 10px #38eeff, 0 0 50px #38eeff;
-  animation: blink 0.2s infinite alternate; /* Animação de piscar */
+  animation: blink 0.2s infinite alternate;
 }
 
 .rotating-text-wrapper {
   overflow: hidden;
   padding-bottom: 0.25rem;
 }
-/* --- FIM DOS ESTILOS DO TÍTULO --- */
 
-
+/* CORREÇÃO APLICADA AQUI: Removemos o posicionamento absoluto */
 .start-button-wrapper {
-  position: absolute;
-  bottom: 15%;
-  left: 50%;
-  transform: translateX(-50%);
+  margin-top: 1.5rem; /* Adiciona um espaço acima do botão */
 }
 
 @keyframes blink {
@@ -101,7 +93,6 @@
   }
 }
 
-/* Estilos para o Card de Insight (mantidos) */
 .animated-card {
   width: 380px;
   min-height: 180px;
