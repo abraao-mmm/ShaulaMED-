@@ -7,19 +7,17 @@ import MainLayout from './MainLayout';
 import HomePage from './pages/HomePage';
 import ReportsPage from './pages/ReportsPage';
 import ProfilePage from './pages/ProfilePage';
-import SettingsPage from './pages/SettingsPage';
+import SettingsPage from './pages/SettingsPage'; // <-- IMPORTAÇÃO QUE FALTAVA
 import ConsultationScreen from './components/ConsultationScreen';
 
 function App() {
   const [userId, setUserId] = useState('TEST_UID_THALLES');
   const [lastInsight, setLastInsight] = useState(null);
 
-  // Usaremos um componente wrapper para acessar os hooks do roteador
   const AppContent = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // O insight é passado via state da navegação
     const insightFromNavigation = location.state?.insight;
 
     const handleStartConsultation = () => {
@@ -27,7 +25,6 @@ function App() {
     };
 
     const handleFinishConsultation = (insight) => {
-      // Navega de volta para a Home, passando o insight
       navigate('/', { state: { insight } });
     };
 
@@ -40,10 +37,13 @@ function App() {
           />
           <Route path="/relatorios" element={<ReportsPage />} />
           <Route path="/perfil" element={<ProfilePage />} />
+
+          {/* ===== CORREÇÃO APLICADA AQUI ===== */}
+          {/* Esta é a linha que registra a página de Configurações */}
           <Route path="/configuracoes" element={<SettingsPage />} />
+
         </Route>
 
-        {/* A tela de consulta fica fora do layout principal */}
         <Route 
           path="/consulta" 
           element={<ConsultationScreen userId={userId} onFinish={handleFinishConsultation} />} 
