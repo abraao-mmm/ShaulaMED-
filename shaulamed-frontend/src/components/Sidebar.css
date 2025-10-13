@@ -1,0 +1,78 @@
+/* src/components/Sidebar.css */
+
+.sidebar {
+  width: 250px;
+  height: 100vh;
+  background: #0c0d14; /* Fundo escuro consistente */
+  border-right: 1px solid rgba(147, 112, 219, 0.2);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 0;
+  position: fixed; /* Fixa a barra na lateral */
+  top: 0;
+  left: 0;
+  z-index: 1000;
+}
+
+.sidebar-header {
+  padding: 0 1.5rem 2rem 1.5rem;
+  text-align: center;
+  border-bottom: 1px solid rgba(147, 112, 219, 0.1);
+}
+
+.sidebar-header h3 {
+  font-family: 'Nixie One', sans-serif;
+  font-size: 1.8rem;
+  color: #d8b4fe;
+  margin: 0;
+  text-shadow: 0 0 10px rgba(216, 180, 254, 0.4);
+}
+
+.sidebar-menu {
+  list-style: none;
+  padding: 2rem 0;
+  margin: 0;
+  width: 100%;
+}
+
+.sidebar-menu li {
+  padding: 0 1.5rem;
+  width: 100%;
+  box-sizing: border-box; /* Garante que o padding não aumente a largura */
+}
+
+.menu-link {
+  display: block;
+  padding: 1rem 0;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  font-size: 1.1rem;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.menu-link:hover {
+  color: #ffffff;
+  background-color: rgba(147, 112, 219, 0.1);
+  padding-left: 0.5rem;
+}
+
+.menu-link.active {
+  color: #ffffff;
+  font-weight: 700;
+  background-color: rgba(147, 112, 219, 0.2);
+}
+
+.menu-link.active::before {
+  content: '';
+  position: absolute;
+  left: -1.5rem; /* Alinha com o padding do li */
+  top: 50%;
+  transform: translateY(-50%);
+  height: 80%;
+  width: 4px;
+  background-color: #9333ea; /* Roxo principal */
+  border-radius: 0 4px 4px 0;
+}
