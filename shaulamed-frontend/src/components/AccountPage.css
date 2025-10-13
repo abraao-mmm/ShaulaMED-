@@ -1,0 +1,133 @@
+/* src/components/settings/AccountPage.css */
+
+.settings-section h2 {
+  font-size: 1.5rem; /* Menor que o H1 da página */
+  font-weight: 500;
+  color: white;
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.widget {
+  background: #111119;
+  border-radius: 12px;
+  padding: 2rem;
+  border: 1px solid rgba(147, 112, 219, 0.2);
+}
+
+.widget h3 {
+    margin-top: 0;
+    color: white;
+    font-weight: 500;
+}
+
+.section-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 2rem;
+}
+
+/* --- Divisor entre seções --- */
+.section-divider {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(147, 112, 219, 0.2);
+}
+
+/* --- Estilos do Perfil do Médico --- */
+.profile-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.form-group input {
+  background-color: #1e1e2d;
+  border: 1px solid rgba(147, 112, 219, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem;
+  color: white;
+  font-family: inherit;
+}
+
+.form-group input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* --- Estilos da Zona de Ações (Reutilizados) --- */
+.danger-zone {
+  border-color: #f87171;
+}
+
+.danger-zone h3 {
+    color: #f87171;
+}
+
+.action-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.action-item:first-of-type {
+    border-top: none;
+    padding-top: 0;
+}
+
+.action-item:last-of-type {
+    padding-bottom: 0;
+}
+
+.action-item h4 {
+    margin: 0 0 0.25rem 0;
+    color: white;
+}
+
+.action-item p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.6);
+    max-width: 500px;
+}
+
+.action-button {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 1rem;
+}
+
+.action-button.secondary {
+    background: none;
+    border-color: #d8b4fe;
+    color: #d8b4fe;
+}
+
+.action-button.danger {
+    background-color: #f87171;
+    border-color: #f87171;
+    color: black;
+}
+
+.action-button.danger:hover {
+    background-color: transparent;
+    color: #f87171;
+}

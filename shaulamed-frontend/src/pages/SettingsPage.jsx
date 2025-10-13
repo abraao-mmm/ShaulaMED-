@@ -1,63 +1,17 @@
 // src/pages/SettingsPage.jsx
-
-import React, { useState } from 'react';
+import React from 'react';
 import './SettingsPage.css';
-
-// Verifique se o caminho de importação está correto
-import SubscriptionSection from '../components/settings/SubscriptionSection';
-import AccountSecuritySection from '../components/settings/AccountSecuritySection';
-import GeneralSection from '../components/settings/GeneralSection';
-import NotificationsSection from '../components/settings/NotificationsSection';
+import AccountPage from '../components/settings/AccountPage'; // Importa a nova página unificada
 
 const SettingsPage = () => {
-  const [activeSection, setActiveSection] = useState('assinatura');
-
-  const renderSection = () => {
-    switch (activeSection) {
-      case 'assinatura':
-        return <SubscriptionSection />;
-      case 'seguranca':
-        return <AccountSecuritySection />;
-      case 'geral':
-        return <GeneralSection />;
-      case 'notificacoes':
-        return <NotificationsSection />;
-      default:
-        return <SubscriptionSection />;
-    }
-  };
-
   return (
-    <div className="settings-page">
-      <nav className="settings-nav">
-        <button
-          onClick={() => setActiveSection('assinatura')}
-          className={activeSection === 'assinatura' ? 'active' : ''}
-        >
-          Assinatura & Faturamento
-        </button>
-        <button
-          onClick={() => setActiveSection('seguranca')}
-          className={activeSection === 'seguranca' ? 'active' : ''}
-        >
-          Conta & Segurança
-        </button>
-        <button
-          onClick={() => setActiveSection('geral')}
-          className={activeSection === 'geral' ? 'active' : ''}
-        >
-          Geral
-        </button>
-        <button
-          onClick={() => setActiveSection('notificacoes')}
-          className={activeSection === 'notificacoes' ? 'active' : ''}
-        >
-          Notificações
-        </button>
-      </nav>
-      <main className="settings-content">
-        {renderSection()}
-      </main>
+    <div className="settings-page-container">
+        <div className="settings-header">
+            <h1>Configurações</h1>
+        </div>
+        <div className="settings-content-area">
+            <AccountPage />
+        </div>
     </div>
   );
 };
