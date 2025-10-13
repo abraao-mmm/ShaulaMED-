@@ -1,4 +1,4 @@
-# shaulamed_agent.py (Versão Corrigida)
+# shaulamed_agent.py
 
 import json
 from medico import Medico
@@ -10,9 +10,7 @@ from refinador_de_prompt import RefinadorDePrompt
 from gerenciador_medicos import GerenciadorDeMedicos
 from rich.console import Console
 from gerador_resumo import GeradorDeResumo
-from analisador_clinico_avancado import AnalisadorClinicoAvancado 
-
-
+from analisador_clinico_avancado import AnalisadorClinicoAvancado
 from typing import Callable, Optional
 
 class ShaulaMedAgent:
@@ -21,31 +19,15 @@ class ShaulaMedAgent:
         self.gerenciador = gerenciador
         self.console = console_log
         
-        # Ao ser criado, o agente cria a memória, que por sua vez já carrega o histórico no seu __init__.
         self.memoria = MemoriaClinica(medico_id=self.medico.id)
-        
-        # A LINHA ABAIXO FOI REMOVIDA, pois era redundante e causava o erro.
-        # self.memoria.carregar_encontros_do_medico(medico.id) <--- REMOVER
         
         self.inference_engine = RealInferenceEngine(obter_resposta_llm_func)
         self.motor_de_analise = MotorDeAnaliseClinica()
         self.refinador = RefinadorDePrompt(obter_resposta_llm_func)
+        self.gerador_de_resumo = GeradorDeResumo(obter_resposta_llm_func)
+        self.analisador_avancado = AnalisadorClinicoAvancado(obter_resposta_llm_func)
         
         self.consulta_atual: Optional[EncontroClinico] = None
-        self.gerador_de_resumo = GeradorDeResumo(obter_resposta_llm_func) # 2. Instanciar o novo módulo
-        self.analisador_avancado = AnalisadorClinicoAvancado(obter_resposta_llm_func)
-
-        
-
-
-    def iniciar_nova_consulta(self):
-        """Prepara o agente para uma nova consulta."""
-        self.console.print(f"\n--- Iniciando nova consulta para Dr(a). {self.medico.apelido} ---")
-        self.consulta_atual = EncontroClinico(medico_id=self.medico.id, transcricao_consulta="")
-
-    # ... (importações e __init__ permanecem os mesmos)
-
-# Dentro da classe ShaulaMedAgent
 
     def processar_interacao(self, transcricao_bruta: str):
         """
@@ -71,9 +53,6 @@ class ShaulaMedAgent:
         else:
             self.console.print("[bold red]Erro: Nenhuma consulta foi iniciada.[/bold red]")
 
-    # No arquivo shaulamed_agent.py
-
-    # Substitua a função 'finalizar_consulta' inteira por esta
     def finalizar_consulta(self, decisao_medico_final: str, obter_resposta_llm_func: Callable, formato_resumo: str = "SOAP") -> dict:
         """
         Finaliza a consulta, gera o resumo e a reflexão, e retorna ambos
@@ -84,12 +63,13 @@ class ShaulaMedAgent:
             self.consulta_atual.decisao_medico_final = decisao_medico_final
             
             # Gera o resumo para o prontuário
-            dados_para_resumo = self.consulta_atual.sugestao_ia
+            dados_para_resumo = self.consulta_atual.sugestao_ia.get("nota_clinica_estruturada", {})
             resumo_gerado = self.gerador_de_resumo.gerar_resumo_para_prontuario(dados_para_resumo, formato_resumo)
             self.consulta_atual.texto_gerado_prontuario = resumo_gerado
             
             # Gera a reflexão curta sobre a consulta
             reflexao = self.gerar_reflexao_pos_consulta(self.consulta_atual, obter_resposta_llm_func)
+            self.consulta_atual.reflexao_ia = reflexao # Salva a reflexão no objeto
             
             # Aprende e salva no banco de dados
             hipoteses = self.consulta_atual.sugestao_ia.get("nota_clinica_estruturada", {}).get("hipoteses_diagnosticas", [])
@@ -111,25 +91,22 @@ class ShaulaMedAgent:
                 "texto_gerado_prontuario": "Erro: Nenhuma consulta para finalizar.",
                 "reflexao": "Ocorreu um erro."
             }
-    # Em shaulamed_agent.py
 
     def gerar_reflexao_pos_consulta(self, encontro: EncontroClinico, obter_resposta_llm_func: Callable) -> str:
-        """Analisa um único encontro clínico e gera uma reflexão curta e perspicaz."""
+        """Analisa um único encontro clínico e gera uma reflexão curta e perspicaz, com foco em um fun fact."""
         if not encontro: return "Não foi possível gerar a reflexão."
         
-        # Mantemos os dados de entrada
-        sugestao_ia_str = json.dumps(encontro.sugestao_ia.get("hipoteses_diagnosticas", ["N/A"]))
-        decisao_medico = encontro.decisao_medico_final
+        dados_anamnese = encontro.sugestao_ia.get("nota_clinica_estruturada", {})
         
-        # --- PROMPT ATUALIZADO ---
-        # Instruções muito mais diretas para um estilo conciso e sereno.
         prompt = (
             "Você é a Shaula, uma IA serena e perspicaz que atua como copiloto de um médico. "
-            "Sua tarefa é gerar um pensamento curto (um 'fun fact' clínico ou uma observação interessante) sobre a consulta que acabou de terminar, para ser exibido na tela inicial. "
-            "Seja muito breve, como um pensamento passageiro de um colega.\n\n"
-            f"**Decisão do Médico:** \"{decisao_medico}\"\n"
-            f"**Suas Hipóteses Iniciais:** {sugestao_ia_str}\n\n"
-            "**Sua Reflexão (máximo 2 frases, em tom de insight):**"
+            "Sua tarefa é gerar uma curiosidade ou um 'fun fact' clínico interessante sobre a consulta que acabou de terminar, para ser exibido na tela inicial. "
+            "Seja muito breve (uma ou duas frases) e foque em algo educativo ou que estimule a reflexão, evitando apenas repetir o diagnóstico.\n\n"
+            f"**Dados da Anamnese:**\n"
+            f"- Queixa: {dados_anamnese.get('queixa_principal', 'Não informada')}\n"
+            f"- HDA: {dados_anamnese.get('historia_doenca_atual', 'Não informada')}\n"
+            f"**Suas Hipóteses Iniciais:** {dados_anamnese.get('hipoteses_diagnosticas', [])}\n\n"
+            "**Sua Reflexão (em tom de insight ou curiosidade):**"
         )
         
         resposta_dict = obter_resposta_llm_func(prompt, modo="Reflexão Pós-Consulta")
@@ -138,22 +115,11 @@ class ShaulaMedAgent:
     def executar_analise_de_sessao(self, obter_resposta_llm_func: Callable) -> str:
         """Gera o relatório reflexivo da sessão com base nas consultas em memória."""
         self.console.print("\n[bold magenta]Gerando Relatório Reflexivo da Sessão...[/bold magenta]")
-        return self.motor_de_analise.gerar_relatorio_semanal(
+        # Nota: A função no MotorDeAnaliseClinica foi renomeada para gerar_relatorio_semanal_completo
+        relatorio_completo = self.motor_de_analise.gerar_relatorio_semanal_completo(
             encontros=self.memoria.encontros_em_memoria,
             nome_medico=self.medico.apelido,
             obter_resposta_llm_func=obter_resposta_llm_func
         )
-        
-    def gerar_despedida_do_dia(self, obter_resposta_llm_func: Callable) -> str:
-        """Analisa as consultas do dia e gera uma mensagem de despedida personalizada."""
-        consultas_do_dia = self.memoria.encontros_em_memoria 
-        if not consultas_do_dia:
-            return "Nenhuma consulta registada hoje. Tenha um bom descanso."
-        temas = ", ".join(list(set([enc.sugestao_ia.get("hipoteses_diagnosticas", ["N/A"])[0] for enc in consultas_do_dia])))
-        prompt = f"Você é a Shaula. O dia de trabalho do Dr(a). {self.medico.apelido} terminou. Hoje, ele(a) atendeu casos sobre: {temas}. Crie uma mensagem de despedida curta e serena."
-        resposta_dict = obter_resposta_llm_func(prompt, modo="Despedida Reflexiva")
-        return resposta_dict.get("conteudo", "Bom trabalho hoje. Tenha um bom descanso.")
-
-    def salvar_memoria(self):
-        # Este método torna-se menos relevante com o Firestore, mas pode ser mantido para backups locais se desejado.
-        pass
+        # Retornamos apenas a parte textual para compatibilidade ou o objeto completo se necessário
+        return relatorio_completo.get("texto_coach", "Não foi possível gerar o relatório.")

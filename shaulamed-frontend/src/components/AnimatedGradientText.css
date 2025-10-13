@@ -1,0 +1,29 @@
+.animated-gradient-text {
+  font-size: 5rem; /* Ajuste conforme necessário */
+  font-weight: 900;
+  background: linear-gradient(45deg, #e0b0ff, #9370DB, #5F0F40); /* Seu gradiente preferido */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% auto;
+  animation: gradientShift 3s ease infinite alternate;
+  margin-bottom: 0.5rem; /* Espaçamento abaixo do título */
+  text-shadow: 0 0 20px rgba(147, 112, 219, 0.7); /* Sombra para o efeito neon */
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .animated-gradient-text {
+    font-size: 3.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .animated-gradient-text {
+    font-size: 2.5rem;
+  }
+}
