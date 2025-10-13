@@ -9,10 +9,10 @@
 }
 
 .widget {
-  background: #111119;
+  background: #ffffff;
   border-radius: 12px;
   padding: 2rem;
-  border: 1px solid rgba(147, 112, 219, 0.2);
+  border: 1px solid rgb(255, 255, 255);
 }
 
 .widget h3 {
@@ -82,4 +82,12 @@
   background-color: rgba(147, 112, 219, 0.1);
   border-color: white;
   color: white;
+}
+
+/* Adicione ao final de src/components/settings/Section.css */
+.section-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    margin-top: -1.5rem;
+    margin-bottom: 2rem;
 }
