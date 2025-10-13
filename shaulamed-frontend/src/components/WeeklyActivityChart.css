@@ -1,0 +1,35 @@
+/* src/components/WeeklyActivityChart.css */
+
+.chart-widget {
+  background: #111119;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid rgba(147, 112, 219, 0.2);
+  height: 100%; /* Faz o widget preencher a altura do grid */
+}
+
+.chart-widget h3 {
+  text-align: center;
+  color: white;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+.chart-container {
+  width: 100%;
+  height: 250px; /* Altura fixa para o gráfico */
+}
+
+/* Estilo para o tooltip customizado */
+.custom-tooltip {
+    background-color: rgba(30, 30, 45, 0.9);
+    border: 1px solid rgba(147, 112, 219, 0.5);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    color: white;
+}
+
+.custom-tooltip .label {
+    margin: 0;
+}

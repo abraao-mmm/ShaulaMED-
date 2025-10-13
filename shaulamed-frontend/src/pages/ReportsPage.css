@@ -72,3 +72,22 @@
     border-radius: 12px;
     color: rgba(255, 255, 255, 0.5);
 }
+
+/* Adicione ao final de src/pages/ReportsPage.css */
+
+.analysis-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr; /* O insight ocupa mais espaço (1.5) que o gráfico (1) */
+  gap: 2rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  align-items: start; /* Alinha os itens no topo */
+}
+
+/* Regra para telas menores (tablets e celulares) */
+@media (max-width: 900px) {
+  .analysis-grid {
+    grid-template-columns: 1fr; /* Coloca os itens um abaixo do outro */
+  }
+}
