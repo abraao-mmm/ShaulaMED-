@@ -43,6 +43,15 @@
   margin: 0 auto;
 }
 
+.analysis-section {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr; /* O insight ocupa mais espaço */
+  gap: 2rem;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
 .loading-state, .error-state {
   display: flex;
   justify-content: center;
