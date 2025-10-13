@@ -51,3 +51,35 @@
     text-align: center;
     margin-top: 1.5rem;
 }
+
+.pro-features {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0;
+  text-align: left;
+}
+
+.pro-features li {
+  margin-bottom: 0.5rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.manage-button {
+  width: 100%;
+  background-color: transparent;
+  color: #d8b4fe;
+  border: 1px solid #d8b4fe;
+  padding: 0.8rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1rem;
+  margin-top: 1rem;
+  transition: all 0.2s ease;
+}
+
+.manage-button:hover {
+  background-color: rgba(147, 112, 219, 0.1);
+  border-color: white;
+  color: white;
+}

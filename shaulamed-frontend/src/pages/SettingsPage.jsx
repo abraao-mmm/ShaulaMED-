@@ -15,7 +15,7 @@ const SettingsPage = () => {
   const renderSection = () => {
     switch (activeSection) {
       case 'assinatura':
-        return <SubscriptionSection />;
+        return <SubscriptionSection profileData={profileData} />;
       case 'seguranca':
         return <AccountSecuritySection />;
       case 'geral':
