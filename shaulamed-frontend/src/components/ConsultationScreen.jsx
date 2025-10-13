@@ -121,7 +121,6 @@ const ConsultationScreen = ({ userId, onFinish }) => {
         }
     };
 
-    // NOVA FUNÇÃO ADICIONADA AQUI:
     const handleFinalizeAndSave = async () => {
         if (!finalNotes) {
             alert("Para finalizar, por favor, descreva sua decisão final no campo de prontuário.");
@@ -133,16 +132,16 @@ const ConsultationScreen = ({ userId, onFinish }) => {
         }
 
         console.log("Finalizando e salvando a consulta...");
-        setIsLoading(true); // Reutiliza o estado de loading
+        setIsLoading(true);
 
         try {
             const payload = {
                 consulta_atual: consulta,
                 decisao: {
                     decisao: finalNotes,
-                    resumo: "" // O backend não precisa disso para a finalização
+                    resumo: "" 
                 },
-                formato_resumo: "SOAP" // Define o formato do resumo a ser gerado
+                formato_resumo: "SOAP"
             };
 
             const response = await fetch(`${API_BASE_URL}/consulta/finalizar/${userId}`, {
@@ -160,7 +159,9 @@ const ConsultationScreen = ({ userId, onFinish }) => {
             console.log("Consulta finalizada:", result);
             alert("Consulta salva com sucesso!");
 
-            onFinish(); // Chama a função original para trocar de tela APÓS o sucesso
+            // MODIFICAÇÃO APLICADA AQUI
+            // Passamos a reflexão gerada (result.reflexao) para a função onFinish.
+            onFinish(result.reflexao); 
 
         } catch (error) {
             console.error("Erro ao finalizar a consulta:", error);

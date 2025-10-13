@@ -6,7 +6,7 @@ import AnimatedSubtitle from './AnimatedSubtitle';
 import StarButton from './StarButton';
 import './StartScreen.css';
 
-const StartScreen = ({ onStart }) => {
+const StartScreen = ({ onStart, insight }) => {
   return (
     <div className="start-screen-container">
       <div className="particle-background">

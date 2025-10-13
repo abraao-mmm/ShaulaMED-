@@ -129,3 +129,23 @@
   left: 50%;
   transform: translateX(-50%);
 }
+
+.insight-container {
+  margin-top: 3rem;
+  max-width: 600px;
+  text-align: center;
+  padding: 1rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid var(--purple-primary);
+  border-radius: 0 8px 8px 0;
+}
+
+.insight-text {
+  font-family: 'Georgia', serif;
+  font-style: italic;
+  font-size: 1.1rem;
+  color: #d8b4fe; /* Um tom de roxo claro */
+  margin: 0;
+  line-height: 1.6;
+  text-shadow: 0 0 10px rgba(216, 180, 254, 0.3);
+}
