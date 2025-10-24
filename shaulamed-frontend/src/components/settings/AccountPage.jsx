@@ -48,7 +48,7 @@ const AccountPage = () => {
         <PricingTiers />
       </div>
 
-      {/* --- 2. SEÇÃO PERFIL DO MÉDICO --- */}
+      {/* --- 2. SEÇÃO PERFIL DO MÉDICO (BUILDER PROFILE) --- */}
       <h2 className="section-divider">Perfil do Médico</h2>
       <div className="widget">
         <h3>Personalize seu Perfil</h3>
@@ -62,7 +62,7 @@ const AccountPage = () => {
         </div>
       </div>
       
-      {/* --- 3. SEÇÃO DE AÇÕES DA CONTA --- */}
+      {/* --- 3. SEÇÃO DE AÇÕES DA CONTA (EXCLUIR) --- */}
       <h2 className="section-divider">Conta</h2>
        <div className="widget danger-zone">
         <div className="action-item">
