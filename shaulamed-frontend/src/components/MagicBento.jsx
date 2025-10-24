@@ -1,3 +1,4 @@
+// MagicBento.jsx
 import React, { useRef, useEffect, useCallback, useState } from "react";
 import { gsap } from "gsap";
 import "./MagicBento.css";
@@ -5,6 +6,7 @@ import "./MagicBento.css";
 const DEFAULT_PARTICLE_COUNT = 12;
 const DEFAULT_GLOW_COLOR = "132, 0, 255";
 
+// ... (O código createParticleElement e ParticleCard permanece exatamente o mesmo) ...
 const createParticleElement = (x, y, color) => {
   const el = document.createElement("div");
   el.className = "particle";
@@ -76,19 +78,35 @@ const ParticleCard = ({ children, ...props }) => {
     );
 };
 
+
 const MagicBento = ({ cardContents = {} }) => {
+    
+    // ===== MUDANÇA PRINCIPAL AQUI =====
+    // Atualizamos o layout dos cards para a nova estrutura.
     const cardLayoutData = [
-        { id: "Insights" }, { id: "Overview" }, { id: "Collaboration" },
-        { id: "Efficiency" }, { id: "Connectivity" }, { id: "Protection" },
+        { id: "Gravador" },       // Antigo "Insights"
+        { id: "QueixaPrincipal" },// Antigo "Overview"
+        { id: "Acoes" },          // Antigo "Collaboration"
+        { id: "Anamnese" },       // Novo! (Parte do "Efficiency")
+        { id: "Hipoteses" },      // Novo! (Parte do "Efficiency")
+        { id: "ExamesSugeridos" },// Antigo "Connectivity"
+        { id: "TratamentosSugeridos" }, // Antigo "Protection"
     ];
+    // ==================================
 
     return (
         <div className="card-grid">
-            {cardLayoutData.map((card) => (
+            {/* O card "Acoes" (Prontuário) agora é renderizado de forma diferente */}
+            {cardLayoutData.filter(c => c.id !== 'Acoes').map((card) => (
                 <ParticleCard key={card.id} className="card">
                     {cardContents[card.id]}
                 </ParticleCard>
             ))}
+            
+            {/* Renderiza o card "Acoes" com uma classe especial para ocupar mais espaço */}
+            <ParticleCard key="Acoes" className="card card-span-2">
+                {cardContents["Acoes"]}
+            </ParticleCard>
         </div>
     );
 };

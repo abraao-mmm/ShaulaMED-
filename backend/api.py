@@ -315,3 +315,25 @@ def delete_account(uid: str, payload: DeleteAccountPayload):
          return {"status": "sucesso", "mensagem": "Conta e todos os dados foram excluídos."}
     else:
         raise HTTPException(status_code=403, detail="Senha incorreta.")
+    
+@app.post("/consulta/gerar_resumo/{uid}", tags=["Documentos"])
+def gerar_resumo_prontuario(uid: str, payload: ResumoPayload):
+    """
+    Gera um resumo formatado (ex: SOAP) com base nos dados da consulta.
+    """
+    console.print(f"[{uid}] Gerando resumo {payload.formato_resumo}...")
+    try:
+        gerador = GeradorDeResumo(obter_resposta_llm_api)
+        # A sugestão da IA contém ambos os objetos necessários
+        dados_completos = payload.dados_consulta.get("sugestao_ia", {}) 
+
+        resumo_texto = gerador.gerar_resumo_para_prontuario(
+            dados_clinicos=dados_completos,
+            formato=payload.formato_resumo
+        )
+        if "Não foi possível" in resumo_texto:
+            raise HTTPException(status_code=500, detail=resumo_texto)
+        return {"resumo_gerado": resumo_texto}
+    except Exception as e:
+        console.print(f"❌ [bold red]Erro ao gerar resumo: {e}[/bold red]")
+        raise HTTPException(status_code=500, detail=f"Erro interno ao gerar o resumo: {e}")
