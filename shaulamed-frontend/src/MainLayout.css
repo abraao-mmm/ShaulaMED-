@@ -1,14 +1,21 @@
-/* src/MainLayout.css */
+/* src/MainLayout.css (VERSÃO CORRIGIDA) */
 
 .main-layout {
   display: flex;
+  /* Define a altura total para o layout */
+  height: 100vh;
 }
 
 .content-area {
   flex-grow: 1;
-  margin-left: 250px; /* Mesmo valor da largura da sidebar */
+  /* O 'margin-left' deve ser igual à largura da sua sidebar (250px) */
+  margin-left: 250px; 
   padding: 2rem;
   width: calc(100% - 250px);
-  min-height: 100vh;
   box-sizing: border-box;
+
+  /* ADICIONADO: Faz apenas esta área ter scroll vertical */
+  overflow-y: auto;
+  /* Garante que esta área também ocupe 100% da altura */
+  height: 100vh; 
 }
