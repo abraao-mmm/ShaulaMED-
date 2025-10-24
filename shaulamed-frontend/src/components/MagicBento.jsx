@@ -1,4 +1,4 @@
-// MagicBento.jsx
+// src/components/MagicBento.jsx
 import React, { useRef, useEffect, useCallback, useState } from "react";
 import { gsap } from "gsap";
 import "./MagicBento.css";
@@ -6,7 +6,7 @@ import "./MagicBento.css";
 const DEFAULT_PARTICLE_COUNT = 12;
 const DEFAULT_GLOW_COLOR = "132, 0, 255";
 
-// ... (O código createParticleElement e ParticleCard permanece exatamente o mesmo) ...
+// ... (O código createParticleElement permanece o mesmo) ...
 const createParticleElement = (x, y, color) => {
   const el = document.createElement("div");
   el.className = "particle";
@@ -14,13 +14,13 @@ const createParticleElement = (x, y, color) => {
   return el;
 };
 
+// ... (O código ParticleCard permanece o mesmo) ...
 const ParticleCard = ({ children, ...props }) => {
     const cardRef = useRef(null);
     const particlesRef = useRef([]);
     const timeoutsRef = useRef([]);
     const isHoveredRef = useRef(false);
     const memoizedParticles = useRef([]);
-
     const particleCount = DEFAULT_PARTICLE_COUNT;
     const glowColor = DEFAULT_GLOW_COLOR;
 
@@ -79,33 +79,32 @@ const ParticleCard = ({ children, ...props }) => {
 };
 
 
+// ===== MUDANÇA PRINCIPAL AQUI =====
+// O layout da grade agora é explícito para corresponder à sua captura de tela
+// e garantir que o card "Acoes" ocupe o espaço correto.
 const MagicBento = ({ cardContents = {} }) => {
-    
-    // ===== MUDANÇA PRINCIPAL AQUI =====
-    // Atualizamos o layout dos cards para a nova estrutura.
-    const cardLayoutData = [
-        { id: "Gravador" },       // Antigo "Insights"
-        { id: "QueixaPrincipal" },// Antigo "Overview"
-        { id: "Acoes" },          // Antigo "Collaboration"
-        { id: "Anamnese" },       // Novo! (Parte do "Efficiency")
-        { id: "Hipoteses" },      // Novo! (Parte do "Efficiency")
-        { id: "ExamesSugeridos" },// Antigo "Connectivity"
-        { id: "TratamentosSugeridos" }, // Antigo "Protection"
-    ];
-    // ==================================
-
     return (
         <div className="card-grid">
-            {/* O card "Acoes" (Prontuário) agora é renderizado de forma diferente */}
-            {cardLayoutData.filter(c => c.id !== 'Acoes').map((card) => (
-                <ParticleCard key={card.id} className="card">
-                    {cardContents[card.id]}
-                </ParticleCard>
-            ))}
-            
-            {/* Renderiza o card "Acoes" com uma classe especial para ocupar mais espaço */}
-            <ParticleCard key="Acoes" className="card card-span-2">
+            <ParticleCard className="card">
+                {cardContents["Gravador"]}
+            </ParticleCard>
+            <ParticleCard className="card">
+                {cardContents["QueixaPrincipal"]}
+            </ParticleCard>
+            <ParticleCard className="card card-span-row-2">
                 {cardContents["Acoes"]}
+            </ParticleCard>
+            <ParticleCard className="card">
+                {cardContents["Anamnese"]}
+            </ParticleCard>
+            <ParticleCard className="card">
+                {cardContents["Hipoteses"]}
+            </ParticleCard>
+            <ParticleCard className="card">
+                {cardContents["ExamesSugeridos"]}
+            </ParticleCard>
+            <ParticleCard className="card">
+                {cardContents["TratamentosSugeridos"]}
             </ParticleCard>
         </div>
     );

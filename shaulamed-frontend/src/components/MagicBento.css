@@ -1,145 +1,44 @@
-:root {
-  --white: hsl(0, 0%, 100%);
-  --purple-primary: rgba(132, 0, 255, 1);
-  --purple-glow: rgba(132, 0, 255, 0.2);
-  --border-color: #392e4e;
-  --background-dark: #060010;
-}
+/* src/components/MagicBento.css */
 
 .card-grid {
   display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  /* Define 3 linhas que dividem o espaço. 
+    Isso força os cards a terem uma altura limitada.
+  */
+  grid-template-rows: repeat(3, 1fr);
   gap: 1rem;
   padding: 1rem;
   width: 100%;
-  max-width: 70vw;
-  height: calc(100vh - 120px);
-  margin: auto;
-}
-
-/* REGRA 1: O Card principal deve esconder o que transborda */
-.card {
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  padding: 1.5em;
-  border-radius: 20px;
-  border: 1px solid var(--border-color);
-  background: var(--background-dark);
-  overflow: hidden; /* ESSENCIAL: Esconde a barra de scroll feia */
-  transition: all 0.3s ease;
-}
-
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-}
-
-.particle {
-    position: absolute;
-    pointer-events: none;
-}
-
-/* REGRA 2: A classe 'scrollable-content' é quem deve ter a barra de scroll */
-.scrollable-content {
-  overflow-y: auto; /* Adiciona a barra de scroll SÓ quando necessário */
-  height: 100%; /* Ocupa o espaço vertical disponível */
-  padding-right: 5px; /* Evita que o texto cole na barra */
-}
-
-/* REGRA 3: Estilizamos a barra de scroll da nossa classe */
-.scrollable-content::-webkit-scrollbar {
-  width: 8px;
-}
-
-.scrollable-content::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-}
-
-.scrollable-content::-webkit-scrollbar-thumb {
-  background-color: var(--purple-primary);
-  border-radius: 10px;
-  border: 2px solid var(--background-dark);
-}
-
-.scrollable-content::-webkit-scrollbar-thumb:hover {
-  background-color: var(--purple-border);
-}
-
-/* Layout do Bento Grid para telas grandes */
-@media (min-width: 1024px) {
-  .card-grid {
-    grid-template-columns: repeat(4, 1fr);
-    grid-auto-rows: minmax(200px, auto);
-  }:root {
-  --white: hsl(0, 0%, 100%);
-  --purple-primary: rgba(132, 0, 255, 1);
-  --purple-glow: rgba(132, 0, 255, 0.2);
-  --border-color: #392e4e;
-  --background-dark: #060010;
-}
-
-.card-grid {
-  display: grid;
-  gap: 1rem;
-  padding: 1rem;
-  width: 100%;
-  max-width: 90vw;
-  height: calc(100vh - 120px);
-  margin: auto;
+  /* Força a grade a ter 85% da altura da tela, para caber no fullscreen */
+  height: 85vh; 
+  box-sizing: border-box;
 }
 
 .card {
-  display: flex;
-  flex-direction: column;
   position: relative;
-  padding: 1.5em;
-  border-radius: 20px;
-  border: 1px solid var(--border-color);
-  background: var(--background-dark);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
   overflow: hidden;
-  transition: all 0.3s ease;
+  display: flex; 
+  flex-direction: column;
 }
 
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px var(--purple-glow);
+/* Classe especial para o card "Acoes" se esticar por 2 LINHAS */
+.card-span-row-2 {
+  grid-row: span 2 / auto;
 }
 
+/* Estilos das Partículas (do ParticleCard) */
 .particle {
-    position: absolute;
-    pointer-events: none;
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(132, 0, 255, 1);
+  box-shadow: 0 0 6px rgba(132, 0, 255, 0.6);
+  pointer-events: none;
+  z-index: 100;
 }
-
-/* Layout do Bento Grid para telas grandes (idêntico ao original) */
-@media (min-width: 1024px) {
-  .card-grid {
-    grid-template-columns: repeat(4, 1fr);
-    grid-auto-rows: minmax(200px, 1fr);
-  }
-  .card:nth-child(3) { /* Collaboration */
-    grid-column: 3 / span 2;
-    grid-row: 1 / span 2;
-  }
-  .card:nth-child(4) { /* Efficiency */
-    grid-column: 1 / span 2;
-    grid-row: 2 / span 2;
-  }
-  .card:nth-child(6) { /* Protection */
-    grid-column: 4;
-    grid-row: 3;
-  }
-}
-  .card:nth-child(3) { /* Collaboration */
-    grid-column: span 2;
-    grid-row: span 2;
-  }
-  .card:nth-child(4) { /* Efficiency */
-    grid-column: 1 / span 2;
-    grid-row: 2 / span 2;
-  }
-  .card:nth-child(6) { /* Protection */
-    grid-column: 4;
-    grid-row: 3;
-  }
-}   
