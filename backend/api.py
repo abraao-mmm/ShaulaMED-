@@ -131,6 +131,10 @@ class ChangePasswordPayload(BaseModel):
 class DeleteAccountPayload(BaseModel):
     password: str
 
+class ResumoPayload(BaseModel):
+    dados_consulta: dict
+    formato_resumo: str
+
 # --- ENDPOINTS DA API DE NEGÓCIO ---
 
 @app.post("/sessao/ativar", tags=["Sessão"])
