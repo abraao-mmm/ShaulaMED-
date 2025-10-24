@@ -25,7 +25,6 @@ body, input, button {
 body {
     color: var(--white-color);
     background-color: #0c0d14; /* Cor de fundo para garantir que não haja flash branco */
-    overflow: hidden;
 }
 
 input, button {
