@@ -1,14 +1,28 @@
 // src/components/settings/AccountPage.jsx
 import React from 'react';
-import { useAuth } from '../../context/AuthContext'; // Importa o hook para pegar o usuário
+import { useAuth } from '../../context/AuthContext'; 
+import { useNavigate } from 'react-router-dom'; 
+import { signOut } from 'firebase/auth';         
+import { auth } from '../../firebase/config';   
+
 import './AccountPage.css';
 import PricingTiers from './PricingTiers';
 
 const API_BASE_URL = "https://shaulamed-api-1x9x.onrender.com";
 
 const AccountPage = () => {
-    // Pega o usuário logado a partir do nosso contexto de autenticação
     const { currentUser } = useAuth();
+    const navigate = useNavigate(); 
+
+    const handleLogout = async () => {
+        try {
+            await signOut(auth); 
+            navigate('/login');  
+        } catch (error) {
+            console.error("Erro ao fazer logout:", error);
+            alert("Erro ao sair da conta.");
+        }
+    };
 
     const handleExportData = async () => {
         if (!currentUser) return;
@@ -32,7 +46,6 @@ const AccountPage = () => {
         if (!currentUser) return;
         const confirmation = prompt("Esta ação é irreversível e apagará todos os seus dados. Para confirmar, digite 'EXCLUIR MINHA CONTA'.");
         if (confirmation === "EXCLUIR MINHA CONTA") {
-            // AQUI IRIA A LÓGICA DE CHAMADA À API PARA DELETAR A CONTA
             alert("Funcionalidade de exclusão em desenvolvimento. Sua conta não foi excluída.");
         } else if (confirmation !== null) {
             alert("A confirmação está incorreta. Ação cancelada.");
@@ -48,7 +61,7 @@ const AccountPage = () => {
         <PricingTiers />
       </div>
 
-      {/* --- 2. SEÇÃO PERFIL DO MÉDICO (BUILDER PROFILE) --- */}
+      {/* --- 2. SEÇÃO PERFIL DO MÉDICO --- */}
       <h2 className="section-divider">Perfil do Médico</h2>
       <div className="widget">
         <h3>Personalize seu Perfil</h3>
@@ -56,20 +69,28 @@ const AccountPage = () => {
         <div className="profile-fields">
             <div className="form-group">
                 <label>E-mail</label>
-                {/* Exibe o email do usuário logado dinamicamente */}
                 <input type="email" value={currentUser?.email || 'Carregando...'} disabled />
             </div>
         </div>
       </div>
       
-      {/* --- 3. SEÇÃO DE AÇÕES DA CONTA (EXCLUIR) --- */}
+      {/* --- 3. SEÇÃO DE AÇÕES DA CONTA --- */}
       <h2 className="section-divider">Conta</h2>
        <div className="widget danger-zone">
+        <div className="action-item">
+          <div>
+            <h4>Sair da Conta</h4>
+            <p>Encerra a sua sessão atual e retorna para a tela de login.</p>
+          </div>
+          <button onClick={handleLogout} className="action-button secondary">Sair</button>
+        </div>
+        
         <div className="action-item">
           <div>
             <h4>Exportar Meus Dados</h4>
             <p>Faça o download de todos os seus dados de perfil e histórico de consultas.</p>
           </div>
+          {/* ===== LINHA CORRIGIDA ===== */}
           <button onClick={handleExportData} className="action-button secondary">Exportar</button>
         </div>
         <div className="action-item">
