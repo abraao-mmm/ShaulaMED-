@@ -17,58 +17,35 @@ import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
 
 function App() {
-  // O AppContent é um componente interno para poder usar os hooks do roteador
   const AppContent = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { currentUser } = useAuth();
+    const { currentUser } = useAuth(); // Pega o usuário logado
 
-    // Lógica para fazer logout
     const handleLogout = async () => {
-      try {
-        await signOut(auth);
-        // Após o logout, o onAuthStateChanged no AuthContext irá
-        // atualizar o currentUser, e o ProtectedRoute redirecionará para /login.
-        // Adicionamos um navigate explícito por segurança.
-        navigate('/login');
-      } catch (error) {
-        console.error("Erro ao fazer logout:", error);
-      }
+      await signOut(auth);
+      navigate('/login');
     };
 
-    const handleStartConsultation = () => {
-      navigate('/consulta');
-    };
-
-    const handleFinishConsultation = (insight) => {
-      navigate('/', { state: { insight } });
-    };
-
-    // Pega o insight passado durante a navegação, se houver
+    const handleStartConsultation = () => navigate('/consulta');
+    const handleFinishConsultation = (insight) => navigate('/', { state: { insight } });
     const insightFromNavigation = location.state?.insight;
 
     return (
       <Routes>
-        {/* === ROTAS PÚBLICAS === */}
-        {/* Acessíveis apenas quando o usuário NÃO está logado */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/cadastro" element={<SignupPage />} />
 
-        {/* === ROTAS PROTEGIDAS === */}
-        {/* Só são acessíveis se o usuário estiver logado */}
         <Route element={<ProtectedRoute />}>
-          {/* Rotas que usam o layout principal com a barra lateral */}
           <Route element={<MainLayout onLogout={handleLogout} />}>
-            <Route
-              path="/"
-              element={<HomePage onStart={handleStartConsultation} insight={insightFromNavigation} />}
-            />
+            <Route path="/" element={<HomePage onStart={handleStartConsultation} insight={insightFromNavigation} />} />
             <Route path="/relatorios" element={<ReportsPage />} />
             <Route path="/perfil" element={<ProfilePage />} />
             <Route path="/configuracoes" element={<SettingsPage />} />
           </Route>
-
-          {/* Rota da consulta, que não usa o layout principal (tela cheia) */}
+          
+          {/* ===== CORREÇÃO APLICADA AQUI ===== */}
+          {/* Passa o UID real do usuário logado para a tela de consulta */}
           <Route
             path="/consulta"
             element={<ConsultationScreen userId={currentUser?.uid} onFinish={handleFinishConsultation} />}
