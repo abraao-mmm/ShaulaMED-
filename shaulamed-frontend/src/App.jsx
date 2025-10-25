@@ -1,7 +1,7 @@
 // src/App.jsx
 import React from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from './context/AuthContext'; // 1. Importa o hook de autenticação
 import { auth } from './firebase/config';
 import { signOut } from 'firebase/auth';
 
@@ -9,7 +9,7 @@ import { signOut } from 'firebase/auth';
 import MainLayout from './MainLayout';
 import ProtectedRoute from './ProtectedRoute';
 import HomePage from './pages/HomePage';
-import ReportsPage from './pages/ReportsPage';
+import ReportsPage from './pagesS/ReportsPage';
 import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
 import ConsultationScreen from './components/ConsultationScreen';
@@ -20,7 +20,7 @@ function App() {
   const AppContent = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { currentUser } = useAuth(); // Pega o usuário logado
+    const { currentUser } = useAuth(); // 2. Pega o usuário que está logado
 
     const handleLogout = async () => {
       await signOut(auth);
@@ -44,8 +44,10 @@ function App() {
             <Route path="/configuracoes" element={<SettingsPage />} />
           </Route>
           
-          {/* ===== CORREÇÃO APLICADA AQUI ===== */}
-          {/* Passa o UID real do usuário logado para a tela de consulta */}
+          {/* ===== 3. CORREÇÃO APLICADA AQUI ===== */}
+          {/* Removemos o userId de teste e passamos o UID real do usuário logado.
+            O 'currentUser?.uid' garante que só passamos o ID se o usuário existir.
+          */}
           <Route
             path="/consulta"
             element={<ConsultationScreen userId={currentUser?.uid} onFinish={handleFinishConsultation} />}
