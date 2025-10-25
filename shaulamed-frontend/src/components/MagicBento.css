@@ -1,17 +1,22 @@
-/* src/components/MagicBento.css */
+/* src/components/MagicBento.css (VERSÃO CORRIGIDA) */
 
 .card-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  /* Define 3 linhas que dividem o espaço. 
-    Isso força os cards a terem uma altura limitada.
+
+  /* A MUDANÇA PRINCIPAL ESTÁ AQUI:
+    Em vez de 'grid-template-rows: repeat(3, 1fr)',
+    usamos 'grid-auto-rows' com 'minmax'.
+    Isso, combinado com o 'height: 85vh', força as linhas a 
+    se dividirem igualmente na altura da tela, sem deixar o 
+    conteúdo expandi-las.
   */
-  grid-template-rows: repeat(3, 1fr);
+  height: 85vh; /* Define a altura total da grade */
+  grid-auto-rows: minmax(0, 1fr); /* Divide a altura em linhas flexíveis que podem encolher */
+
   gap: 1rem;
   padding: 1rem;
   width: 100%;
-  /* Força a grade a ter 85% da altura da tela, para caber no fullscreen */
-  height: 85vh; 
   box-sizing: border-box;
 }
 
@@ -21,12 +26,15 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 1.5rem;
-  overflow: hidden;
+  overflow: hidden; /* Garante que o conteúdo não vaze */
   display: flex; 
   flex-direction: column;
+
+  /* A MÁGICA FINAL: */
+  min-height: 0; /* Permite que o card encolha para caber na linha da grade */
 }
 
-/* Classe especial para o card "Acoes" se esticar por 2 LINHAS */
+/* Esta classe faz o card "Acoes" ocupar 2 linhas de altura */
 .card-span-row-2 {
   grid-row: span 2 / auto;
 }
